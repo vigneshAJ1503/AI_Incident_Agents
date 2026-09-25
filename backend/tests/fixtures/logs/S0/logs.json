@@ -3,42 +3,55 @@
     {
       "arguments": {
         "end": "2026-09-25T10:30:00Z",
-        "query": "FROM payment-prod-* | STATS count = COUNT(*) BY level | SORT count DESC",
-        "start": "2026-09-25T10:00:00Z"
+        "query": "FROM payment-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*) BY window, level = level",
+        "start": "2026-09-24T10:00:00Z"
       },
       "result": {
         "is_error": false,
         "structured": {
           "columns": [
             "count",
+            "window",
             "level"
           ],
-          "row_count": 2,
+          "row_count": 4,
           "rows": [
             [
+              17063,
+              "baseline",
+              "INFO"
+            ],
+            [
+              65,
+              "baseline",
+              "ERROR"
+            ],
+            [
               369,
+              "current",
               "INFO"
             ],
             [
               1,
+              "current",
               "ERROR"
             ]
           ],
           "time_range": {
             "end": "2026-09-25T10:30:00+00:00",
-            "start": "2026-09-25T10:00:00+00:00"
+            "start": "2026-09-24T10:00:00+00:00"
           },
           "truncated": false
         },
-        "text": "{\n  \"columns\": [\n    \"count\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      369,\n      \"INFO\"\n    ],\n    [\n      1,\n      \"ERROR\"\n    ]\n  ],\n  \"row_count\": 2,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-25T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"window\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      17063,\n      \"baseline\",\n      \"INFO\"\n    ],\n    [\n      65,\n      \"baseline\",\n      \"ERROR\"\n    ],\n    [\n      369,\n      \"current\",\n      \"INFO\"\n    ],\n    [\n      1,\n      \"current\",\n      \"ERROR\"\n    ]\n  ],\n  \"row_count\": 4,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
       },
       "tool": "execute_esql"
     },
     {
       "arguments": {
         "end": "2026-09-25T10:30:00Z",
-        "query": "FROM payment-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY msg = message.keyword | SORT count DESC | LIMIT 10",
-        "start": "2026-09-25T10:00:00Z"
+        "query": "FROM payment-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\", \"WARN\") | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY window, level = level, msg = message.keyword | SORT count DESC | LIMIT 1000",
+        "start": "2026-09-24T10:00:00Z"
       },
       "result": {
         "is_error": false,
@@ -47,65 +60,593 @@
             "count",
             "first_seen",
             "last_seen",
+            "window",
+            "level",
             "msg"
           ],
-          "row_count": 1,
+          "row_count": 66,
           "rows": [
+            [
+              1,
+              "2026-09-24T10:27:12.327Z",
+              "2026-09-24T10:27:12.327Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68032)"
+            ],
+            [
+              1,
+              "2026-09-24T10:46:23.147Z",
+              "2026-09-24T10:46:23.147Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 27715)"
+            ],
+            [
+              1,
+              "2026-09-24T10:54:40.842Z",
+              "2026-09-24T10:54:40.842Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 75732)"
+            ],
+            [
+              1,
+              "2026-09-24T11:33:29.205Z",
+              "2026-09-24T11:33:29.205Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 76528)"
+            ],
+            [
+              1,
+              "2026-09-24T11:46:55.235Z",
+              "2026-09-24T11:46:55.235Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 69881)"
+            ],
+            [
+              1,
+              "2026-09-24T12:57:33.607Z",
+              "2026-09-24T12:57:33.607Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68014)"
+            ],
+            [
+              1,
+              "2026-09-24T13:38:27.478Z",
+              "2026-09-24T13:38:27.478Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 61976)"
+            ],
+            [
+              1,
+              "2026-09-24T13:40:30.028Z",
+              "2026-09-24T13:40:30.028Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 62535)"
+            ],
+            [
+              1,
+              "2026-09-24T13:54:50.280Z",
+              "2026-09-24T13:54:50.280Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 72608)"
+            ],
+            [
+              1,
+              "2026-09-24T14:06:38.129Z",
+              "2026-09-24T14:06:38.129Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 58906)"
+            ],
+            [
+              1,
+              "2026-09-24T14:35:39.201Z",
+              "2026-09-24T14:35:39.201Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 90470)"
+            ],
+            [
+              1,
+              "2026-09-24T15:26:26.605Z",
+              "2026-09-24T15:26:26.605Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 73192)"
+            ],
+            [
+              1,
+              "2026-09-24T15:38:13.557Z",
+              "2026-09-24T15:38:13.557Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 20191)"
+            ],
+            [
+              1,
+              "2026-09-24T16:18:50.072Z",
+              "2026-09-24T16:18:50.072Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 60623)"
+            ],
+            [
+              1,
+              "2026-09-24T16:39:35.664Z",
+              "2026-09-24T16:39:35.664Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 55139)"
+            ],
+            [
+              1,
+              "2026-09-24T16:42:42.305Z",
+              "2026-09-24T16:42:42.305Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 67227)"
+            ],
+            [
+              1,
+              "2026-09-24T16:56:27.819Z",
+              "2026-09-24T16:56:27.819Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 15723)"
+            ],
+            [
+              1,
+              "2026-09-24T17:05:05.669Z",
+              "2026-09-24T17:05:05.669Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 39593)"
+            ],
+            [
+              1,
+              "2026-09-24T17:15:08.536Z",
+              "2026-09-24T17:15:08.536Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 56819)"
+            ],
+            [
+              1,
+              "2026-09-24T19:17:41.467Z",
+              "2026-09-24T19:17:41.467Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 12842)"
+            ],
+            [
+              1,
+              "2026-09-24T19:28:16.894Z",
+              "2026-09-24T19:28:16.894Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 15931)"
+            ],
+            [
+              1,
+              "2026-09-24T19:36:07.871Z",
+              "2026-09-24T19:36:07.871Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 32517)"
+            ],
+            [
+              1,
+              "2026-09-24T19:37:24.998Z",
+              "2026-09-24T19:37:24.998Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 46394)"
+            ],
+            [
+              1,
+              "2026-09-24T19:38:39.079Z",
+              "2026-09-24T19:38:39.079Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 57234)"
+            ],
+            [
+              1,
+              "2026-09-24T19:41:06.460Z",
+              "2026-09-24T19:41:06.460Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 50892)"
+            ],
+            [
+              1,
+              "2026-09-24T21:54:47.278Z",
+              "2026-09-24T21:54:47.278Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 79872)"
+            ],
+            [
+              1,
+              "2026-09-24T22:11:32.968Z",
+              "2026-09-24T22:11:32.968Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 60012)"
+            ],
+            [
+              1,
+              "2026-09-24T22:22:24.925Z",
+              "2026-09-24T22:22:24.925Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 27804)"
+            ],
+            [
+              1,
+              "2026-09-24T22:32:30.869Z",
+              "2026-09-24T22:32:30.869Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 69065)"
+            ],
+            [
+              1,
+              "2026-09-24T22:38:31.861Z",
+              "2026-09-24T22:38:31.861Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 56784)"
+            ],
+            [
+              1,
+              "2026-09-24T22:53:02.705Z",
+              "2026-09-24T22:53:02.705Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 46543)"
+            ],
+            [
+              1,
+              "2026-09-24T22:53:59.317Z",
+              "2026-09-24T22:53:59.317Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 72647)"
+            ],
+            [
+              1,
+              "2026-09-24T23:01:17.897Z",
+              "2026-09-24T23:01:17.897Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 88790)"
+            ],
+            [
+              1,
+              "2026-09-24T23:03:48.282Z",
+              "2026-09-24T23:03:48.282Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 84514)"
+            ],
+            [
+              1,
+              "2026-09-24T23:19:10.918Z",
+              "2026-09-24T23:19:10.918Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 28524)"
+            ],
+            [
+              1,
+              "2026-09-24T23:20:39.245Z",
+              "2026-09-24T23:20:39.245Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 78056)"
+            ],
+            [
+              1,
+              "2026-09-24T23:27:59.861Z",
+              "2026-09-24T23:27:59.861Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 26141)"
+            ],
+            [
+              1,
+              "2026-09-24T23:41:36.402Z",
+              "2026-09-24T23:41:36.402Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 10787)"
+            ],
+            [
+              1,
+              "2026-09-24T23:47:54.652Z",
+              "2026-09-24T23:47:54.652Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 42323)"
+            ],
+            [
+              1,
+              "2026-09-25T00:02:16.108Z",
+              "2026-09-25T00:02:16.108Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 23978)"
+            ],
+            [
+              1,
+              "2026-09-25T00:33:10.985Z",
+              "2026-09-25T00:33:10.985Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 98925)"
+            ],
+            [
+              1,
+              "2026-09-25T00:49:16.845Z",
+              "2026-09-25T00:49:16.845Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 25522)"
+            ],
+            [
+              1,
+              "2026-09-25T00:55:22.189Z",
+              "2026-09-25T00:55:22.189Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 36896)"
+            ],
+            [
+              1,
+              "2026-09-25T01:48:54.404Z",
+              "2026-09-25T01:48:54.404Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 36829)"
+            ],
+            [
+              1,
+              "2026-09-25T02:14:40.709Z",
+              "2026-09-25T02:14:40.709Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 12526)"
+            ],
+            [
+              1,
+              "2026-09-25T03:26:15.849Z",
+              "2026-09-25T03:26:15.849Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 20629)"
+            ],
+            [
+              1,
+              "2026-09-25T04:55:10.096Z",
+              "2026-09-25T04:55:10.096Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 82019)"
+            ],
+            [
+              1,
+              "2026-09-25T05:11:03.668Z",
+              "2026-09-25T05:11:03.668Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 60226)"
+            ],
+            [
+              1,
+              "2026-09-25T05:46:11.642Z",
+              "2026-09-25T05:46:11.642Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 40063)"
+            ],
+            [
+              1,
+              "2026-09-25T06:12:44.480Z",
+              "2026-09-25T06:12:44.480Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 40499)"
+            ],
+            [
+              1,
+              "2026-09-25T06:43:27.144Z",
+              "2026-09-25T06:43:27.144Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 61845)"
+            ],
+            [
+              1,
+              "2026-09-25T06:51:48.768Z",
+              "2026-09-25T06:51:48.768Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 87325)"
+            ],
+            [
+              1,
+              "2026-09-25T07:02:21.135Z",
+              "2026-09-25T07:02:21.135Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 69303)"
+            ],
+            [
+              1,
+              "2026-09-25T07:35:43.651Z",
+              "2026-09-25T07:35:43.651Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 86926)"
+            ],
+            [
+              1,
+              "2026-09-25T07:54:04.918Z",
+              "2026-09-25T07:54:04.918Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 12095)"
+            ],
+            [
+              1,
+              "2026-09-25T08:23:35.410Z",
+              "2026-09-25T08:23:35.410Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 29618)"
+            ],
+            [
+              1,
+              "2026-09-25T08:37:34.984Z",
+              "2026-09-25T08:37:34.984Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 86011)"
+            ],
+            [
+              1,
+              "2026-09-25T08:43:04.882Z",
+              "2026-09-25T08:43:04.882Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 45082)"
+            ],
+            [
+              1,
+              "2026-09-25T08:45:30.450Z",
+              "2026-09-25T08:45:30.450Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 35700)"
+            ],
+            [
+              1,
+              "2026-09-25T08:49:44.428Z",
+              "2026-09-25T08:49:44.428Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 50683)"
+            ],
+            [
+              1,
+              "2026-09-25T08:51:25.330Z",
+              "2026-09-25T08:51:25.330Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 49670)"
+            ],
+            [
+              1,
+              "2026-09-25T08:53:11.587Z",
+              "2026-09-25T08:53:11.587Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 49157)"
+            ],
+            [
+              1,
+              "2026-09-25T09:03:02.881Z",
+              "2026-09-25T09:03:02.881Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 17669)"
+            ],
+            [
+              1,
+              "2026-09-25T09:14:25.622Z",
+              "2026-09-25T09:14:25.622Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 97390)"
+            ],
             [
               1,
               "2026-09-25T10:22:29.340Z",
               "2026-09-25T10:22:29.340Z",
+              "current",
+              "ERROR",
               "Payment declined by issuer: insufficient funds (order 76266)"
+            ],
+            [
+              1,
+              "2026-09-24T10:00:31.839Z",
+              "2026-09-24T10:00:31.839Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68058)"
             ]
           ],
           "time_range": {
             "end": "2026-09-25T10:30:00+00:00",
-            "start": "2026-09-25T10:00:00+00:00"
+            "start": "2026-09-24T10:00:00+00:00"
           },
           "truncated": false
         },
-        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      1,\n      \"2026-09-25T10:22:29.340Z\",\n      \"2026-09-25T10:22:29.340Z\",\n      \"Payment declined by issuer: insufficient funds (order 76266)\"\n    ]\n  ],\n  \"row_count\": 1,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-25T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"window\",\n    \"level\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      1,\n      \"2026-09-24T10:27:12.327Z\",\n      \"2026-09-24T10:27:12.327Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68032)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:46:23.147Z\",\n      \"2026-09-24T10:46:23.147Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 27715)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:54:40.842Z\",\n      \"2026-09-24T10:54:40.842Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 75732)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:33:29.205Z\",\n      \"2026-09-24T11:33:29.205Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 76528)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:46:55.235Z\",\n      \"2026-09-24T11:46:55.235Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 69881)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:57:33.607Z\",\n      \"2026-09-24T12:57:33.607Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68014)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:38:27.478Z\",\n      \"2026-09-24T13:38:27.478Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 61976)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:40:30.028Z\",\n      \"2026-09-24T13:40:30.028Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 62535)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:54:50.280Z\",\n      \"2026-09-24T13:54:50.280Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 72608)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:06:38.129Z\",\n      \"2026-09-24T14:06:38.129Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 58906)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:35:39.201Z\",\n      \"2026-09-24T14:35:39.201Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 90470)\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:26:26.605Z\",\n      \"2026-09-24T15:26:26.605Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 73192)\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:38:13.557Z\",\n      \"2026-09-24T15:38:13.557Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 20191)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:18:50.072Z\",\n      \"2026-09-24T16:18:50.072Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 60623)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:39:35.664Z\",\n      \"2026-09-24T16:39:35.664Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 55139)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:42:42.305Z\",\n      \"2026-09-24T16:42:42.305Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 67227)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:56:27.819Z\",\n      \"2026-09-24T16:56:27.819Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 15723)\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:05:05.669Z\",\n      \"2026-09-24T17:05:05.669Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 39593)\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:15:08.536Z\",\n      \"2026-09-24T17:15:08.536Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 56819)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:17:41.467Z\",\n      \"2026-09-24T19:17:41.467Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 12842)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:28:16.894Z\",\n      \"2026-09-24T19:28:16.894Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 15931)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:36:07.871Z\",\n      \"2026-09-24T19:36:07.871Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 32517)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:37:24.998Z\",\n      \"2026-09-24T19:37:24.998Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 46394)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:38:39.079Z\",\n      \"2026-09-24T19:38:39.079Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 57234)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:41:06.460Z\",\n      \"2026-09-24T19:41:06.460Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 50892)\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:54:47.278Z\",\n      \"2026-09-24T21:54:47.278Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 79872)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:11:32.968Z\",\n      \"2026-09-24T22:11:32.968Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 60012)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:22:24.925Z\",\n      \"2026-09-24T22:22:24.925Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 27804)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:32:30.869Z\",\n      \"2026-09-24T22:32:30.869Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 69065)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:38:31.861Z\",\n      \"2026-09-24T22:38:31.861Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 56784)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:53:02.705Z\",\n      \"2026-09-24T22:53:02.705Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 46543)\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:53:59.317Z\",\n      \"2026-09-24T22:53:59.317Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 72647)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:01:17.897Z\",\n      \"2026-09-24T23:01:17.897Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 88790)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:03:48.282Z\",\n      \"2026-09-24T23:03:48.282Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 84514)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:19:10.918Z\",\n      \"2026-09-24T23:19:10.918Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 28524)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:20:39.245Z\",\n      \"2026-09-24T23:20:39.245Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 78056)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:27:59.861Z\",\n      \"2026-09-24T23:27:59.861Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 26141)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:41:36.402Z\",\n      \"2026-09-24T23:41:36.402Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 10787)\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:47:54.652Z\",\n      \"2026-09-24T23:47:54.652Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 42323)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:02:16.108Z\",\n      \"2026-09-25T00:02:16.108Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 23978)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:33:10.985Z\",\n      \"2026-09-25T00:33:10.985Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 98925)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:49:16.845Z\",\n      \"2026-09-25T00:49:16.845Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 25522)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:55:22.189Z\",\n      \"2026-09-25T00:55:22.189Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 36896)\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:48:54.404Z\",\n      \"2026-09-25T01:48:54.404Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 36829)\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:14:40.709Z\",\n      \"2026-09-25T02:14:40.709Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 12526)\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:26:15.849Z\",\n      \"2026-09-25T03:26:15.849Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 20629)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:55:10.096Z\",\n      \"2026-09-25T04:55:10.096Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 82019)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:11:03.668Z\",\n      \"2026-09-25T05:11:03.668Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 60226)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:46:11.642Z\",\n      \"2026-09-25T05:46:11.642Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 40063)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:12:44.480Z\",\n      \"2026-09-25T06:12:44.480Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 40499)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:43:27.144Z\",\n      \"2026-09-25T06:43:27.144Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 61845)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:51:48.768Z\",\n      \"2026-09-25T06:51:48.768Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 87325)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:02:21.135Z\",\n      \"2026-09-25T07:02:21.135Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 69303)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:35:43.651Z\",\n      \"2026-09-25T07:35:43.651Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 86926)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:54:04.918Z\",\n      \"2026-09-25T07:54:04.918Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 12095)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:23:35.410Z\",\n      \"2026-09-25T08:23:35.410Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 29618)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:37:34.984Z\",\n      \"2026-09-25T08:37:34.984Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 86011)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:43:04.882Z\",\n      \"2026-09-25T08:43:04.882Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 45082)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:45:30.450Z\",\n      \"2026-09-25T08:45:30.450Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 35700)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:49:44.428Z\",\n      \"2026-09-25T08:49:44.428Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 50683)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:51:25.330Z\",\n      \"2026-09-25T08:51:25.330Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 49670)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:53:11.587Z\",\n      \"2026-09-25T08:53:11.587Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 49157)\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:03:02.881Z\",\n      \"2026-09-25T09:03:02.881Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 17669)\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:14:25.622Z\",\n      \"2026-09-25T09:14:25.622Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 97390)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:29.340Z\",\n      \"2026-09-25T10:22:29.340Z\",\n      \"current\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 76266)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:00:31.839Z\",\n      \"2026-09-24T10:00:31.839Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68058)\"\n    ]\n  ],\n  \"row_count\": 66,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
       },
       "tool": "execute_esql"
     },
     {
       "arguments": {
         "end": "2026-09-25T10:30:00Z",
-        "index": "payment-prod-*",
-        "levels": [
-          "ERROR"
-        ],
-        "size": 5,
-        "start": "2026-09-25T10:00:00Z"
+        "query": "FROM payment-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | EVAL is_start = CASE(message LIKE \"Starting*\", 1, 0) | STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN(@timestamp) BY window, version = version",
+        "start": "2026-09-24T10:00:00Z"
       },
       "result": {
         "is_error": false,
         "structured": {
-          "hits": [
-            {
-              "@timestamp": "2026-09-25T10:22:29.340363Z",
-              "duration_ms": 45,
-              "endpoint": "/api/v1/pay",
-              "environment": "production",
-              "error_type": "PaymentDeclinedException",
-              "host": "payment-service-f12f7-c8x",
-              "http_method": "POST",
-              "level": "ERROR",
-              "logger": "com.acme.payment.PaymentController",
-              "message": "Payment declined by issuer: insufficient funds (order 76266)",
-              "service": "payment-service",
-              "status_code": 402,
-              "trace_id": "047832b2d4eec029",
-              "version": "v1.8.1"
-            }
+          "columns": [
+            "count",
+            "starts",
+            "first_seen",
+            "window",
+            "version"
           ],
-          "returned": 1,
-          "total": 1,
+          "row_count": 2,
+          "rows": [
+            [
+              17128,
+              0,
+              "2026-09-24T10:00:03.266Z",
+              "baseline",
+              "v1.8.1"
+            ],
+            [
+              370,
+              0,
+              "2026-09-25T10:00:05.487Z",
+              "current",
+              "v1.8.1"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
           "truncated": false
         },
-        "text": "{\n  \"total\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"hits\": [\n    {\n      \"@timestamp\": \"2026-09-25T10:22:29.340363Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Payment declined by issuer: insufficient funds (order 76266)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.1\",\n      \"host\": \"payment-service-f12f7-c8x\",\n      \"logger\": \"com.acme.payment.PaymentController\",\n      \"trace_id\": \"047832b2d4eec029\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 402,\n      \"duration_ms\": 45,\n      \"error_type\": \"PaymentDeclinedException\"\n    }\n  ]\n}"
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"starts\",\n    \"first_seen\",\n    \"window\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      17128,\n      0,\n      \"2026-09-24T10:00:03.266Z\",\n      \"baseline\",\n      \"v1.8.1\"\n    ],\n    [\n      370,\n      0,\n      \"2026-09-25T10:00:05.487Z\",\n      \"current\",\n      \"v1.8.1\"\n    ]\n  ],\n  \"row_count\": 2,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
       },
-      "tool": "search_logs"
+      "tool": "execute_esql"
     }
   ],
   "tools": [

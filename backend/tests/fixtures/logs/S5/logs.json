@@ -1,0 +1,1647 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*) BY window, level = level",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "window",
+            "level"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              17147,
+              "baseline",
+              "INFO"
+            ],
+            [
+              77,
+              "baseline",
+              "ERROR"
+            ],
+            [
+              268,
+              "current",
+              "INFO"
+            ],
+            [
+              113,
+              "current",
+              "ERROR"
+            ],
+            [
+              90,
+              "current",
+              "WARN"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"window\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      17147,\n      \"baseline\",\n      \"INFO\"\n    ],\n    [\n      77,\n      \"baseline\",\n      \"ERROR\"\n    ],\n    [\n      268,\n      \"current\",\n      \"INFO\"\n    ],\n    [\n      113,\n      \"current\",\n      \"ERROR\"\n    ],\n    [\n      90,\n      \"current\",\n      \"WARN\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\", \"WARN\") | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY window, level = level, msg = message.keyword | SORT count DESC | LIMIT 1000",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "first_seen",
+            "last_seen",
+            "window",
+            "level",
+            "msg"
+          ],
+          "row_count": 166,
+          "rows": [
+            [
+              101,
+              "2026-09-25T10:10:07.725Z",
+              "2026-09-25T10:29:53.662Z",
+              "current",
+              "ERROR",
+              "Redis connection refused: redis:6379 (ECONNREFUSED)"
+            ],
+            [
+              3,
+              "2026-09-25T10:12:26.184Z",
+              "2026-09-25T10:25:42.353Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 155ms)"
+            ],
+            [
+              3,
+              "2026-09-25T10:10:07.725Z",
+              "2026-09-25T10:27:19.022Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 180ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:21:10.165Z",
+              "2026-09-25T10:24:32.194Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 202ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:19:23.181Z",
+              "2026-09-25T10:23:43.539Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 147ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:24:14.633Z",
+              "2026-09-25T10:27:34.901Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 206ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:14:29.054Z",
+              "2026-09-25T10:28:50.158Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 138ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:18:29.422Z",
+              "2026-09-25T10:26:06.813Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 148ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:10:59.188Z",
+              "2026-09-25T10:22:02.503Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 113ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:11:20.819Z",
+              "2026-09-25T10:16:25.718Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 152ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:19:23.671Z",
+              "2026-09-25T10:28:40.971Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 188ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:12:53.453Z",
+              "2026-09-25T10:18:44.539Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 146ms)"
+            ],
+            [
+              2,
+              "2026-09-25T10:11:07.240Z",
+              "2026-09-25T10:17:40.749Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 216ms)"
+            ],
+            [
+              1,
+              "2026-09-25T05:09:04.461Z",
+              "2026-09-25T05:09:04.461Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 52229)"
+            ],
+            [
+              1,
+              "2026-09-25T04:51:32.227Z",
+              "2026-09-25T04:51:32.227Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 87574)"
+            ],
+            [
+              1,
+              "2026-09-25T02:35:30.442Z",
+              "2026-09-25T02:35:30.442Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 39736)"
+            ],
+            [
+              1,
+              "2026-09-25T04:49:59.433Z",
+              "2026-09-25T04:49:59.433Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 45815)"
+            ],
+            [
+              1,
+              "2026-09-25T04:35:00.454Z",
+              "2026-09-25T04:35:00.454Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 11578)"
+            ],
+            [
+              1,
+              "2026-09-25T01:06:36.439Z",
+              "2026-09-25T01:06:36.439Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 75420)"
+            ],
+            [
+              1,
+              "2026-09-25T00:53:14.188Z",
+              "2026-09-25T00:53:14.188Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 94654)"
+            ],
+            [
+              1,
+              "2026-09-25T06:52:10.674Z",
+              "2026-09-25T06:52:10.674Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 15730)"
+            ],
+            [
+              1,
+              "2026-09-25T06:29:57.097Z",
+              "2026-09-25T06:29:57.097Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 20063)"
+            ],
+            [
+              1,
+              "2026-09-25T07:07:45.886Z",
+              "2026-09-25T07:07:45.886Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 93567)"
+            ],
+            [
+              1,
+              "2026-09-25T07:10:33.113Z",
+              "2026-09-25T07:10:33.113Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 64983)"
+            ],
+            [
+              1,
+              "2026-09-25T07:39:13.611Z",
+              "2026-09-25T07:39:13.611Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 31972)"
+            ],
+            [
+              1,
+              "2026-09-25T07:39:14.800Z",
+              "2026-09-25T07:39:14.800Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 38517)"
+            ],
+            [
+              1,
+              "2026-09-25T07:57:48.002Z",
+              "2026-09-25T07:57:48.002Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 77821)"
+            ],
+            [
+              1,
+              "2026-09-25T08:18:32.298Z",
+              "2026-09-25T08:18:32.298Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 77306)"
+            ],
+            [
+              1,
+              "2026-09-25T08:33:10.002Z",
+              "2026-09-25T08:33:10.002Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 98931)"
+            ],
+            [
+              1,
+              "2026-09-25T08:37:13.830Z",
+              "2026-09-25T08:37:13.830Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 41673)"
+            ],
+            [
+              1,
+              "2026-09-25T04:16:22.743Z",
+              "2026-09-25T04:16:22.743Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 89637)"
+            ],
+            [
+              1,
+              "2026-09-25T06:24:21.124Z",
+              "2026-09-25T06:24:21.124Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 75669)"
+            ],
+            [
+              1,
+              "2026-09-25T06:16:20.345Z",
+              "2026-09-25T06:16:20.345Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 30540)"
+            ],
+            [
+              1,
+              "2026-09-25T04:09:36.793Z",
+              "2026-09-25T04:09:36.793Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 34364)"
+            ],
+            [
+              1,
+              "2026-09-25T00:59:20.991Z",
+              "2026-09-25T00:59:20.991Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68313)"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:35.599Z",
+              "2026-09-25T10:10:35.599Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 2ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:18.507Z",
+              "2026-09-25T10:10:18.507Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 51ms)"
+            ],
+            [
+              1,
+              "2026-09-25T06:08:20.848Z",
+              "2026-09-25T06:08:20.848Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 52989)"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:38.967Z",
+              "2026-09-25T10:10:38.967Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 198ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:39.331Z",
+              "2026-09-25T10:10:39.331Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 326ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:30.890Z",
+              "2026-09-25T10:20:30.890Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 160ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:20.547Z",
+              "2026-09-25T10:21:20.547Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 204ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:12.514Z",
+              "2026-09-25T10:11:12.514Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 169ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:20.555Z",
+              "2026-09-25T10:22:20.555Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 503 in 170ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:32.978Z",
+              "2026-09-25T10:11:32.978Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 221ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:40.467Z",
+              "2026-09-25T10:11:40.467Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 92ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:47.969Z",
+              "2026-09-25T10:11:47.969Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 112ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:12:09.147Z",
+              "2026-09-25T10:12:09.147Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 221ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:25:37.819Z",
+              "2026-09-25T10:25:37.819Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 85ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:21.861Z",
+              "2026-09-25T10:26:21.861Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 60ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:12:55.398Z",
+              "2026-09-25T10:12:55.398Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 195ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:13:05.490Z",
+              "2026-09-25T10:13:05.490Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 61ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:13:34.003Z",
+              "2026-09-25T10:13:34.003Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 228ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:35.501Z",
+              "2026-09-25T10:27:35.501Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 219ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:52.234Z",
+              "2026-09-25T10:14:52.234Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 223ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:12.564Z",
+              "2026-09-25T10:15:12.564Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 127ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:29.035Z",
+              "2026-09-25T10:15:29.035Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 218ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:58.519Z",
+              "2026-09-25T10:15:58.519Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 135ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:59.660Z",
+              "2026-09-25T10:15:59.660Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 192ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:13.428Z",
+              "2026-09-25T10:16:13.428Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 194ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:20.531Z",
+              "2026-09-25T10:16:20.531Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 190ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:25.185Z",
+              "2026-09-25T10:16:25.185Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 215ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:04.351Z",
+              "2026-09-25T10:19:04.351Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 238ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:48.885Z",
+              "2026-09-25T10:18:48.885Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 100ms)"
+            ],
+            [
+              1,
+              "2026-09-25T05:58:47.786Z",
+              "2026-09-25T05:58:47.786Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68181)"
+            ],
+            [
+              1,
+              "2026-09-25T03:03:04.945Z",
+              "2026-09-25T03:03:04.945Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 86808)"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:15.090Z",
+              "2026-09-25T10:18:15.090Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 276ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:08.132Z",
+              "2026-09-25T10:18:08.132Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 124ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:06:15.257Z",
+              "2026-09-25T10:06:15.257Z",
+              "current",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 78440)"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:06.087Z",
+              "2026-09-25T10:18:06.087Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 193ms)"
+            ],
+            [
+              1,
+              "2026-09-24T15:13:55.187Z",
+              "2026-09-24T15:13:55.187Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 38047)"
+            ],
+            [
+              1,
+              "2026-09-24T16:03:11.597Z",
+              "2026-09-24T16:03:11.597Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68461)"
+            ],
+            [
+              1,
+              "2026-09-24T16:06:46.362Z",
+              "2026-09-24T16:06:46.362Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 53572)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:07.412Z",
+              "2026-09-25T10:19:07.412Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 206ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:16.453Z",
+              "2026-09-25T10:19:16.453Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 207ms)"
+            ],
+            [
+              1,
+              "2026-09-24T18:42:00.219Z",
+              "2026-09-24T18:42:00.219Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 27362)"
+            ],
+            [
+              1,
+              "2026-09-24T19:32:01.354Z",
+              "2026-09-24T19:32:01.354Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 62938)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:35.689Z",
+              "2026-09-25T10:19:35.689Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 278ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:58.820Z",
+              "2026-09-25T10:19:58.820Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 270ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:02.908Z",
+              "2026-09-25T10:20:02.908Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 24ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:08.974Z",
+              "2026-09-25T10:20:08.974Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 182ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:17.747Z",
+              "2026-09-25T10:20:17.747Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 197ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:54.175Z",
+              "2026-09-25T10:17:54.175Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 252ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:31.940Z",
+              "2026-09-25T10:20:31.940Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 141ms)"
+            ],
+            [
+              1,
+              "2026-09-25T09:01:45.152Z",
+              "2026-09-25T09:01:45.152Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 14368)"
+            ],
+            [
+              1,
+              "2026-09-25T05:33:22.711Z",
+              "2026-09-25T05:33:22.711Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 90617)"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:50.043Z",
+              "2026-09-25T10:21:50.043Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 173ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:51.754Z",
+              "2026-09-25T10:21:51.754Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 127ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:31.272Z",
+              "2026-09-25T10:17:31.272Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 244ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:22.018Z",
+              "2026-09-25T10:22:22.018Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 228ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:24.386Z",
+              "2026-09-25T10:22:24.386Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 174ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:52.259Z",
+              "2026-09-25T10:22:52.259Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 203ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:22.013Z",
+              "2026-09-25T10:23:22.013Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 93ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:27.080Z",
+              "2026-09-25T10:23:27.080Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 66ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:38.548Z",
+              "2026-09-25T10:23:38.548Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 112ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:27.485Z",
+              "2026-09-25T10:17:27.485Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 155ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:31.149Z",
+              "2026-09-25T10:24:31.149Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 286ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:54.958Z",
+              "2026-09-25T10:24:54.958Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 160ms)"
+            ],
+            [
+              1,
+              "2026-09-25T08:42:06.811Z",
+              "2026-09-25T08:42:06.811Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 41422)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:17.561Z",
+              "2026-09-25T10:26:17.561Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 193ms)"
+            ],
+            [
+              1,
+              "2026-09-24T12:01:29.512Z",
+              "2026-09-24T12:01:29.512Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 35389)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:23.490Z",
+              "2026-09-25T10:26:23.490Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 145ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:29.287Z",
+              "2026-09-25T10:26:29.287Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 503 in 223ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:39.558Z",
+              "2026-09-25T10:26:39.558Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 158ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:43.307Z",
+              "2026-09-25T10:26:43.307Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 77ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:50.357Z",
+              "2026-09-25T10:26:50.357Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 212ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:22.306Z",
+              "2026-09-25T10:27:22.306Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 166ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:31.570Z",
+              "2026-09-25T10:27:31.570Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 13ms)"
+            ],
+            [
+              1,
+              "2026-09-24T11:25:26.333Z",
+              "2026-09-24T11:25:26.333Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 68669)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:39.742Z",
+              "2026-09-25T10:27:39.742Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 209ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:39.892Z",
+              "2026-09-25T10:27:39.892Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 132ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:53.754Z",
+              "2026-09-25T10:27:53.754Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 215ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:54.793Z",
+              "2026-09-25T10:27:54.793Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 213ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:18.443Z",
+              "2026-09-25T10:28:18.443Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 111ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:19.913Z",
+              "2026-09-25T10:28:19.913Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 144ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:21.646Z",
+              "2026-09-25T10:28:21.646Z",
+              "current",
+              "ERROR",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 503 in 248ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:39.274Z",
+              "2026-09-25T10:28:39.274Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 231ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:44.738Z",
+              "2026-09-25T10:28:44.738Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 262ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:10.422Z",
+              "2026-09-25T10:29:10.422Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 256ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:13.852Z",
+              "2026-09-25T10:29:13.852Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 89ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:41.167Z",
+              "2026-09-25T10:29:41.167Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 200ms)"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:53.662Z",
+              "2026-09-25T10:29:53.662Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (POST /api/v1/pay 200 in 124ms)"
+            ],
+            [
+              1,
+              "2026-09-24T10:02:17.654Z",
+              "2026-09-24T10:02:17.654Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 61398)"
+            ],
+            [
+              1,
+              "2026-09-24T10:16:24.631Z",
+              "2026-09-24T10:16:24.631Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 62905)"
+            ],
+            [
+              1,
+              "2026-09-24T10:31:09.927Z",
+              "2026-09-24T10:31:09.927Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 23595)"
+            ],
+            [
+              1,
+              "2026-09-24T10:39:51.691Z",
+              "2026-09-24T10:39:51.691Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 77245)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:06.514Z",
+              "2026-09-25T10:17:06.514Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 196ms)"
+            ],
+            [
+              1,
+              "2026-09-24T11:23:29.551Z",
+              "2026-09-24T11:23:29.551Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 93463)"
+            ],
+            [
+              1,
+              "2026-09-24T11:04:38.942Z",
+              "2026-09-24T11:04:38.942Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 58496)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:04.411Z",
+              "2026-09-25T10:17:04.411Z",
+              "current",
+              "WARN",
+              "Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 156ms)"
+            ],
+            [
+              1,
+              "2026-09-24T12:24:12.911Z",
+              "2026-09-24T12:24:12.911Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 16199)"
+            ],
+            [
+              1,
+              "2026-09-24T12:29:38.079Z",
+              "2026-09-24T12:29:38.079Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 85294)"
+            ],
+            [
+              1,
+              "2026-09-24T12:50:40.719Z",
+              "2026-09-24T12:50:40.719Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 23099)"
+            ],
+            [
+              1,
+              "2026-09-24T12:50:55.924Z",
+              "2026-09-24T12:50:55.924Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 67873)"
+            ],
+            [
+              1,
+              "2026-09-24T13:10:19.480Z",
+              "2026-09-24T13:10:19.480Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 57919)"
+            ],
+            [
+              1,
+              "2026-09-24T13:14:05.831Z",
+              "2026-09-24T13:14:05.831Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 43247)"
+            ],
+            [
+              1,
+              "2026-09-24T13:27:34.905Z",
+              "2026-09-24T13:27:34.905Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 85809)"
+            ],
+            [
+              1,
+              "2026-09-24T13:54:00.993Z",
+              "2026-09-24T13:54:00.993Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 83326)"
+            ],
+            [
+              1,
+              "2026-09-24T14:15:22.252Z",
+              "2026-09-24T14:15:22.252Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 24440)"
+            ],
+            [
+              1,
+              "2026-09-24T14:25:33.424Z",
+              "2026-09-24T14:25:33.424Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 33391)"
+            ],
+            [
+              1,
+              "2026-09-24T14:27:13.190Z",
+              "2026-09-24T14:27:13.190Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 44443)"
+            ],
+            [
+              1,
+              "2026-09-24T14:54:19.045Z",
+              "2026-09-24T14:54:19.045Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 20064)"
+            ],
+            [
+              1,
+              "2026-09-25T08:39:02.103Z",
+              "2026-09-25T08:39:02.103Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 70829)"
+            ],
+            [
+              1,
+              "2026-09-24T15:15:11.086Z",
+              "2026-09-24T15:15:11.086Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 81987)"
+            ],
+            [
+              1,
+              "2026-09-25T05:21:45.683Z",
+              "2026-09-25T05:21:45.683Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 72703)"
+            ],
+            [
+              1,
+              "2026-09-24T16:03:49.264Z",
+              "2026-09-24T16:03:49.264Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 44424)"
+            ],
+            [
+              1,
+              "2026-09-25T02:40:43.064Z",
+              "2026-09-25T02:40:43.064Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 51557)"
+            ],
+            [
+              1,
+              "2026-09-24T16:18:00.842Z",
+              "2026-09-24T16:18:00.842Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 13337)"
+            ],
+            [
+              1,
+              "2026-09-24T16:36:24.936Z",
+              "2026-09-24T16:36:24.936Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 66305)"
+            ],
+            [
+              1,
+              "2026-09-24T16:56:33.225Z",
+              "2026-09-24T16:56:33.225Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 93055)"
+            ],
+            [
+              1,
+              "2026-09-24T18:37:16.125Z",
+              "2026-09-24T18:37:16.125Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 35170)"
+            ],
+            [
+              1,
+              "2026-09-24T18:40:17.560Z",
+              "2026-09-24T18:40:17.560Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 51099)"
+            ],
+            [
+              1,
+              "2026-09-25T00:56:19.831Z",
+              "2026-09-25T00:56:19.831Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 55706)"
+            ],
+            [
+              1,
+              "2026-09-24T18:42:23.697Z",
+              "2026-09-24T18:42:23.697Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 23417)"
+            ],
+            [
+              1,
+              "2026-09-25T00:50:40.936Z",
+              "2026-09-25T00:50:40.936Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 23875)"
+            ],
+            [
+              1,
+              "2026-09-24T19:44:57.902Z",
+              "2026-09-24T19:44:57.902Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 92805)"
+            ],
+            [
+              1,
+              "2026-09-24T19:54:13.636Z",
+              "2026-09-24T19:54:13.636Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 42599)"
+            ],
+            [
+              1,
+              "2026-09-24T20:05:52.128Z",
+              "2026-09-24T20:05:52.128Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 63203)"
+            ],
+            [
+              1,
+              "2026-09-24T20:29:38.239Z",
+              "2026-09-24T20:29:38.239Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 92534)"
+            ],
+            [
+              1,
+              "2026-09-24T20:45:44.487Z",
+              "2026-09-24T20:45:44.487Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 26276)"
+            ],
+            [
+              1,
+              "2026-09-24T20:48:27.971Z",
+              "2026-09-24T20:48:27.971Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 66881)"
+            ],
+            [
+              1,
+              "2026-09-24T21:11:03.198Z",
+              "2026-09-24T21:11:03.198Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 87328)"
+            ],
+            [
+              1,
+              "2026-09-24T21:18:17.340Z",
+              "2026-09-24T21:18:17.340Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 78897)"
+            ],
+            [
+              1,
+              "2026-09-24T21:37:36.347Z",
+              "2026-09-24T21:37:36.347Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 89483)"
+            ],
+            [
+              1,
+              "2026-09-24T21:48:05.219Z",
+              "2026-09-24T21:48:05.219Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 36585)"
+            ],
+            [
+              1,
+              "2026-09-25T00:40:12.339Z",
+              "2026-09-25T00:40:12.339Z",
+              "baseline",
+              "ERROR",
+              "Payment declined by issuer: insufficient funds (order 48828)"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"window\",\n    \"level\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      101,\n      \"2026-09-25T10:10:07.725Z\",\n      \"2026-09-25T10:29:53.662Z\",\n      \"current\",\n      \"ERROR\",\n      \"Redis connection refused: redis:6379 (ECONNREFUSED)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:12:26.184Z\",\n      \"2026-09-25T10:25:42.353Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 155ms)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:10:07.725Z\",\n      \"2026-09-25T10:27:19.022Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 180ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:21:10.165Z\",\n      \"2026-09-25T10:24:32.194Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 202ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:19:23.181Z\",\n      \"2026-09-25T10:23:43.539Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 147ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:24:14.633Z\",\n      \"2026-09-25T10:27:34.901Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 206ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:14:29.054Z\",\n      \"2026-09-25T10:28:50.158Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 138ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:18:29.422Z\",\n      \"2026-09-25T10:26:06.813Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 148ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:10:59.188Z\",\n      \"2026-09-25T10:22:02.503Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 113ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:11:20.819Z\",\n      \"2026-09-25T10:16:25.718Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 152ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:19:23.671Z\",\n      \"2026-09-25T10:28:40.971Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 188ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:12:53.453Z\",\n      \"2026-09-25T10:18:44.539Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 146ms)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:11:07.240Z\",\n      \"2026-09-25T10:17:40.749Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 216ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:09:04.461Z\",\n      \"2026-09-25T05:09:04.461Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 52229)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:51:32.227Z\",\n      \"2026-09-25T04:51:32.227Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 87574)\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:35:30.442Z\",\n      \"2026-09-25T02:35:30.442Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 39736)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:49:59.433Z\",\n      \"2026-09-25T04:49:59.433Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 45815)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:35:00.454Z\",\n      \"2026-09-25T04:35:00.454Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 11578)\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:06:36.439Z\",\n      \"2026-09-25T01:06:36.439Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 75420)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:53:14.188Z\",\n      \"2026-09-25T00:53:14.188Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 94654)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:52:10.674Z\",\n      \"2026-09-25T06:52:10.674Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 15730)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:29:57.097Z\",\n      \"2026-09-25T06:29:57.097Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 20063)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:07:45.886Z\",\n      \"2026-09-25T07:07:45.886Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 93567)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:10:33.113Z\",\n      \"2026-09-25T07:10:33.113Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 64983)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:39:13.611Z\",\n      \"2026-09-25T07:39:13.611Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 31972)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:39:14.800Z\",\n      \"2026-09-25T07:39:14.800Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 38517)\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:57:48.002Z\",\n      \"2026-09-25T07:57:48.002Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 77821)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:18:32.298Z\",\n      \"2026-09-25T08:18:32.298Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 77306)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:33:10.002Z\",\n      \"2026-09-25T08:33:10.002Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 98931)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:37:13.830Z\",\n      \"2026-09-25T08:37:13.830Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 41673)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:16:22.743Z\",\n      \"2026-09-25T04:16:22.743Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 89637)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:24:21.124Z\",\n      \"2026-09-25T06:24:21.124Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 75669)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:16:20.345Z\",\n      \"2026-09-25T06:16:20.345Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 30540)\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:09:36.793Z\",\n      \"2026-09-25T04:09:36.793Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 34364)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:59:20.991Z\",\n      \"2026-09-25T00:59:20.991Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68313)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:35.599Z\",\n      \"2026-09-25T10:10:35.599Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 2ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:18.507Z\",\n      \"2026-09-25T10:10:18.507Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 51ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:08:20.848Z\",\n      \"2026-09-25T06:08:20.848Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 52989)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:38.967Z\",\n      \"2026-09-25T10:10:38.967Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 198ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:39.331Z\",\n      \"2026-09-25T10:10:39.331Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 326ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:30.890Z\",\n      \"2026-09-25T10:20:30.890Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 160ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:20.547Z\",\n      \"2026-09-25T10:21:20.547Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 204ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:12.514Z\",\n      \"2026-09-25T10:11:12.514Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 169ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:20.555Z\",\n      \"2026-09-25T10:22:20.555Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 503 in 170ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:32.978Z\",\n      \"2026-09-25T10:11:32.978Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 221ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:40.467Z\",\n      \"2026-09-25T10:11:40.467Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 92ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:47.969Z\",\n      \"2026-09-25T10:11:47.969Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 112ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:12:09.147Z\",\n      \"2026-09-25T10:12:09.147Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 221ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:25:37.819Z\",\n      \"2026-09-25T10:25:37.819Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 85ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:21.861Z\",\n      \"2026-09-25T10:26:21.861Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 60ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:12:55.398Z\",\n      \"2026-09-25T10:12:55.398Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 195ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:13:05.490Z\",\n      \"2026-09-25T10:13:05.490Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 61ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:13:34.003Z\",\n      \"2026-09-25T10:13:34.003Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 228ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:35.501Z\",\n      \"2026-09-25T10:27:35.501Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 219ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:52.234Z\",\n      \"2026-09-25T10:14:52.234Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 223ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:12.564Z\",\n      \"2026-09-25T10:15:12.564Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 127ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:29.035Z\",\n      \"2026-09-25T10:15:29.035Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 218ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:58.519Z\",\n      \"2026-09-25T10:15:58.519Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 135ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:59.660Z\",\n      \"2026-09-25T10:15:59.660Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 192ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:13.428Z\",\n      \"2026-09-25T10:16:13.428Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 194ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:20.531Z\",\n      \"2026-09-25T10:16:20.531Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 190ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:25.185Z\",\n      \"2026-09-25T10:16:25.185Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 215ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:04.351Z\",\n      \"2026-09-25T10:19:04.351Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 238ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:48.885Z\",\n      \"2026-09-25T10:18:48.885Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 100ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:58:47.786Z\",\n      \"2026-09-25T05:58:47.786Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68181)\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:03:04.945Z\",\n      \"2026-09-25T03:03:04.945Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 86808)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:15.090Z\",\n      \"2026-09-25T10:18:15.090Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 276ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:08.132Z\",\n      \"2026-09-25T10:18:08.132Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 124ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:06:15.257Z\",\n      \"2026-09-25T10:06:15.257Z\",\n      \"current\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 78440)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:06.087Z\",\n      \"2026-09-25T10:18:06.087Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 193ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:13:55.187Z\",\n      \"2026-09-24T15:13:55.187Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 38047)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:03:11.597Z\",\n      \"2026-09-24T16:03:11.597Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68461)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:06:46.362Z\",\n      \"2026-09-24T16:06:46.362Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 53572)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:07.412Z\",\n      \"2026-09-25T10:19:07.412Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 206ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:16.453Z\",\n      \"2026-09-25T10:19:16.453Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 207ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:42:00.219Z\",\n      \"2026-09-24T18:42:00.219Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 27362)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:32:01.354Z\",\n      \"2026-09-24T19:32:01.354Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 62938)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:35.689Z\",\n      \"2026-09-25T10:19:35.689Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 278ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:58.820Z\",\n      \"2026-09-25T10:19:58.820Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 270ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:02.908Z\",\n      \"2026-09-25T10:20:02.908Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 24ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:08.974Z\",\n      \"2026-09-25T10:20:08.974Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 182ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:17.747Z\",\n      \"2026-09-25T10:20:17.747Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 197ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:54.175Z\",\n      \"2026-09-25T10:17:54.175Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 252ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:31.940Z\",\n      \"2026-09-25T10:20:31.940Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 141ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:01:45.152Z\",\n      \"2026-09-25T09:01:45.152Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 14368)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:33:22.711Z\",\n      \"2026-09-25T05:33:22.711Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 90617)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:50.043Z\",\n      \"2026-09-25T10:21:50.043Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 173ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:51.754Z\",\n      \"2026-09-25T10:21:51.754Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 127ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:31.272Z\",\n      \"2026-09-25T10:17:31.272Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 244ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:22.018Z\",\n      \"2026-09-25T10:22:22.018Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 228ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:24.386Z\",\n      \"2026-09-25T10:22:24.386Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 174ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:52.259Z\",\n      \"2026-09-25T10:22:52.259Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 203ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:22.013Z\",\n      \"2026-09-25T10:23:22.013Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 93ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:27.080Z\",\n      \"2026-09-25T10:23:27.080Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 66ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:38.548Z\",\n      \"2026-09-25T10:23:38.548Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 112ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:27.485Z\",\n      \"2026-09-25T10:17:27.485Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 155ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:31.149Z\",\n      \"2026-09-25T10:24:31.149Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 286ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:54.958Z\",\n      \"2026-09-25T10:24:54.958Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 160ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:42:06.811Z\",\n      \"2026-09-25T08:42:06.811Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 41422)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:17.561Z\",\n      \"2026-09-25T10:26:17.561Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 193ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:01:29.512Z\",\n      \"2026-09-24T12:01:29.512Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 35389)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:23.490Z\",\n      \"2026-09-25T10:26:23.490Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 145ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:29.287Z\",\n      \"2026-09-25T10:26:29.287Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 503 in 223ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:39.558Z\",\n      \"2026-09-25T10:26:39.558Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 158ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:43.307Z\",\n      \"2026-09-25T10:26:43.307Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 77ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:50.357Z\",\n      \"2026-09-25T10:26:50.357Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 212ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:22.306Z\",\n      \"2026-09-25T10:27:22.306Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 166ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:31.570Z\",\n      \"2026-09-25T10:27:31.570Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 13ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:25:26.333Z\",\n      \"2026-09-24T11:25:26.333Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 68669)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:39.742Z\",\n      \"2026-09-25T10:27:39.742Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 209ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:39.892Z\",\n      \"2026-09-25T10:27:39.892Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 132ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:53.754Z\",\n      \"2026-09-25T10:27:53.754Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 215ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:54.793Z\",\n      \"2026-09-25T10:27:54.793Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 213ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:18.443Z\",\n      \"2026-09-25T10:28:18.443Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 111ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:19.913Z\",\n      \"2026-09-25T10:28:19.913Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 144ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:21.646Z\",\n      \"2026-09-25T10:28:21.646Z\",\n      \"current\",\n      \"ERROR\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 503 in 248ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:39.274Z\",\n      \"2026-09-25T10:28:39.274Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 231ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:44.738Z\",\n      \"2026-09-25T10:28:44.738Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 262ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:10.422Z\",\n      \"2026-09-25T10:29:10.422Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 256ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:13.852Z\",\n      \"2026-09-25T10:29:13.852Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 89ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:41.167Z\",\n      \"2026-09-25T10:29:41.167Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 200ms)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:53.662Z\",\n      \"2026-09-25T10:29:53.662Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (POST /api/v1/pay 200 in 124ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:02:17.654Z\",\n      \"2026-09-24T10:02:17.654Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 61398)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:16:24.631Z\",\n      \"2026-09-24T10:16:24.631Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 62905)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:31:09.927Z\",\n      \"2026-09-24T10:31:09.927Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 23595)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:39:51.691Z\",\n      \"2026-09-24T10:39:51.691Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 77245)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:06.514Z\",\n      \"2026-09-25T10:17:06.514Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 196ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:23:29.551Z\",\n      \"2026-09-24T11:23:29.551Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 93463)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:04:38.942Z\",\n      \"2026-09-24T11:04:38.942Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 58496)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:04.411Z\",\n      \"2026-09-25T10:17:04.411Z\",\n      \"current\",\n      \"WARN\",\n      \"Cache unavailable, fell back to database (GET /api/v1/payments/{id} 200 in 156ms)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:24:12.911Z\",\n      \"2026-09-24T12:24:12.911Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 16199)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:29:38.079Z\",\n      \"2026-09-24T12:29:38.079Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 85294)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:50:40.719Z\",\n      \"2026-09-24T12:50:40.719Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 23099)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:50:55.924Z\",\n      \"2026-09-24T12:50:55.924Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 67873)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:10:19.480Z\",\n      \"2026-09-24T13:10:19.480Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 57919)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:14:05.831Z\",\n      \"2026-09-24T13:14:05.831Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 43247)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:27:34.905Z\",\n      \"2026-09-24T13:27:34.905Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 85809)\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:54:00.993Z\",\n      \"2026-09-24T13:54:00.993Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 83326)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:15:22.252Z\",\n      \"2026-09-24T14:15:22.252Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 24440)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:25:33.424Z\",\n      \"2026-09-24T14:25:33.424Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 33391)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:27:13.190Z\",\n      \"2026-09-24T14:27:13.190Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 44443)\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:54:19.045Z\",\n      \"2026-09-24T14:54:19.045Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 20064)\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:39:02.103Z\",\n      \"2026-09-25T08:39:02.103Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 70829)\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:15:11.086Z\",\n      \"2026-09-24T15:15:11.086Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 81987)\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:21:45.683Z\",\n      \"2026-09-25T05:21:45.683Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 72703)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:03:49.264Z\",\n      \"2026-09-24T16:03:49.264Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 44424)\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:40:43.064Z\",\n      \"2026-09-25T02:40:43.064Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 51557)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:18:00.842Z\",\n      \"2026-09-24T16:18:00.842Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 13337)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:36:24.936Z\",\n      \"2026-09-24T16:36:24.936Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 66305)\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:56:33.225Z\",\n      \"2026-09-24T16:56:33.225Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 93055)\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:37:16.125Z\",\n      \"2026-09-24T18:37:16.125Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 35170)\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:40:17.560Z\",\n      \"2026-09-24T18:40:17.560Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 51099)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:56:19.831Z\",\n      \"2026-09-25T00:56:19.831Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 55706)\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:42:23.697Z\",\n      \"2026-09-24T18:42:23.697Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 23417)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:50:40.936Z\",\n      \"2026-09-25T00:50:40.936Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 23875)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:44:57.902Z\",\n      \"2026-09-24T19:44:57.902Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 92805)\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:54:13.636Z\",\n      \"2026-09-24T19:54:13.636Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 42599)\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:05:52.128Z\",\n      \"2026-09-24T20:05:52.128Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 63203)\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:29:38.239Z\",\n      \"2026-09-24T20:29:38.239Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 92534)\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:45:44.487Z\",\n      \"2026-09-24T20:45:44.487Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 26276)\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:48:27.971Z\",\n      \"2026-09-24T20:48:27.971Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 66881)\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:11:03.198Z\",\n      \"2026-09-24T21:11:03.198Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 87328)\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:18:17.340Z\",\n      \"2026-09-24T21:18:17.340Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 78897)\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:37:36.347Z\",\n      \"2026-09-24T21:37:36.347Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 89483)\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:48:05.219Z\",\n      \"2026-09-24T21:48:05.219Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 36585)\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:40:12.339Z\",\n      \"2026-09-25T00:40:12.339Z\",\n      \"baseline\",\n      \"ERROR\",\n      \"Payment declined by issuer: insufficient funds (order 48828)\"\n    ]\n  ],\n  \"row_count\": 166,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | EVAL is_start = CASE(message LIKE \"Starting*\", 1, 0) | STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN(@timestamp) BY window, version = version",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "starts",
+            "first_seen",
+            "window",
+            "version"
+          ],
+          "row_count": 2,
+          "rows": [
+            [
+              17224,
+              0,
+              "2026-09-24T10:00:09.259Z",
+              "baseline",
+              "v1.8.1"
+            ],
+            [
+              471,
+              0,
+              "2026-09-25T10:00:00.650Z",
+              "current",
+              "v1.8.1"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"starts\",\n    \"first_seen\",\n    \"window\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      17224,\n      0,\n      \"2026-09-24T10:00:09.259Z\",\n      \"baseline\",\n      \"v1.8.1\"\n    ],\n    [\n      471,\n      0,\n      \"2026-09-25T10:00:00.650Z\",\n      \"current\",\n      \"v1.8.1\"\n    ]\n  ],\n  \"row_count\": 2,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | WHERE @timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\") AND message LIKE \"Redis connection refused: redis:*\" | KEEP @timestamp, trace_id, version | SORT @timestamp ASC | LIMIT 5",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "@timestamp",
+            "trace_id",
+            "version"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              "2026-09-25T10:10:07.725Z",
+              "3e0952bfe34d89ae",
+              "v1.8.1"
+            ],
+            [
+              "2026-09-25T10:10:18.507Z",
+              "7d9605ad8386224a",
+              "v1.8.1"
+            ],
+            [
+              "2026-09-25T10:10:35.599Z",
+              "07d3781493fc3a9b",
+              "v1.8.1"
+            ],
+            [
+              "2026-09-25T10:10:38.967Z",
+              "262640533e193831",
+              "v1.8.1"
+            ],
+            [
+              "2026-09-25T10:10:39.331Z",
+              "f21c8506af801179",
+              "v1.8.1"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"@timestamp\",\n    \"trace_id\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      \"2026-09-25T10:10:07.725Z\",\n      \"3e0952bfe34d89ae\",\n      \"v1.8.1\"\n    ],\n    [\n      \"2026-09-25T10:10:18.507Z\",\n      \"7d9605ad8386224a\",\n      \"v1.8.1\"\n    ],\n    [\n      \"2026-09-25T10:10:35.599Z\",\n      \"07d3781493fc3a9b\",\n      \"v1.8.1\"\n    ],\n    [\n      \"2026-09-25T10:10:38.967Z\",\n      \"262640533e193831\",\n      \"v1.8.1\"\n    ],\n    [\n      \"2026-09-25T10:10:39.331Z\",\n      \"f21c8506af801179\",\n      \"v1.8.1\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List the log indices you are allowed to query, with document counts and sizes.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_indicesArguments",
+        "type": "object"
+      },
+      "name": "list_indices"
+    },
+    {
+      "description": "Field names and types for an index pattern, e.g. 'payment-prod-*'.",
+      "input_schema": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "get_mappingArguments",
+        "type": "object"
+      },
+      "name": "get_mapping"
+    },
+    {
+      "description": "Return sample log documents.\n\n        Args:\n            index: allowed index pattern, e.g. 'payment-prod-*'.\n            start: window start, ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z').\n            end: window end, ISO-8601 UTC.\n            query: optional Lucene query, e.g. 'message:\"connection timeout\" AND status_code:500'.\n            levels: optional log levels, e.g. ['ERROR', 'WARN'].\n            size: max documents to return (capped by the server).\n            sort: 'desc' = newest first, 'asc' = oldest first (use asc to find first occurrence).\n            fields: optional list of fields to return.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "index": {
+            "title": "Index",
+            "type": "string"
+          },
+          "levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Levels"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "size": {
+            "default": 20,
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end"
+        ],
+        "title": "search_logsArguments",
+        "type": "object"
+      },
+      "name": "search_logs"
+    },
+    {
+      "description": "Run a read-only ES|QL query, automatically limited to [start, end].\n\n        The query must start with 'FROM <allowed index pattern>'. Example:\n          FROM payment-prod-* | WHERE level == \"ERROR\"\n          | STATS count = COUNT(*), first_seen = MIN(@timestamp) BY error_type | SORT count DESC\n        Args:\n            query: ES|QL query.\n            start: window start, ISO-8601 UTC.\n            end: window end, ISO-8601 UTC.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "execute_esqlArguments",
+        "type": "object"
+      },
+      "name": "execute_esql"
+    }
+  ]
+}

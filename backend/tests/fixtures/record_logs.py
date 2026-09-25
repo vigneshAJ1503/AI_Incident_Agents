@@ -24,7 +24,7 @@ from aiops.seed.logs import LogGenerator, SeedWindow, index_name
 from tests.fixtures.scenario_context import FIXED_NOW, task_for
 
 HERE = Path(__file__).parent
-SCENARIOS = ["S0", "S1"]
+SCENARIOS = ["S0", "S1", "S2", "S3", "S4", "S5"]
 
 
 def seed(scenario: str) -> None:
@@ -43,18 +43,7 @@ def seed(scenario: str) -> None:
 
 
 def responder(messages: list[ChatMessage], tools: list[ToolSpec] | None) -> LLMResponse:
-    """One follow-up sample query, then a minimal submit (content irrelevant for recording)."""
-    if not any(m.role == "tool" for m in messages):
-        return tool_call(
-            "search_logs",
-            {
-                "index": "payment-prod-*",
-                "start": "2026-09-25T10:00:00Z",
-                "end": "2026-09-25T10:30:00Z",
-                "levels": ["ERROR"],
-                "size": 5,
-            },
-        )
+    """Minimal submit: recording captures the deterministic tool exchanges only."""
     return tool_call("submit", {"status": "no_signal", "summary": "recording", "confidence": 0.1})
 
 

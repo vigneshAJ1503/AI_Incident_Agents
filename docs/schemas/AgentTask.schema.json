@@ -1,0 +1,123 @@
+{
+  "$defs": {
+    "IncidentContext": {
+      "additionalProperties": false,
+      "description": "What every agent knows about the incident.",
+      "properties": {
+        "environment": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Environment"
+        },
+        "question": {
+          "title": "Question",
+          "type": "string"
+        },
+        "service": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Service"
+        },
+        "symptoms": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Symptoms",
+          "type": "array"
+        },
+        "time_range": {
+          "$ref": "#/$defs/TimeRange"
+        }
+      },
+      "required": [
+        "question",
+        "time_range"
+      ],
+      "title": "IncidentContext",
+      "type": "object"
+    },
+    "TimeRange": {
+      "additionalProperties": false,
+      "properties": {
+        "end": {
+          "format": "date-time",
+          "title": "End",
+          "type": "string"
+        },
+        "start": {
+          "format": "date-time",
+          "title": "Start",
+          "type": "string"
+        }
+      },
+      "required": [
+        "start",
+        "end"
+      ],
+      "title": "TimeRange",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "agent": {
+      "title": "Agent",
+      "type": "string"
+    },
+    "context": {
+      "$ref": "#/$defs/IncidentContext"
+    },
+    "hints": {
+      "additionalProperties": true,
+      "title": "Hints",
+      "type": "object"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "investigation_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Investigation Id"
+    },
+    "objective": {
+      "title": "Objective",
+      "type": "string"
+    },
+    "round": {
+      "default": 1,
+      "minimum": 1,
+      "title": "Round",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "agent",
+    "objective",
+    "context"
+  ],
+  "title": "AgentTask",
+  "type": "object"
+}

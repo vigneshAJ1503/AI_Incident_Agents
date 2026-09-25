@@ -1,0 +1,432 @@
+{
+  "calls": [
+    {
+      "arguments": {},
+      "result": {
+        "is_error": false,
+        "structured": {
+          "documents": [
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/bad-deployment-rollback.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "deployment",
+                "rollback",
+                "release",
+                "imagepullbackoff",
+                "replicas",
+                "kubernetes",
+                "capacity"
+              ],
+              "title": "Bad deployment and rollback"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "connection-pool",
+                "hikari",
+                "timeouts",
+                "http-500"
+              ],
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "dependency",
+                "downstream",
+                "timeouts",
+                "latency",
+                "http-504",
+                "circuit-breaker",
+                "retries"
+              ],
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "services": [],
+              "tags": [
+                "errors",
+                "http-500",
+                "http-5xx",
+                "error-rate",
+                "slo",
+                "triage"
+              ],
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-latency.md",
+              "services": [],
+              "tags": [
+                "latency",
+                "p95",
+                "p99",
+                "slow",
+                "slo",
+                "saturation",
+                "triage"
+              ],
+              "title": "High latency (p95/p99)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "memory",
+                "oom",
+                "oomkilled",
+                "heap",
+                "gc",
+                "jvm",
+                "restarts",
+                "http-503"
+              ],
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/pod-crashloop.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "kubernetes",
+                "crashloopbackoff",
+                "restarts",
+                "probes",
+                "startup",
+                "config"
+              ],
+              "title": "Pod CrashLoopBackOff"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "redis",
+                "cache",
+                "econnrefused",
+                "fallback",
+                "latency",
+                "database-load"
+              ],
+              "title": "Redis cache outage"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "slow-query",
+                "index",
+                "locks",
+                "latency"
+              ],
+              "title": "Slow database queries"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/inventory-service.md",
+              "services": [
+                "inventory-service"
+              ],
+              "tags": [
+                "service",
+                "inventory",
+                "stock",
+                "ownership"
+              ],
+              "title": "inventory-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/order-service.md",
+              "services": [
+                "order-service"
+              ],
+              "tags": [
+                "service",
+                "orders",
+                "checkout",
+                "ownership"
+              ],
+              "title": "order-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/payment-service.md",
+              "services": [
+                "payment-service"
+              ],
+              "tags": [
+                "service",
+                "payments",
+                "ownership"
+              ],
+              "title": "payment-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/user-service.md",
+              "services": [
+                "user-service"
+              ],
+              "tags": [
+                "service",
+                "identity",
+                "login",
+                "ownership"
+              ],
+              "title": "user-service"
+            }
+          ],
+          "returned": 13,
+          "total": 13,
+          "truncated": false
+        },
+        "text": "{\n  \"total\": 13,\n  \"returned\": 13,\n  \"truncated\": false,\n  \"documents\": [\n    {\n      \"path\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"title\": \"Bad deployment and rollback\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"deployment\",\n        \"rollback\",\n        \"release\",\n        \"imagepullbackoff\",\n        \"replicas\",\n        \"kubernetes\",\n        \"capacity\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"connection-pool\",\n        \"hikari\",\n        \"timeouts\",\n        \"http-500\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"dependency\",\n        \"downstream\",\n        \"timeouts\",\n        \"latency\",\n        \"http-504\",\n        \"circuit-breaker\",\n        \"retries\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"errors\",\n        \"http-500\",\n        \"http-5xx\",\n        \"error-rate\",\n        \"slo\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-latency.md\",\n      \"title\": \"High latency (p95/p99)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"latency\",\n        \"p95\",\n        \"p99\",\n        \"slow\",\n        \"slo\",\n        \"saturation\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"memory\",\n        \"oom\",\n        \"oomkilled\",\n        \"heap\",\n        \"gc\",\n        \"jvm\",\n        \"restarts\",\n        \"http-503\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"title\": \"Pod CrashLoopBackOff\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"kubernetes\",\n        \"crashloopbackoff\",\n        \"restarts\",\n        \"probes\",\n        \"startup\",\n        \"config\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"redis\",\n        \"cache\",\n        \"econnrefused\",\n        \"fallback\",\n        \"latency\",\n        \"database-load\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"slow-query\",\n        \"index\",\n        \"locks\",\n        \"latency\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/inventory-service.md\",\n      \"title\": \"inventory-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"inventory\",\n        \"stock\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"orders\",\n        \"checkout\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"payments\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/user-service.md\",\n      \"title\": \"user-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"identity\",\n        \"login\",\n        \"ownership\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "list_docs"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/services/payment-service.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# payment-service\n\n## Overview\npayment-service processes card payments for orders. It authorizes and captures payments through the card processor, and stores payment records and idempotency keys. It is on the checkout critical path: if it's down, no order can be paid.\n\n## Ownership\n- **Team:** payments\n- **On-call:** `#payments-oncall` (PagerDuty schedule \"Payments Primary\")\n- **Escalation:** payments engineering manager, then the SRE incident commander in `#incidents`\n- **Tier:** 1 (customer-facing, revenue-critical)\n\n## Dependencies\n| Dependency | Why | Failure impact |\n|------------|-----|----------------|\n| Postgres (`payments` database) | Payment records | Connection pool exhaustion causes HTTP 500 on `POST /api/v1/pay` |\n| Redis | Idempotency keys, session cache | Falls back to Postgres, so latency rises |\n| user-service | Account and fraud checks | Payments fail with 502/503 when user-service is degraded |\n\n## Endpoints\n- `POST /api/v1/pay`: authorize and capture a payment (p95 SLO 800 ms)\n- `GET /api/v1/payments/{id}`: payment status\n- `POST /api/v1/refunds`: refunds\n\n## Configuration\n| Setting | Default | Notes |\n|---------|---------|-------|\n| `DB_POOL_SIZE` | 20 | Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections`. **Never below 10 in production.** |\n| `DB_POOL_TIMEOUT_MS` | 5000 | Wait for a free connection before failing with HTTP 500 |\n| `REDIS_URL` | `redis://redis:6379` | |\n| `USER_SERVICE_TIMEOUT_MS` | 1000 | |\n\n## Dashboards\n- Kibana logs: Discover, filter `service: payment-service` (index `payment-prod-*`)\n- Grafana: \"payment-service overview\" (request rate, 5xx rate, p95 latency, DB pool active/max)\n- Alertmanager: `service=\"payment-service\"`\n\n## SLOs\n- Availability 99.9% (5xx rate below 0.1% over 30 days)\n- p95 latency of `POST /api/v1/pay` below 800 ms\n\n## Known failure modes\n- DB pool exhaustion after config changes: [database-connection-pool](../runbooks/database-connection-pool.md)\n- Cache outage: [redis-outage](../runbooks/redis-outage.md)\n- Bad releases: [bad-deployment-rollback](../runbooks/bad-deployment-rollback.md)",
+          "doc_type": "service",
+          "metadata": {
+            "last_reviewed": "2026-09-01",
+            "owner": "payments",
+            "services": [
+              "payment-service"
+            ],
+            "tags": [
+              "service",
+              "payments",
+              "ownership"
+            ],
+            "title": "payment-service",
+            "type": "service"
+          },
+          "outline": [
+            {
+              "anchor": "overview",
+              "heading_path": "payment-service > Overview"
+            },
+            {
+              "anchor": "ownership",
+              "heading_path": "payment-service > Ownership"
+            },
+            {
+              "anchor": "dependencies",
+              "heading_path": "payment-service > Dependencies"
+            },
+            {
+              "anchor": "endpoints",
+              "heading_path": "payment-service > Endpoints"
+            },
+            {
+              "anchor": "configuration",
+              "heading_path": "payment-service > Configuration"
+            },
+            {
+              "anchor": "dashboards",
+              "heading_path": "payment-service > Dashboards"
+            },
+            {
+              "anchor": "slos",
+              "heading_path": "payment-service > SLOs"
+            },
+            {
+              "anchor": "known-failure-modes",
+              "heading_path": "payment-service > Known failure modes"
+            }
+          ],
+          "path": "knowledge-base/services/payment-service.md",
+          "services": [
+            "payment-service"
+          ],
+          "tags": [
+            "service",
+            "payments",
+            "ownership"
+          ],
+          "title": "payment-service",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/services/payment-service.md\",\n  \"title\": \"payment-service\",\n  \"doc_type\": \"service\",\n  \"services\": [\n    \"payment-service\"\n  ],\n  \"tags\": [\n    \"service\",\n    \"payments\",\n    \"ownership\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"service\",\n      \"payments\",\n      \"ownership\"\n    ],\n    \"type\": \"service\",\n    \"owner\": \"payments\",\n    \"title\": \"payment-service\",\n    \"services\": [\n      \"payment-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# payment-service\\n\\n## Overview\\npayment-service processes card payments for orders. It authorizes and captures payments through the card processor, and stores payment records and idempotency keys. It is on the checkout critical path: if it's down, no order can be paid.\\n\\n## Ownership\\n- **Team:** payments\\n- **On-call:** `#payments-oncall` (PagerDuty schedule \\\"Payments Primary\\\")\\n- **Escalation:** payments engineering manager, then the SRE incident commander in `#incidents`\\n- **Tier:** 1 (customer-facing, revenue-critical)\\n\\n## Dependencies\\n| Dependency | Why | Failure impact |\\n|------------|-----|----------------|\\n| Postgres (`payments` database) | Payment records | Connection pool exhaustion causes HTTP 500 on `POST /api/v1/pay` |\\n| Redis | Idempotency keys, session cache | Falls back to Postgres, so latency rises |\\n| user-service | Account and fraud checks | Payments fail with 502/503 when user-service is degraded |\\n\\n## Endpoints\\n- `POST /api/v1/pay`: authorize and capture a payment (p95 SLO 800 ms)\\n- `GET /api/v1/payments/{id}`: payment status\\n- `POST /api/v1/refunds`: refunds\\n\\n## Configuration\\n| Setting | Default | Notes |\\n|---------|---------|-------|\\n| `DB_POOL_SIZE` | 20 | Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections`. **Never below 10 in production.** |\\n| `DB_POOL_TIMEOUT_MS` | 5000 | Wait for a free connection before failing with HTTP 500 |\\n| `REDIS_URL` | `redis://redis:6379` | |\\n| `USER_SERVICE_TIMEOUT_MS` | 1000 | |\\n\\n## Dashboards\\n- Kibana logs: Discover, filter `service: payment-service` (index `payment-prod-*`)\\n- Grafana: \\\"payment-service overview\\\" (request rate, 5xx rate, p95 latency, DB pool active/max)\\n- Alertmanager: `service=\\\"payment-service\\\"`\\n\\n## SLOs\\n- Availability 99.9% (5xx rate below 0.1% over 30 days)\\n- p95 latency of `POST /api/v1/pay` below 800 ms\\n\\n## Known failure modes\\n- DB pool exhaustion after config changes: [database-connection-pool](../runbooks/database-connection-pool.md)\\n- Cache outage: [redis-outage](../runbooks/redis-outage.md)\\n- Bad releases: [bad-deployment-rollback](../runbooks/bad-deployment-rollback.md)\",\n  \"outline\": [\n    {\n      \"heading_path\": \"payment-service > Overview\",\n      \"anchor\": \"overview\"\n    },\n    {\n      \"heading_path\": \"payment-service > Ownership\",\n      \"anchor\": \"ownership\"\n    },\n    {\n      \"heading_path\": \"payment-service > Dependencies\",\n      \"anchor\": \"dependencies\"\n    },\n    {\n      \"heading_path\": \"payment-service > Endpoints\",\n      \"anchor\": \"endpoints\"\n    },\n    {\n      \"heading_path\": \"payment-service > Configuration\",\n      \"anchor\": \"configuration\"\n    },\n    {\n      \"heading_path\": \"payment-service > Dashboards\",\n      \"anchor\": \"dashboards\"\n    },\n    {\n      \"heading_path\": \"payment-service > SLOs\",\n      \"anchor\": \"slos\"\n    },\n    {\n      \"heading_path\": \"payment-service > Known failure modes\",\n      \"anchor\": \"known-failure-modes\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Full-text search over runbook and service-doc sections, best first.\n\n        Args:\n            query: symptoms or keywords, e.g. 'could not acquire a connection from the pool HikariPool'.\n            k: number of sections to return (1-10).\n            services: only docs tagged with any of these services, e.g. ['payment-service'].\n                Generic runbooks (no services) are excluded by this filter; search again without it.\n            tags: only docs with any of these tags, e.g. ['database'].\n            match: 'any' (default) ranks sections by how many query words they contain;\n                'all' requires every word (web-search syntax: \"quoted phrase\", or, -exclude).\n            max_per_doc: at most this many sections per document (1-5), for diverse results.\n        ",
+      "input_schema": {
+        "properties": {
+          "k": {
+            "default": 5,
+            "title": "K",
+            "type": "integer"
+          },
+          "match": {
+            "default": "any",
+            "enum": [
+              "any",
+              "all"
+            ],
+            "title": "Match",
+            "type": "string"
+          },
+          "max_per_doc": {
+            "default": 3,
+            "title": "Max Per Doc",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "services": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Services"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tags"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "searchArguments",
+        "type": "object"
+      },
+      "name": "search"
+    },
+    {
+      "description": "Full markdown of one document, with its section outline (heading paths + anchors).\n\n        Args:\n            path: repo-relative path from search/list_docs, e.g. 'knowledge-base/runbooks/redis-outage.md'.\n        ",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "get_docArguments",
+        "type": "object"
+      },
+      "name": "get_doc"
+    },
+    {
+      "description": "List indexed documents (path, title, type, services, tags).\n\n        Args:\n            doc_type: optional 'runbook', 'service' or 'doc'.\n            service: optional service name; only docs tagged with it, e.g. 'payment-service'.\n        ",
+      "input_schema": {
+        "properties": {
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Doc Type"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          }
+        },
+        "title": "list_docsArguments",
+        "type": "object"
+      },
+      "name": "list_docs"
+    }
+  ]
+}

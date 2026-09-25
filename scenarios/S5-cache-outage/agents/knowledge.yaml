@@ -1,0 +1,12 @@
+# Hints = the Log agent's S5 replay result (signals + top 3 anomalous patterns).
+hints:
+  signals: [error_rate_up, new_error_pattern, cache_connection_errors]
+  patterns:
+    - "Redis connection refused: redis:<NUM> (ECONNREFUSED)"
+    - "Cache unavailable, fell back to database (POST /api/v1/pay <NUM> in <NUM>ms)"
+    - "Cache unavailable, fell back to database (GET /api/v1/payments/{id} <NUM> in <NUM>ms)"
+status: [success]
+signals: [runbook_found, known_issue_documented, mitigation_available]
+forbidden_signals: [no_relevant_docs]
+must_mention: [knowledge-base/runbooks/redis-outage.md]
+min_evidence: 3

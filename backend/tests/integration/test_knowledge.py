@@ -10,10 +10,16 @@ import psycopg
 import pytest
 from psycopg import sql
 
+from aiops.agents.deps import build_deps
+from aiops.agents.knowledge_agent import KnowledgeAgent
 from aiops.core.config import load_settings
 from aiops.core.guardrails.audit import MemoryAuditSink
+from aiops.core.models import AgentStatus
+from aiops.evals.replay import echo_responder
 from aiops.knowledge.ingest import KnowledgeStore, default_conninfo
+from aiops.llm.fake import FakeLLMProvider
 from aiops.mcp.registry import MCPRegistry
+from tests.fixtures.scenario_context import task_for
 
 pytestmark = pytest.mark.integration
 REPO = Path(__file__).resolve().parents[3]
@@ -77,3 +83,26 @@ async def test_capability_search_finds_scenario_runbooks(symptoms: str, runbook:
         blocked = await tools.call("drop_schema", {})
         assert not blocked.ok and "not allowed" in blocked.content
     assert [r.tool_call.status for r in audit.records] == ["ok", "blocked"]
+
+
+@pytest.mark.parametrize(
+    ("scenario", "runbook"),
+    [
+        ("S1", "database-connection-pool.md"),
+        ("S2", "memory-leak-oom.md"),
+        ("S3", "dependency-timeouts.md"),
+        ("S4", "bad-deployment-rollback.md"),
+        ("S5", "redis-outage.md"),
+    ],
+)
+async def test_knowledge_agent_live(scenario: str, runbook: str) -> None:
+    """The agent against the live knowledge-mcp, with the scenario's Log agent hints."""
+    settings = load_settings("local", CONFIG)
+    deps = build_deps(settings, llm=FakeLLMProvider(responder=echo_responder()))
+    result = await KnowledgeAgent(deps).run(task_for(scenario, "knowledge"))
+    assert result.status is AgentStatus.SUCCESS, result.summary
+    first = next(f for f in result.findings if f.type == "runbook_match")
+    assert f"knowledge-base/runbooks/{runbook}" in first.description
+    assert {"runbook_found", "known_issue_documented", "mitigation_available"} <= set(
+        result.signals
+    )

@@ -74,6 +74,8 @@ capabilities:
     settings:
       # Where a cited doc opens: {path} is repo-relative, e.g. knowledge-base/runbooks/redis-outage.md
       ui_link_template: "https://github.com/vigneshAJ1503/AI_Incident_Agents/blob/main/{path}"
+      search_k: 8          # sections per search (server caps at 10)
+      top_docs: 3          # relevant runbooks fetched and cited
 
   tickets:
     # mock = mock-tickets-mcp (offline, Postgres, default) | jira = mcp-atlassian on a Jira
@@ -115,5 +117,13 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 6
+      max_execution_s: 45
+      max_tokens: 30000
+  knowledge:
+    model_role: agent
+    # list_docs + up to 4 searches + up to 4 get_doc (deterministic), then <= 2 LLM follow-ups
+    limits:
+      max_steps: 4
+      max_tool_calls: 12
       max_execution_s: 45
       max_tokens: 30000

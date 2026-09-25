@@ -1,0 +1,11 @@
+# Hints = the Log agent's S2 replay result (signals + top anomalous patterns).
+hints:
+  signals: [error_rate_up, new_error_pattern, oom_errors, service_restarts]
+  patterns:
+    - "GC overhead limit approaching: heap usage <NUM>% after full GC"
+    - "java.lang.OutOfMemoryError: Java heap space"
+status: [success]
+signals: [runbook_found, known_issue_documented, mitigation_available]
+forbidden_signals: [no_relevant_docs]
+must_mention: [knowledge-base/runbooks/memory-leak-oom.md]
+min_evidence: 3

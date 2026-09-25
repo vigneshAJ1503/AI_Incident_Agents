@@ -39,3 +39,11 @@ def test_catalog_resolve_unknown_service_exits_1() -> None:
 def test_config_error_exits_2() -> None:
     result = runner.invoke(app, ["config", "validate", "--env", "does-not-exist"])
     assert result.exit_code == 2
+
+
+def test_agent_run_rejects_invalid_hints() -> None:
+    for bad in ("{not json", "[1, 2]"):
+        args = ["agent", "run", "knowledge", "q", "-s", "payments", "--hints", bad]
+        result = runner.invoke(app, args)
+        assert result.exit_code == 2
+        assert "hints" in result.output

@@ -24,6 +24,7 @@ scenarios/<id>/
 | `forbidden_signals` | Signals that must NOT be reported |
 | `must_mention` | Phrases the summary or findings must contain (case-insensitive) |
 | `min_evidence` | Minimum number of evidence items |
+| `hints` | Optional task input for the agent when it runs standalone (e.g. representative upstream findings such as the Log agent's signals and patterns); the orchestrator passes real ones |
 
 ## Evaluations
 

@@ -100,6 +100,10 @@ record-fixtures: venv-fix ## Re-record Log agent MCP fixtures from the live stac
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_logs
 	@$(MAKE) --no-print-directory seed-logs S=S1
 
+.PHONY: record-knowledge-fixtures
+record-knowledge-fixtures: venv-fix ## Re-record Knowledge agent fixtures (needs infra-up ingest-knowledge + knowledge-mcp)
+	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_knowledge
+
 .PHONY: ingest-knowledge
 ingest-knowledge: venv-fix ## Index knowledge-base/ runbooks into Postgres full-text search (idempotent)
 	cd $(BACKEND) && uv run --no-sync aiops knowledge ingest --path ../knowledge-base

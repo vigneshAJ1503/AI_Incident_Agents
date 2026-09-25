@@ -1,0 +1,1735 @@
+{
+  "calls": [
+    {
+      "arguments": {},
+      "result": {
+        "is_error": false,
+        "structured": {
+          "documents": [
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/bad-deployment-rollback.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "deployment",
+                "rollback",
+                "release",
+                "imagepullbackoff",
+                "replicas",
+                "kubernetes",
+                "capacity"
+              ],
+              "title": "Bad deployment and rollback"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "connection-pool",
+                "hikari",
+                "timeouts",
+                "http-500"
+              ],
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "dependency",
+                "downstream",
+                "timeouts",
+                "latency",
+                "http-504",
+                "circuit-breaker",
+                "retries"
+              ],
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "services": [],
+              "tags": [
+                "errors",
+                "http-500",
+                "http-5xx",
+                "error-rate",
+                "slo",
+                "triage"
+              ],
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-latency.md",
+              "services": [],
+              "tags": [
+                "latency",
+                "p95",
+                "p99",
+                "slow",
+                "slo",
+                "saturation",
+                "triage"
+              ],
+              "title": "High latency (p95/p99)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "memory",
+                "oom",
+                "oomkilled",
+                "heap",
+                "gc",
+                "jvm",
+                "restarts",
+                "http-503"
+              ],
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/pod-crashloop.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "kubernetes",
+                "crashloopbackoff",
+                "restarts",
+                "probes",
+                "startup",
+                "config"
+              ],
+              "title": "Pod CrashLoopBackOff"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "redis",
+                "cache",
+                "econnrefused",
+                "fallback",
+                "latency",
+                "database-load"
+              ],
+              "title": "Redis cache outage"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "slow-query",
+                "index",
+                "locks",
+                "latency"
+              ],
+              "title": "Slow database queries"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/inventory-service.md",
+              "services": [
+                "inventory-service"
+              ],
+              "tags": [
+                "service",
+                "inventory",
+                "stock",
+                "ownership"
+              ],
+              "title": "inventory-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/order-service.md",
+              "services": [
+                "order-service"
+              ],
+              "tags": [
+                "service",
+                "orders",
+                "checkout",
+                "ownership"
+              ],
+              "title": "order-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/payment-service.md",
+              "services": [
+                "payment-service"
+              ],
+              "tags": [
+                "service",
+                "payments",
+                "ownership"
+              ],
+              "title": "payment-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/user-service.md",
+              "services": [
+                "user-service"
+              ],
+              "tags": [
+                "service",
+                "identity",
+                "login",
+                "ownership"
+              ],
+              "title": "user-service"
+            }
+          ],
+          "returned": 13,
+          "total": 13,
+          "truncated": false
+        },
+        "text": "{\n  \"total\": 13,\n  \"returned\": 13,\n  \"truncated\": false,\n  \"documents\": [\n    {\n      \"path\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"title\": \"Bad deployment and rollback\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"deployment\",\n        \"rollback\",\n        \"release\",\n        \"imagepullbackoff\",\n        \"replicas\",\n        \"kubernetes\",\n        \"capacity\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"connection-pool\",\n        \"hikari\",\n        \"timeouts\",\n        \"http-500\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"dependency\",\n        \"downstream\",\n        \"timeouts\",\n        \"latency\",\n        \"http-504\",\n        \"circuit-breaker\",\n        \"retries\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"errors\",\n        \"http-500\",\n        \"http-5xx\",\n        \"error-rate\",\n        \"slo\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-latency.md\",\n      \"title\": \"High latency (p95/p99)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"latency\",\n        \"p95\",\n        \"p99\",\n        \"slow\",\n        \"slo\",\n        \"saturation\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"memory\",\n        \"oom\",\n        \"oomkilled\",\n        \"heap\",\n        \"gc\",\n        \"jvm\",\n        \"restarts\",\n        \"http-503\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"title\": \"Pod CrashLoopBackOff\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"kubernetes\",\n        \"crashloopbackoff\",\n        \"restarts\",\n        \"probes\",\n        \"startup\",\n        \"config\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"redis\",\n        \"cache\",\n        \"econnrefused\",\n        \"fallback\",\n        \"latency\",\n        \"database-load\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"slow-query\",\n        \"index\",\n        \"locks\",\n        \"latency\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/inventory-service.md\",\n      \"title\": \"inventory-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"inventory\",\n        \"stock\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"orders\",\n        \"checkout\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"payments\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/user-service.md\",\n      \"title\": \"user-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"identity\",\n        \"login\",\n        \"ownership\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "list_docs"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx",
+        "services": [
+          "payment-service"
+        ]
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [
+              "payment-service"
+            ],
+            "tags": []
+          },
+          "match": "any",
+          "query": "Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx",
+          "results": [
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Redis cache outage > Symptoms",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "econnrefus",
+                "fell",
+                "post",
+                "rate",
+                "redi",
+                "refus",
+                "unavail"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 1,
+              "score": 0.6467,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern: `**Redis** **connection** **refused**: **redis**:6379 (**ECONNREFUSED**)` in several services at the same time.\n- Log pattern: `**Cache** **unavailable**, **fell** **back** to **database** (**POST** /api/v1/pay ...)`.\n- Latency rises on **all** services together, and the **cache** hit **rate** \u2026 drops to ~0.\n- **Database** queries per second and **connection** usage go up.\n- `**redis**-cli -h **redis** ping` fails, or the **Redis** pod or container isn't running.\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "Redis cache outage > Summary",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "econnrefus",
+                "error",
+                "redi"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 2,
+              "score": 0.4739,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "**Redis** is a shared **cache** for sessions, idempotency keys and hot reads. The services are built to **fail open**: when **Redis** is unreachable they fall **back** to Postgres. So a **Redis** outage rarely causes hard \u2026 **errors** at first. It shows up as **latency on every service at once**, plus more load on the **database**. If the outage lasts, the extra **database** load can exhaust **connection** pools and cause real **errors**",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "dependencies",
+              "doc_type": "service",
+              "heading": "Dependencies",
+              "heading_path": "payment-service > Dependencies",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "post",
+                "redi"
+              ],
+              "path": "knowledge-base/services/payment-service.md",
+              "rank": 3,
+              "score": 0.3464,
+              "services": [
+                "payment-service"
+              ],
+              "snippet": "Dependency | Why | Failure impact |\n|------------|-----|----------------|\n| Postgres (`payments` **database**) | Payment records | **Connection** pool exhaustion causes HTTP 500 on `**POST** /api/v1/pay` |\n| **Redis** | Idempotency keys, session **cache** | Falls **back** to Postgres, so latency rises |\n| user-service | Account and fraud",
+              "title": "payment-service"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Database connection pool exhaustion > Mitigation",
+              "matched_terms": [
+                "back",
+                "connect",
+                "databas",
+                "rate"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 4,
+              "score": 0.329,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "release changed the pool settings, roll **back** first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then \u2026 kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_**connections**` minus a 20% reserve.\n3. If **connections** are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "known-issues",
+              "doc_type": "runbook",
+              "heading": "Known issues",
+              "heading_path": "Database connection pool exhaustion > Known issues",
+              "matched_terms": [
+                "back",
+                "connect",
+                "databas",
+                "post"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 5,
+              "score": 0.3242,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "commit titled \"tune db pool\". Within minutes of the rollout, requests queued for a **connection**, `waiting` climbed above 15 and `**POST** /api/v1/pay` returned HTTP 500. Fix: roll **back** to `v1.8.1`, then restore `DB_POOL_SIZE \u2026 call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every **connection**. See [dependency-timeouts](dependency-timeouts.md",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "endpoints",
+              "doc_type": "service",
+              "heading": "Endpoints",
+              "heading_path": "payment-service > Endpoints",
+              "matched_terms": [
+                "get",
+                "id",
+                "ms",
+                "post"
+              ],
+              "path": "knowledge-base/services/payment-service.md",
+              "rank": 6,
+              "score": 0.266,
+              "services": [
+                "payment-service"
+              ],
+              "snippet": "**POST** /api/v1/pay`: authorize and capture a payment (p95 SLO 800 **ms**)\n- `**GET** /api/v1/payments/{**id**}`: payment status\n- `**POST** /api/v1/refunds`: refunds",
+              "title": "payment-service"
+            },
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Slow database queries > Symptoms",
+              "matched_terms": [
+                "databas",
+                "error",
+                "rate"
+              ],
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "rank": 7,
+              "score": 0.2421,
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "snippet": "pattern: `Slow query on stock_levels took 4200ms`.\n- The service's latency rises, while the **error** **rate** may stay low at first.\n- Callers log `Timeout calling  `.\n- Postgres: `pg_stat_activity` shows many active queries with",
+              "title": "Slow database queries"
+            },
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Downstream dependency timeouts > Symptoms",
+              "matched_terms": [
+                "connect",
+                "error",
+                "get",
+                "id"
+              ],
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "rank": 8,
+              "score": 0.2348,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern in the caller: `Timeout calling inventory-service **GET** /api/v1/stock/{**id**} after 3000ms`.\n- Caller latency is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\n- The dependency \u2026 show slow requests or slow queries (for example `Slow query on stock_levels took 4200ms`), often without **errors**.\n- Thread or **connection** pools in the caller fill up with requests that are waiting.\n- Alerts: `DependencyTimeouts",
+              "title": "Downstream dependency timeouts"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "5xx",
+            "api/v1/pay",
+            "api/v1/payments",
+            "back",
+            "cach",
+            "connect",
+            "databas",
+            "econnrefus",
+            "error",
+            "fell",
+            "get",
+            "id",
+            "ms",
+            "post",
+            "rate",
+            "redi",
+            "refus",
+            "unavail"
+          ],
+          "total_matches": 60
+        },
+        "text": "{\n  \"query\": \"Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"5xx\",\n    \"api/v1/pay\",\n    \"api/v1/payments\",\n    \"back\",\n    \"cach\",\n    \"connect\",\n    \"databas\",\n    \"econnrefus\",\n    \"error\",\n    \"fell\",\n    \"get\",\n    \"id\",\n    \"ms\",\n    \"post\",\n    \"rate\",\n    \"redi\",\n    \"refus\",\n    \"unavail\"\n  ],\n  \"filters\": {\n    \"services\": [\n      \"payment-service\"\n    ],\n    \"tags\": []\n  },\n  \"total_matches\": 60,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Redis cache outage > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern: `**Redis** **connection** **refused**: **redis**:6379 (**ECONNREFUSED**)` in several services at the same time.\\n- Log pattern: `**Cache** **unavailable**, **fell** **back** to **database** (**POST** /api/v1/pay ...)`.\\n- Latency rises on **all** services together, and the **cache** hit **rate** \u2026 drops to ~0.\\n- **Database** queries per second and **connection** usage go up.\\n- `**redis**-cli -h **redis** ping` fails, or the **Redis** pod or container isn't running.\\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services\",\n      \"score\": 0.6467,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"econnrefus\",\n        \"fell\",\n        \"post\",\n        \"rate\",\n        \"redi\",\n        \"refus\",\n        \"unavail\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"Redis cache outage > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"**Redis** is a shared **cache** for sessions, idempotency keys and hot reads. The services are built to **fail open**: when **Redis** is unreachable they fall **back** to Postgres. So a **Redis** outage rarely causes hard \u2026 **errors** at first. It shows up as **latency on every service at once**, plus more load on the **database**. If the outage lasts, the extra **database** load can exhaust **connection** pools and cause real **errors**\",\n      \"score\": 0.4739,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"econnrefus\",\n        \"error\",\n        \"redi\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"heading\": \"Dependencies\",\n      \"heading_path\": \"payment-service > Dependencies\",\n      \"anchor\": \"dependencies\",\n      \"snippet\": \"Dependency | Why | Failure impact |\\n|------------|-----|----------------|\\n| Postgres (`payments` **database**) | Payment records | **Connection** pool exhaustion causes HTTP 500 on `**POST** /api/v1/pay` |\\n| **Redis** | Idempotency keys, session **cache** | Falls **back** to Postgres, so latency rises |\\n| user-service | Account and fraud\",\n      \"score\": 0.3464,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"post\",\n        \"redi\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Database connection pool exhaustion > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"release changed the pool settings, roll **back** first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then \u2026 kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_**connections**` minus a 20% reserve.\\n3. If **connections** are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow\",\n      \"score\": 0.329,\n      \"matched_terms\": [\n        \"back\",\n        \"connect\",\n        \"databas\",\n        \"rate\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Known issues\",\n      \"heading_path\": \"Database connection pool exhaustion > Known issues\",\n      \"anchor\": \"known-issues\",\n      \"snippet\": \"commit titled \\\"tune db pool\\\". Within minutes of the rollout, requests queued for a **connection**, `waiting` climbed above 15 and `**POST** /api/v1/pay` returned HTTP 500. Fix: roll **back** to `v1.8.1`, then restore `DB_POOL_SIZE \u2026 call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every **connection**. See [dependency-timeouts](dependency-timeouts.md\",\n      \"score\": 0.3242,\n      \"matched_terms\": [\n        \"back\",\n        \"connect\",\n        \"databas\",\n        \"post\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"heading\": \"Endpoints\",\n      \"heading_path\": \"payment-service > Endpoints\",\n      \"anchor\": \"endpoints\",\n      \"snippet\": \"**POST** /api/v1/pay`: authorize and capture a payment (p95 SLO 800 **ms**)\\n- `**GET** /api/v1/payments/{**id**}`: payment status\\n- `**POST** /api/v1/refunds`: refunds\",\n      \"score\": 0.266,\n      \"matched_terms\": [\n        \"get\",\n        \"id\",\n        \"ms\",\n        \"post\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Slow database queries > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern: `Slow query on stock_levels took 4200ms`.\\n- The service's latency rises, while the **error** **rate** may stay low at first.\\n- Callers log `Timeout calling  `.\\n- Postgres: `pg_stat_activity` shows many active queries with\",\n      \"score\": 0.2421,\n      \"matched_terms\": [\n        \"databas\",\n        \"error\",\n        \"rate\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Downstream dependency timeouts > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern in the caller: `Timeout calling inventory-service **GET** /api/v1/stock/{**id**} after 3000ms`.\\n- Caller latency is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\\n- The dependency \u2026 show slow requests or slow queries (for example `Slow query on stock_levels took 4200ms`), often without **errors**.\\n- Thread or **connection** pools in the caller fill up with requests that are waiting.\\n- Alerts: `DependencyTimeouts\",\n      \"score\": 0.2348,\n      \"matched_terms\": [\n        \"connect\",\n        \"error\",\n        \"get\",\n        \"id\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [],
+            "tags": []
+          },
+          "match": "any",
+          "query": "Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx",
+          "results": [
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Redis cache outage > Symptoms",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "econnrefus",
+                "fell",
+                "post",
+                "rate",
+                "redi",
+                "refus",
+                "unavail"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 1,
+              "score": 0.6467,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern: `**Redis** **connection** **refused**: **redis**:6379 (**ECONNREFUSED**)` in several services at the same time.\n- Log pattern: `**Cache** **unavailable**, **fell** **back** to **database** (**POST** /api/v1/pay ...)`.\n- Latency rises on **all** services together, and the **cache** hit **rate** \u2026 drops to ~0.\n- **Database** queries per second and **connection** usage go up.\n- `**redis**-cli -h **redis** ping` fails, or the **Redis** pod or container isn't running.\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "3-map-the-pattern-to-a-specific-runbook",
+              "doc_type": "runbook",
+              "heading": "3. Map the pattern to a specific runbook",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook",
+              "matched_terms": [
+                "5xx",
+                "cach",
+                "connect",
+                "databas",
+                "econnrefus",
+                "error",
+                "rate",
+                "redi"
+              ],
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "rank": 2,
+              "score": 0.5175,
+              "services": [],
+              "snippet": "Pattern or signal | Runbook |\n|-------------------|---------|\n| `could not acquire a **connection**`, `HikariPool` | [**database**-**connection**-pool](database-connection-pool.md) |\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\n| `Timeout calling  ` | [dependency-timeouts](dependency-timeouts.md) |\n| `**ECONNREFUSED**` to **Redis**, **cache** fallback | [**redis**-outage](redis-outage.md) |\n| CrashLoopBackOff",
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "Redis cache outage > Summary",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "econnrefus",
+                "error",
+                "redi"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 3,
+              "score": 0.4739,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "**Redis** is a shared **cache** for sessions, idempotency keys and hot reads. The services are built to **fail open**: when **Redis** is unreachable they fall **back** to Postgres. So a **Redis** outage rarely causes hard \u2026 **errors** at first. It shows up as **latency on every service at once**, plus more load on the **database**. If the outage lasts, the extra **database** load can exhaust **connection** pools and cause real **errors**",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "High error rate (HTTP 5xx) > Mitigation",
+              "matched_terms": [
+                "5xx",
+                "back",
+                "error",
+                "post",
+                "rate"
+              ],
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "rank": 4,
+              "score": 0.4006,
+              "services": [],
+              "snippet": "change correlates with the start time, roll it **back**.\n2. If one endpoint dominates, consider disabling it with a feature flag or **rate**-limiting it.\n3. Communicate: **post** the impact and ETA in `#incidents \u2026 **error** **rate** stays above 5% for more than 10 minutes",
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "anchor": "dependencies",
+              "doc_type": "service",
+              "heading": "Dependencies",
+              "heading_path": "payment-service > Dependencies",
+              "matched_terms": [
+                "back",
+                "cach",
+                "connect",
+                "databas",
+                "post",
+                "redi"
+              ],
+              "path": "knowledge-base/services/payment-service.md",
+              "rank": 5,
+              "score": 0.3464,
+              "services": [
+                "payment-service"
+              ],
+              "snippet": "Dependency | Why | Failure impact |\n|------------|-----|----------------|\n| Postgres (`payments` **database**) | Payment records | **Connection** pool exhaustion causes HTTP 500 on `**POST** /api/v1/pay` |\n| **Redis** | Idempotency keys, session **cache** | Falls **back** to Postgres, so latency rises |\n| user-service | Account and fraud",
+              "title": "payment-service"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Database connection pool exhaustion > Mitigation",
+              "matched_terms": [
+                "back",
+                "connect",
+                "databas",
+                "rate"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 6,
+              "score": 0.329,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "release changed the pool settings, roll **back** first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then \u2026 kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_**connections**` minus a 20% reserve.\n3. If **connections** are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "known-issues",
+              "doc_type": "runbook",
+              "heading": "Known issues",
+              "heading_path": "Database connection pool exhaustion > Known issues",
+              "matched_terms": [
+                "back",
+                "connect",
+                "databas",
+                "post"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 7,
+              "score": 0.3242,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "commit titled \"tune db pool\". Within minutes of the rollout, requests queued for a **connection**, `waiting` climbed above 15 and `**POST** /api/v1/pay` returned HTTP 500. Fix: roll **back** to `v1.8.1`, then restore `DB_POOL_SIZE \u2026 call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every **connection**. See [dependency-timeouts](dependency-timeouts.md",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "endpoints",
+              "doc_type": "service",
+              "heading": "Endpoints",
+              "heading_path": "payment-service > Endpoints",
+              "matched_terms": [
+                "get",
+                "id",
+                "ms",
+                "post"
+              ],
+              "path": "knowledge-base/services/payment-service.md",
+              "rank": 8,
+              "score": 0.266,
+              "services": [
+                "payment-service"
+              ],
+              "snippet": "**POST** /api/v1/pay`: authorize and capture a payment (p95 SLO 800 **ms**)\n- `**GET** /api/v1/payments/{**id**}`: payment status\n- `**POST** /api/v1/refunds`: refunds",
+              "title": "payment-service"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "5xx",
+            "api/v1/pay",
+            "api/v1/payments",
+            "back",
+            "cach",
+            "connect",
+            "databas",
+            "econnrefus",
+            "error",
+            "fell",
+            "get",
+            "id",
+            "ms",
+            "post",
+            "rate",
+            "redi",
+            "refus",
+            "unavail"
+          ],
+          "total_matches": 88
+        },
+        "text": "{\n  \"query\": \"Redis connection refused ECONNREFUSED Cache unavailable fell back to database POST api/v1/pay in ms GET api/v1/payments id error rate 5xx\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"5xx\",\n    \"api/v1/pay\",\n    \"api/v1/payments\",\n    \"back\",\n    \"cach\",\n    \"connect\",\n    \"databas\",\n    \"econnrefus\",\n    \"error\",\n    \"fell\",\n    \"get\",\n    \"id\",\n    \"ms\",\n    \"post\",\n    \"rate\",\n    \"redi\",\n    \"refus\",\n    \"unavail\"\n  ],\n  \"filters\": {\n    \"services\": [],\n    \"tags\": []\n  },\n  \"total_matches\": 88,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Redis cache outage > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern: `**Redis** **connection** **refused**: **redis**:6379 (**ECONNREFUSED**)` in several services at the same time.\\n- Log pattern: `**Cache** **unavailable**, **fell** **back** to **database** (**POST** /api/v1/pay ...)`.\\n- Latency rises on **all** services together, and the **cache** hit **rate** \u2026 drops to ~0.\\n- **Database** queries per second and **connection** usage go up.\\n- `**redis**-cli -h **redis** ping` fails, or the **Redis** pod or container isn't running.\\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services\",\n      \"score\": 0.6467,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"econnrefus\",\n        \"fell\",\n        \"post\",\n        \"rate\",\n        \"redi\",\n        \"refus\",\n        \"unavail\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"3. Map the pattern to a specific runbook\",\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook\",\n      \"anchor\": \"3-map-the-pattern-to-a-specific-runbook\",\n      \"snippet\": \"Pattern or signal | Runbook |\\n|-------------------|---------|\\n| `could not acquire a **connection**`, `HikariPool` | [**database**-**connection**-pool](database-connection-pool.md) |\\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\\n| `Timeout calling  ` | [dependency-timeouts](dependency-timeouts.md) |\\n| `**ECONNREFUSED**` to **Redis**, **cache** fallback | [**redis**-outage](redis-outage.md) |\\n| CrashLoopBackOff\",\n      \"score\": 0.5175,\n      \"matched_terms\": [\n        \"5xx\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"econnrefus\",\n        \"error\",\n        \"rate\",\n        \"redi\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"Redis cache outage > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"**Redis** is a shared **cache** for sessions, idempotency keys and hot reads. The services are built to **fail open**: when **Redis** is unreachable they fall **back** to Postgres. So a **Redis** outage rarely causes hard \u2026 **errors** at first. It shows up as **latency on every service at once**, plus more load on the **database**. If the outage lasts, the extra **database** load can exhaust **connection** pools and cause real **errors**\",\n      \"score\": 0.4739,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"econnrefus\",\n        \"error\",\n        \"redi\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"High error rate (HTTP 5xx) > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"change correlates with the start time, roll it **back**.\\n2. If one endpoint dominates, consider disabling it with a feature flag or **rate**-limiting it.\\n3. Communicate: **post** the impact and ETA in `#incidents \u2026 **error** **rate** stays above 5% for more than 10 minutes\",\n      \"score\": 0.4006,\n      \"matched_terms\": [\n        \"5xx\",\n        \"back\",\n        \"error\",\n        \"post\",\n        \"rate\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"heading\": \"Dependencies\",\n      \"heading_path\": \"payment-service > Dependencies\",\n      \"anchor\": \"dependencies\",\n      \"snippet\": \"Dependency | Why | Failure impact |\\n|------------|-----|----------------|\\n| Postgres (`payments` **database**) | Payment records | **Connection** pool exhaustion causes HTTP 500 on `**POST** /api/v1/pay` |\\n| **Redis** | Idempotency keys, session **cache** | Falls **back** to Postgres, so latency rises |\\n| user-service | Account and fraud\",\n      \"score\": 0.3464,\n      \"matched_terms\": [\n        \"back\",\n        \"cach\",\n        \"connect\",\n        \"databas\",\n        \"post\",\n        \"redi\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Database connection pool exhaustion > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"release changed the pool settings, roll **back** first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then \u2026 kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_**connections**` minus a 20% reserve.\\n3. If **connections** are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow\",\n      \"score\": 0.329,\n      \"matched_terms\": [\n        \"back\",\n        \"connect\",\n        \"databas\",\n        \"rate\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Known issues\",\n      \"heading_path\": \"Database connection pool exhaustion > Known issues\",\n      \"anchor\": \"known-issues\",\n      \"snippet\": \"commit titled \\\"tune db pool\\\". Within minutes of the rollout, requests queued for a **connection**, `waiting` climbed above 15 and `**POST** /api/v1/pay` returned HTTP 500. Fix: roll **back** to `v1.8.1`, then restore `DB_POOL_SIZE \u2026 call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every **connection**. See [dependency-timeouts](dependency-timeouts.md\",\n      \"score\": 0.3242,\n      \"matched_terms\": [\n        \"back\",\n        \"connect\",\n        \"databas\",\n        \"post\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"heading\": \"Endpoints\",\n      \"heading_path\": \"payment-service > Endpoints\",\n      \"anchor\": \"endpoints\",\n      \"snippet\": \"**POST** /api/v1/pay`: authorize and capture a payment (p95 SLO 800 **ms**)\\n- `**GET** /api/v1/payments/{**id**}`: payment status\\n- `**POST** /api/v1/refunds`: refunds\",\n      \"score\": 0.266,\n      \"matched_terms\": [\n        \"get\",\n        \"id\",\n        \"ms\",\n        \"post\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "slow latency",
+        "services": [
+          "payment-service"
+        ]
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [
+              "payment-service"
+            ],
+            "tags": []
+          },
+          "match": "any",
+          "query": "slow latency",
+          "results": [
+            {
+              "anchor": "2-why-is-it-slow",
+              "doc_type": "runbook",
+              "heading": "2. Why is it slow?",
+              "heading_path": "Slow database queries > Diagnosis > 2. Why is it slow?",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "rank": 1,
+              "score": 0.8355,
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "snippet": "- `EXPLAIN (ANALYZE, BUFFERS)  ` on a replica: look for `Seq Scan` on a",
+              "title": "Slow database queries"
+            },
+            {
+              "anchor": "1-find-the-slow-statements",
+              "doc_type": "runbook",
+              "heading": "1. Find the slow statements",
+              "heading_path": "Slow database queries > Diagnosis > 1. Find the slow statements",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "rank": 2,
+              "score": 0.8319,
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "snippet": "- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat",
+              "title": "Slow database queries"
+            },
+            {
+              "anchor": "1-identify-the-slow-dependency",
+              "doc_type": "runbook",
+              "heading": "1. Identify the slow dependency",
+              "heading_path": "Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "rank": 3,
+              "score": 0.7985,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "target: the log message names the dependency and the endpoint (`Timeout calling      `).\n- Check the dependency's **latency** (p95/p99) and error rate over the same window. If its **latency** rose first, it is the cause",
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Downstream dependency timeouts > Symptoms",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "rank": 4,
+              "score": 0.7863,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\n- Caller **latency** is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\n- The dependency \u2026 logs show **slow** requests or **slow** queries (for example `**Slow** query on stock_levels took 4200ms`), often without errors.\n- Thread or connection pools in the caller fill up with requests that are waiting.\n- Alerts: `DependencyTimeouts",
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "Database connection pool exhaustion > Summary",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 5,
+              "score": 0.7619,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and **latency** climbs for every request that touches the database.\n\nThe pool runs out for one of three reasons \u2026 traffic, usually after a config change or a new release;\n- connections are **held too long**, because of **slow** queries, long transactions or a **slow** dependency called inside a transaction;\n- connections **leak**, because code paths never",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Database connection pool exhaustion > Mitigation",
+              "matched_terms": [
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 6,
+              "score": 0.3939,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\n3. If connections are held by **slow** queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow [**slow**-database-queries](slow-database-queries.md).\n4. Shed",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "escalation",
+              "doc_type": "runbook",
+              "heading": "Escalation",
+              "heading_path": "Redis cache outage > Escalation",
+              "matched_terms": [
+                "latenc"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 7,
+              "score": 0.3904,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "platform-oncall` owns Redis.\n- If payment **latency** breaches the SLO (p95 > 1 s) for more than 15 minutes: SEV-2 in `#incidents",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "prevention",
+              "doc_type": "runbook",
+              "heading": "Prevention",
+              "heading_path": "Redis cache outage > Prevention",
+              "matched_terms": [
+                "latenc"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 8,
+              "score": 0.3888,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "automatic failover.\n- Alert on `redis_up == 0` and on the cache hit rate, not only on service **latency**.\n- Load-test the database with a cold cache so the fallback path is sized",
+              "title": "Redis cache outage"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "latenc",
+            "slow"
+          ],
+          "total_matches": 39
+        },
+        "text": "{\n  \"query\": \"slow latency\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"latenc\",\n    \"slow\"\n  ],\n  \"filters\": {\n    \"services\": [\n      \"payment-service\"\n    ],\n    \"tags\": []\n  },\n  \"total_matches\": 39,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"heading\": \"2. Why is it slow?\",\n      \"heading_path\": \"Slow database queries > Diagnosis > 2. Why is it slow?\",\n      \"anchor\": \"2-why-is-it-slow\",\n      \"snippet\": \"- `EXPLAIN (ANALYZE, BUFFERS)  ` on a replica: look for `Seq Scan` on a\",\n      \"score\": 0.8355,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"heading\": \"1. Find the slow statements\",\n      \"heading_path\": \"Slow database queries > Diagnosis > 1. Find the slow statements\",\n      \"anchor\": \"1-find-the-slow-statements\",\n      \"snippet\": \"- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat\",\n      \"score\": 0.8319,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"1. Identify the slow dependency\",\n      \"heading_path\": \"Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency\",\n      \"anchor\": \"1-identify-the-slow-dependency\",\n      \"snippet\": \"target: the log message names the dependency and the endpoint (`Timeout calling      `).\\n- Check the dependency's **latency** (p95/p99) and error rate over the same window. If its **latency** rose first, it is the cause\",\n      \"score\": 0.7985,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Downstream dependency timeouts > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\\n- Caller **latency** is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\\n- The dependency \u2026 logs show **slow** requests or **slow** queries (for example `**Slow** query on stock_levels took 4200ms`), often without errors.\\n- Thread or connection pools in the caller fill up with requests that are waiting.\\n- Alerts: `DependencyTimeouts\",\n      \"score\": 0.7863,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"Database connection pool exhaustion > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and **latency** climbs for every request that touches the database.\\n\\nThe pool runs out for one of three reasons \u2026 traffic, usually after a config change or a new release;\\n- connections are **held too long**, because of **slow** queries, long transactions or a **slow** dependency called inside a transaction;\\n- connections **leak**, because code paths never\",\n      \"score\": 0.7619,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Database connection pool exhaustion > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\\n3. If connections are held by **slow** queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow [**slow**-database-queries](slow-database-queries.md).\\n4. Shed\",\n      \"score\": 0.3939,\n      \"matched_terms\": [\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Escalation\",\n      \"heading_path\": \"Redis cache outage > Escalation\",\n      \"anchor\": \"escalation\",\n      \"snippet\": \"platform-oncall` owns Redis.\\n- If payment **latency** breaches the SLO (p95 > 1 s) for more than 15 minutes: SEV-2 in `#incidents\",\n      \"score\": 0.3904,\n      \"matched_terms\": [\n        \"latenc\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Prevention\",\n      \"heading_path\": \"Redis cache outage > Prevention\",\n      \"anchor\": \"prevention\",\n      \"snippet\": \"automatic failover.\\n- Alert on `redis_up == 0` and on the cache hit rate, not only on service **latency**.\\n- Load-test the database with a cold cache so the fallback path is sized\",\n      \"score\": 0.3888,\n      \"matched_terms\": [\n        \"latenc\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "slow latency"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [],
+            "tags": []
+          },
+          "match": "any",
+          "query": "slow latency",
+          "results": [
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "High latency (p95/p99) > Summary",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/high-latency.md",
+              "rank": 1,
+              "score": 0.8442,
+              "services": [],
+              "snippet": "This is a generic triage runbook for a service whose p95 or p99 **latency** is above its SLO. **Latency** comes from one of three places: **waiting** (queues, pools, locks), **working** (CPU, GC, **slow** queries",
+              "title": "High latency (p95/p99)"
+            },
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "High latency (p95/p99) > Symptoms",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/high-latency.md",
+              "rank": 2,
+              "score": 0.8358,
+              "services": [],
+              "snippet": "rate(http_request_duration_seconds_bucket[5m]))) > 1`.\n- Users report that pages or payments are **slow**; there may be no errors.\n- Callers start timing out (HTTP 504) if **latency** passes their client timeout",
+              "title": "High latency (p95/p99)"
+            },
+            {
+              "anchor": "2-why-is-it-slow",
+              "doc_type": "runbook",
+              "heading": "2. Why is it slow?",
+              "heading_path": "Slow database queries > Diagnosis > 2. Why is it slow?",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "rank": 3,
+              "score": 0.8355,
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "snippet": "- `EXPLAIN (ANALYZE, BUFFERS)  ` on a replica: look for `Seq Scan` on a",
+              "title": "Slow database queries"
+            },
+            {
+              "anchor": "1-find-the-slow-statements",
+              "doc_type": "runbook",
+              "heading": "1. Find the slow statements",
+              "heading_path": "Slow database queries > Diagnosis > 1. Find the slow statements",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "rank": 4,
+              "score": 0.8319,
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "snippet": "- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat",
+              "title": "Slow database queries"
+            },
+            {
+              "anchor": "1-identify-the-slow-dependency",
+              "doc_type": "runbook",
+              "heading": "1. Identify the slow dependency",
+              "heading_path": "Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "rank": 5,
+              "score": 0.7985,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "target: the log message names the dependency and the endpoint (`Timeout calling      `).\n- Check the dependency's **latency** (p95/p99) and error rate over the same window. If its **latency** rose first, it is the cause",
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Downstream dependency timeouts > Symptoms",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "rank": 6,
+              "score": 0.7863,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\n- Caller **latency** is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\n- The dependency \u2026 logs show **slow** requests or **slow** queries (for example `**Slow** query on stock_levels took 4200ms`), often without errors.\n- Thread or connection pools in the caller fill up with requests that are waiting.\n- Alerts: `DependencyTimeouts",
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "Database connection pool exhaustion > Summary",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 7,
+              "score": 0.7619,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and **latency** climbs for every request that touches the database.\n\nThe pool runs out for one of three reasons \u2026 traffic, usually after a config change or a new release;\n- connections are **held too long**, because of **slow** queries, long transactions or a **slow** dependency called inside a transaction;\n- connections **leak**, because code paths never",
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "anchor": "dashboards",
+              "doc_type": "service",
+              "heading": "Dashboards",
+              "heading_path": "inventory-service > Dashboards",
+              "matched_terms": [
+                "latenc",
+                "slow"
+              ],
+              "path": "knowledge-base/services/inventory-service.md",
+              "rank": 8,
+              "score": 0.7541,
+              "services": [
+                "inventory-service"
+              ],
+              "snippet": "Kibana logs: Discover, filter `service: inventory-service` (index `inventory-prod-*`)\n- Grafana: \"inventory-service overview\" (request rate, p95 **latency**, **slow** queries",
+              "title": "inventory-service"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "latenc",
+            "slow"
+          ],
+          "total_matches": 59
+        },
+        "text": "{\n  \"query\": \"slow latency\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"latenc\",\n    \"slow\"\n  ],\n  \"filters\": {\n    \"services\": [],\n    \"tags\": []\n  },\n  \"total_matches\": 59,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/high-latency.md\",\n      \"title\": \"High latency (p95/p99)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"High latency (p95/p99) > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"This is a generic triage runbook for a service whose p95 or p99 **latency** is above its SLO. **Latency** comes from one of three places: **waiting** (queues, pools, locks), **working** (CPU, GC, **slow** queries\",\n      \"score\": 0.8442,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/high-latency.md\",\n      \"title\": \"High latency (p95/p99)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"High latency (p95/p99) > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"rate(http_request_duration_seconds_bucket[5m]))) > 1`.\\n- Users report that pages or payments are **slow**; there may be no errors.\\n- Callers start timing out (HTTP 504) if **latency** passes their client timeout\",\n      \"score\": 0.8358,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"heading\": \"2. Why is it slow?\",\n      \"heading_path\": \"Slow database queries > Diagnosis > 2. Why is it slow?\",\n      \"anchor\": \"2-why-is-it-slow\",\n      \"snippet\": \"- `EXPLAIN (ANALYZE, BUFFERS)  ` on a replica: look for `Seq Scan` on a\",\n      \"score\": 0.8355,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"heading\": \"1. Find the slow statements\",\n      \"heading_path\": \"Slow database queries > Diagnosis > 1. Find the slow statements\",\n      \"anchor\": \"1-find-the-slow-statements\",\n      \"snippet\": \"- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat\",\n      \"score\": 0.8319,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"1. Identify the slow dependency\",\n      \"heading_path\": \"Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency\",\n      \"anchor\": \"1-identify-the-slow-dependency\",\n      \"snippet\": \"target: the log message names the dependency and the endpoint (`Timeout calling      `).\\n- Check the dependency's **latency** (p95/p99) and error rate over the same window. If its **latency** rose first, it is the cause\",\n      \"score\": 0.7985,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Downstream dependency timeouts > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\\n- Caller **latency** is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\\n- The dependency \u2026 logs show **slow** requests or **slow** queries (for example `**Slow** query on stock_levels took 4200ms`), often without errors.\\n- Thread or connection pools in the caller fill up with requests that are waiting.\\n- Alerts: `DependencyTimeouts\",\n      \"score\": 0.7863,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"Database connection pool exhaustion > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and **latency** climbs for every request that touches the database.\\n\\nThe pool runs out for one of three reasons \u2026 traffic, usually after a config change or a new release;\\n- connections are **held too long**, because of **slow** queries, long transactions or a **slow** dependency called inside a transaction;\\n- connections **leak**, because code paths never\",\n      \"score\": 0.7619,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/services/inventory-service.md\",\n      \"title\": \"inventory-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"inventory-service\"\n      ],\n      \"heading\": \"Dashboards\",\n      \"heading_path\": \"inventory-service > Dashboards\",\n      \"anchor\": \"dashboards\",\n      \"snippet\": \"Kibana logs: Discover, filter `service: inventory-service` (index `inventory-prod-*`)\\n- Grafana: \\\"inventory-service overview\\\" (request rate, p95 **latency**, **slow** queries\",\n      \"score\": 0.7541,\n      \"matched_terms\": [\n        \"latenc\",\n        \"slow\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/redis-outage.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# Redis cache outage\n\n## Summary\nRedis is a shared cache for sessions, idempotency keys and hot reads. The services are built to **fail open**: when Redis is unreachable they fall back to Postgres. So a Redis outage rarely causes hard errors at first. It shows up as **latency on every service at once**, plus more load on the database. If the outage lasts, the extra database load can exhaust connection pools and cause real errors.\n\n## Symptoms\n- Log pattern: `Redis connection refused: redis:6379 (ECONNREFUSED)` in several services at the same time.\n- Log pattern: `Cache unavailable, fell back to database (POST /api/v1/pay ...)`.\n- Latency rises on **all** services together, and the cache hit rate drops to ~0.\n- Database queries per second and connection usage go up.\n- `redis-cli -h redis ping` fails, or the Redis pod or container isn't running.\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services.\n\n## Known issues\n- **Redis scaled to 0 during maintenance (INC-2026-061).** Redis was stopped for a node drain and not restarted. Every service logged `ECONNREFUSED` and fell back to the database, and latency rose everywhere. Fix: restart Redis; the caches warm up within about 5 minutes.\n\n## Diagnosis\n### 1. Confirm Redis is down or unreachable\n- `kubectl get pods -n prod -l app=redis` (or `docker ps --filter name=redis` locally).\n- `redis-cli -h <host> -p 6379 ping` should return `PONG`.\n- Check the Redis logs for OOM, `MISCONF` persistence errors or maxclients.\n\n### 2. Measure the blast radius\n- Which services log `ECONNREFUSED` or cache fallbacks? If all of them do, Redis is the shared cause.\n- Database load: connections and queries per second compared with the baseline. Is any pool close to exhaustion? (See [database-connection-pool](database-connection-pool.md).)\n\n### 3. Network or Redis?\n- If Redis is up but clients can't connect, check the NetworkPolicy, DNS (`nslookup redis`) and whether `maxclients` is reached.\n\n## Mitigation\n1. **Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or restart the container.\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or rate-limit expensive read endpoints.\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\n4. After recovery, watch the cache hit rate recover and latency return to baseline (about 5 minutes).\n\n## Rollback\n- If a config or deployment change broke Redis (memory limit, persistence settings), revert it: `kubectl rollout undo statefulset/redis -n prod`.\n\n## Escalation\n- `#platform-oncall` owns Redis.\n- If payment latency breaches the SLO (p95 > 1 s) for more than 15 minutes: SEV-2 in `#incidents`.\n\n## Prevention\n- Run Redis with a replica and Sentinel, or use a managed service with automatic failover.\n- Alert on `redis_up == 0` and on the cache hit rate, not only on service latency.\n- Load-test the database with a cold cache so the fallback path is sized.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "RedisDown",
+              "CacheHitRateLow",
+              "HighLatency"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [
+              "payment-service",
+              "order-service",
+              "user-service",
+              "inventory-service"
+            ],
+            "tags": [
+              "redis",
+              "cache",
+              "econnrefused",
+              "fallback",
+              "latency",
+              "database-load"
+            ],
+            "title": "Redis cache outage",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "Redis cache outage > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "Redis cache outage > Symptoms"
+            },
+            {
+              "anchor": "known-issues",
+              "heading_path": "Redis cache outage > Known issues"
+            },
+            {
+              "anchor": "1-confirm-redis-is-down-or-unreachable",
+              "heading_path": "Redis cache outage > Diagnosis > 1. Confirm Redis is down or unreachable"
+            },
+            {
+              "anchor": "2-measure-the-blast-radius",
+              "heading_path": "Redis cache outage > Diagnosis > 2. Measure the blast radius"
+            },
+            {
+              "anchor": "3-network-or-redis",
+              "heading_path": "Redis cache outage > Diagnosis > 3. Network or Redis?"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "Redis cache outage > Mitigation"
+            },
+            {
+              "anchor": "rollback",
+              "heading_path": "Redis cache outage > Rollback"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "Redis cache outage > Escalation"
+            },
+            {
+              "anchor": "prevention",
+              "heading_path": "Redis cache outage > Prevention"
+            }
+          ],
+          "path": "knowledge-base/runbooks/redis-outage.md",
+          "services": [
+            "payment-service",
+            "order-service",
+            "user-service",
+            "inventory-service"
+          ],
+          "tags": [
+            "redis",
+            "cache",
+            "econnrefused",
+            "fallback",
+            "latency",
+            "database-load"
+          ],
+          "title": "Redis cache outage",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n  \"title\": \"Redis cache outage\",\n  \"doc_type\": \"runbook\",\n  \"services\": [\n    \"payment-service\",\n    \"order-service\",\n    \"user-service\",\n    \"inventory-service\"\n  ],\n  \"tags\": [\n    \"redis\",\n    \"cache\",\n    \"econnrefused\",\n    \"fallback\",\n    \"latency\",\n    \"database-load\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"redis\",\n      \"cache\",\n      \"econnrefused\",\n      \"fallback\",\n      \"latency\",\n      \"database-load\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"Redis cache outage\",\n    \"alerts\": [\n      \"RedisDown\",\n      \"CacheHitRateLow\",\n      \"HighLatency\"\n    ],\n    \"services\": [\n      \"payment-service\",\n      \"order-service\",\n      \"user-service\",\n      \"inventory-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# Redis cache outage\\n\\n## Summary\\nRedis is a shared cache for sessions, idempotency keys and hot reads. The services are built to **fail open**: when Redis is unreachable they fall back to Postgres. So a Redis outage rarely causes hard errors at first. It shows up as **latency on every service at once**, plus more load on the database. If the outage lasts, the extra database load can exhaust connection pools and cause real errors.\\n\\n## Symptoms\\n- Log pattern: `Redis connection refused: redis:6379 (ECONNREFUSED)` in several services at the same time.\\n- Log pattern: `Cache unavailable, fell back to database (POST /api/v1/pay ...)`.\\n- Latency rises on **all** services together, and the cache hit rate drops to ~0.\\n- Database queries per second and connection usage go up.\\n- `redis-cli -h redis ping` fails, or the Redis pod or container isn't running.\\n- Alerts: `RedisDown`, `CacheHitRateLow`, then `HighLatency` on several services.\\n\\n## Known issues\\n- **Redis scaled to 0 during maintenance (INC-2026-061).** Redis was stopped for a node drain and not restarted. Every service logged `ECONNREFUSED` and fell back to the database, and latency rose everywhere. Fix: restart Redis; the caches warm up within about 5 minutes.\\n\\n## Diagnosis\\n### 1. Confirm Redis is down or unreachable\\n- `kubectl get pods -n prod -l app=redis` (or `docker ps --filter name=redis` locally).\\n- `redis-cli -h <host> -p 6379 ping` should return `PONG`.\\n- Check the Redis logs for OOM, `MISCONF` persistence errors or maxclients.\\n\\n### 2. Measure the blast radius\\n- Which services log `ECONNREFUSED` or cache fallbacks? If all of them do, Redis is the shared cause.\\n- Database load: connections and queries per second compared with the baseline. Is any pool close to exhaustion? (See [database-connection-pool](database-connection-pool.md).)\\n\\n### 3. Network or Redis?\\n- If Redis is up but clients can't connect, check the NetworkPolicy, DNS (`nslookup redis`) and whether `maxclients` is reached.\\n\\n## Mitigation\\n1. **Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or restart the container.\\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or rate-limit expensive read endpoints.\\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\\n4. After recovery, watch the cache hit rate recover and latency return to baseline (about 5 minutes).\\n\\n## Rollback\\n- If a config or deployment change broke Redis (memory limit, persistence settings), revert it: `kubectl rollout undo statefulset/redis -n prod`.\\n\\n## Escalation\\n- `#platform-oncall` owns Redis.\\n- If payment latency breaches the SLO (p95 > 1 s) for more than 15 minutes: SEV-2 in `#incidents`.\\n\\n## Prevention\\n- Run Redis with a replica and Sentinel, or use a managed service with automatic failover.\\n- Alert on `redis_up == 0` and on the cache hit rate, not only on service latency.\\n- Load-test the database with a cold cache so the fallback path is sized.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"Redis cache outage > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Known issues\",\n      \"anchor\": \"known-issues\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Diagnosis > 1. Confirm Redis is down or unreachable\",\n      \"anchor\": \"1-confirm-redis-is-down-or-unreachable\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Diagnosis > 2. Measure the blast radius\",\n      \"anchor\": \"2-measure-the-blast-radius\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Diagnosis > 3. Network or Redis?\",\n      \"anchor\": \"3-network-or-redis\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Rollback\",\n      \"anchor\": \"rollback\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Escalation\",\n      \"anchor\": \"escalation\"\n    },\n    {\n      \"heading_path\": \"Redis cache outage > Prevention\",\n      \"anchor\": \"prevention\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/high-error-rate.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# High error rate (HTTP 5xx)\n\n## Summary\nThis is a generic triage runbook for a service whose 5xx rate is above its SLO (for example above 1% for 5 minutes). A high error rate is a symptom, not a cause. The goal is to find out quickly **which** errors are new, **when** they started and **what** changed at that time, and then move to the specific runbook.\n\n## Symptoms\n- Alert `HighErrorRate`: `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.01`.\n- An `ErrorBudgetBurn` page for a fast budget burn.\n- Users report failed requests, and callers log HTTP 500 / 502 / 503 / 504 from this service.\n\n## Diagnosis\n### 1. What kind of errors?\n- Group the error logs by message pattern, endpoint and status code. A **new** pattern is the strongest lead; patterns that also exist in the 24 h baseline are usually noise.\n- Status codes point in a direction:\n  - **500**: the application threw an error (database, bug or config).\n  - **502/503**: nothing healthy is serving (pods not ready, crash loops, capacity).\n  - **504**: a slow dependency or a timeout ([dependency-timeouts](dependency-timeouts.md)).\n\n### 2. When did it start, and what changed?\n- The first-seen time of the new pattern, compared with deployments, config changes, feature flags, traffic spikes and infrastructure events.\n- A release in the previous 30 minutes: see [bad-deployment-rollback](bad-deployment-rollback.md).\n\n### 3. Map the pattern to a specific runbook\n| Pattern or signal | Runbook |\n|-------------------|---------|\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\n| `Timeout calling <service>` | [dependency-timeouts](dependency-timeouts.md) |\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\n| CrashLoopBackOff | [pod-crashloop](pod-crashloop.md) |\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md) |\n\n## Mitigation\n1. If a change correlates with the start time, roll it back.\n2. If one endpoint dominates, consider disabling it with a feature flag or rate-limiting it.\n3. Communicate: post the impact and ETA in `#incidents` if the error rate stays above 5% for more than 10 minutes.\n\n## Escalation\n- The owning team's on-call (service docs in `knowledge-base/services/`).\n- SEV-2 if customer-facing errors stay above 5% for more than 15 minutes; SEV-1 if payments or login are fully down.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "HighErrorRate",
+              "ErrorBudgetBurn"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [],
+            "tags": [
+              "errors",
+              "http-500",
+              "http-5xx",
+              "error-rate",
+              "slo",
+              "triage"
+            ],
+            "title": "High error rate (HTTP 5xx)",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "High error rate (HTTP 5xx) > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "High error rate (HTTP 5xx) > Symptoms"
+            },
+            {
+              "anchor": "1-what-kind-of-errors",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 1. What kind of errors?"
+            },
+            {
+              "anchor": "2-when-did-it-start-and-what-changed",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 2. When did it start, and what changed?"
+            },
+            {
+              "anchor": "3-map-the-pattern-to-a-specific-runbook",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "High error rate (HTTP 5xx) > Mitigation"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "High error rate (HTTP 5xx) > Escalation"
+            }
+          ],
+          "path": "knowledge-base/runbooks/high-error-rate.md",
+          "services": [],
+          "tags": [
+            "errors",
+            "http-500",
+            "http-5xx",
+            "error-rate",
+            "slo",
+            "triage"
+          ],
+          "title": "High error rate (HTTP 5xx)",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n  \"title\": \"High error rate (HTTP 5xx)\",\n  \"doc_type\": \"runbook\",\n  \"services\": [],\n  \"tags\": [\n    \"errors\",\n    \"http-500\",\n    \"http-5xx\",\n    \"error-rate\",\n    \"slo\",\n    \"triage\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"errors\",\n      \"http-500\",\n      \"http-5xx\",\n      \"error-rate\",\n      \"slo\",\n      \"triage\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"High error rate (HTTP 5xx)\",\n    \"alerts\": [\n      \"HighErrorRate\",\n      \"ErrorBudgetBurn\"\n    ],\n    \"services\": [],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# High error rate (HTTP 5xx)\\n\\n## Summary\\nThis is a generic triage runbook for a service whose 5xx rate is above its SLO (for example above 1% for 5 minutes). A high error rate is a symptom, not a cause. The goal is to find out quickly **which** errors are new, **when** they started and **what** changed at that time, and then move to the specific runbook.\\n\\n## Symptoms\\n- Alert `HighErrorRate`: `sum(rate(http_requests_total{status=~\\\"5..\\\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.01`.\\n- An `ErrorBudgetBurn` page for a fast budget burn.\\n- Users report failed requests, and callers log HTTP 500 / 502 / 503 / 504 from this service.\\n\\n## Diagnosis\\n### 1. What kind of errors?\\n- Group the error logs by message pattern, endpoint and status code. A **new** pattern is the strongest lead; patterns that also exist in the 24 h baseline are usually noise.\\n- Status codes point in a direction:\\n  - **500**: the application threw an error (database, bug or config).\\n  - **502/503**: nothing healthy is serving (pods not ready, crash loops, capacity).\\n  - **504**: a slow dependency or a timeout ([dependency-timeouts](dependency-timeouts.md)).\\n\\n### 2. When did it start, and what changed?\\n- The first-seen time of the new pattern, compared with deployments, config changes, feature flags, traffic spikes and infrastructure events.\\n- A release in the previous 30 minutes: see [bad-deployment-rollback](bad-deployment-rollback.md).\\n\\n### 3. Map the pattern to a specific runbook\\n| Pattern or signal | Runbook |\\n|-------------------|---------|\\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\\n| `Timeout calling <service>` | [dependency-timeouts](dependency-timeouts.md) |\\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\\n| CrashLoopBackOff | [pod-crashloop](pod-crashloop.md) |\\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md) |\\n\\n## Mitigation\\n1. If a change correlates with the start time, roll it back.\\n2. If one endpoint dominates, consider disabling it with a feature flag or rate-limiting it.\\n3. Communicate: post the impact and ETA in `#incidents` if the error rate stays above 5% for more than 10 minutes.\\n\\n## Escalation\\n- The owning team's on-call (service docs in `knowledge-base/services/`).\\n- SEV-2 if customer-facing errors stay above 5% for more than 15 minutes; SEV-1 if payments or login are fully down.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 1. What kind of errors?\",\n      \"anchor\": \"1-what-kind-of-errors\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 2. When did it start, and what changed?\",\n      \"anchor\": \"2-when-did-it-start-and-what-changed\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook\",\n      \"anchor\": \"3-map-the-pattern-to-a-specific-runbook\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Escalation\",\n      \"anchor\": \"escalation\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/services/payment-service.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# payment-service\n\n## Overview\npayment-service processes card payments for orders. It authorizes and captures payments through the card processor, and stores payment records and idempotency keys. It is on the checkout critical path: if it's down, no order can be paid.\n\n## Ownership\n- **Team:** payments\n- **On-call:** `#payments-oncall` (PagerDuty schedule \"Payments Primary\")\n- **Escalation:** payments engineering manager, then the SRE incident commander in `#incidents`\n- **Tier:** 1 (customer-facing, revenue-critical)\n\n## Dependencies\n| Dependency | Why | Failure impact |\n|------------|-----|----------------|\n| Postgres (`payments` database) | Payment records | Connection pool exhaustion causes HTTP 500 on `POST /api/v1/pay` |\n| Redis | Idempotency keys, session cache | Falls back to Postgres, so latency rises |\n| user-service | Account and fraud checks | Payments fail with 502/503 when user-service is degraded |\n\n## Endpoints\n- `POST /api/v1/pay`: authorize and capture a payment (p95 SLO 800 ms)\n- `GET /api/v1/payments/{id}`: payment status\n- `POST /api/v1/refunds`: refunds\n\n## Configuration\n| Setting | Default | Notes |\n|---------|---------|-------|\n| `DB_POOL_SIZE` | 20 | Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections`. **Never below 10 in production.** |\n| `DB_POOL_TIMEOUT_MS` | 5000 | Wait for a free connection before failing with HTTP 500 |\n| `REDIS_URL` | `redis://redis:6379` | |\n| `USER_SERVICE_TIMEOUT_MS` | 1000 | |\n\n## Dashboards\n- Kibana logs: Discover, filter `service: payment-service` (index `payment-prod-*`)\n- Grafana: \"payment-service overview\" (request rate, 5xx rate, p95 latency, DB pool active/max)\n- Alertmanager: `service=\"payment-service\"`\n\n## SLOs\n- Availability 99.9% (5xx rate below 0.1% over 30 days)\n- p95 latency of `POST /api/v1/pay` below 800 ms\n\n## Known failure modes\n- DB pool exhaustion after config changes: [database-connection-pool](../runbooks/database-connection-pool.md)\n- Cache outage: [redis-outage](../runbooks/redis-outage.md)\n- Bad releases: [bad-deployment-rollback](../runbooks/bad-deployment-rollback.md)",
+          "doc_type": "service",
+          "metadata": {
+            "last_reviewed": "2026-09-01",
+            "owner": "payments",
+            "services": [
+              "payment-service"
+            ],
+            "tags": [
+              "service",
+              "payments",
+              "ownership"
+            ],
+            "title": "payment-service",
+            "type": "service"
+          },
+          "outline": [
+            {
+              "anchor": "overview",
+              "heading_path": "payment-service > Overview"
+            },
+            {
+              "anchor": "ownership",
+              "heading_path": "payment-service > Ownership"
+            },
+            {
+              "anchor": "dependencies",
+              "heading_path": "payment-service > Dependencies"
+            },
+            {
+              "anchor": "endpoints",
+              "heading_path": "payment-service > Endpoints"
+            },
+            {
+              "anchor": "configuration",
+              "heading_path": "payment-service > Configuration"
+            },
+            {
+              "anchor": "dashboards",
+              "heading_path": "payment-service > Dashboards"
+            },
+            {
+              "anchor": "slos",
+              "heading_path": "payment-service > SLOs"
+            },
+            {
+              "anchor": "known-failure-modes",
+              "heading_path": "payment-service > Known failure modes"
+            }
+          ],
+          "path": "knowledge-base/services/payment-service.md",
+          "services": [
+            "payment-service"
+          ],
+          "tags": [
+            "service",
+            "payments",
+            "ownership"
+          ],
+          "title": "payment-service",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/services/payment-service.md\",\n  \"title\": \"payment-service\",\n  \"doc_type\": \"service\",\n  \"services\": [\n    \"payment-service\"\n  ],\n  \"tags\": [\n    \"service\",\n    \"payments\",\n    \"ownership\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"service\",\n      \"payments\",\n      \"ownership\"\n    ],\n    \"type\": \"service\",\n    \"owner\": \"payments\",\n    \"title\": \"payment-service\",\n    \"services\": [\n      \"payment-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# payment-service\\n\\n## Overview\\npayment-service processes card payments for orders. It authorizes and captures payments through the card processor, and stores payment records and idempotency keys. It is on the checkout critical path: if it's down, no order can be paid.\\n\\n## Ownership\\n- **Team:** payments\\n- **On-call:** `#payments-oncall` (PagerDuty schedule \\\"Payments Primary\\\")\\n- **Escalation:** payments engineering manager, then the SRE incident commander in `#incidents`\\n- **Tier:** 1 (customer-facing, revenue-critical)\\n\\n## Dependencies\\n| Dependency | Why | Failure impact |\\n|------------|-----|----------------|\\n| Postgres (`payments` database) | Payment records | Connection pool exhaustion causes HTTP 500 on `POST /api/v1/pay` |\\n| Redis | Idempotency keys, session cache | Falls back to Postgres, so latency rises |\\n| user-service | Account and fraud checks | Payments fail with 502/503 when user-service is degraded |\\n\\n## Endpoints\\n- `POST /api/v1/pay`: authorize and capture a payment (p95 SLO 800 ms)\\n- `GET /api/v1/payments/{id}`: payment status\\n- `POST /api/v1/refunds`: refunds\\n\\n## Configuration\\n| Setting | Default | Notes |\\n|---------|---------|-------|\\n| `DB_POOL_SIZE` | 20 | Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections`. **Never below 10 in production.** |\\n| `DB_POOL_TIMEOUT_MS` | 5000 | Wait for a free connection before failing with HTTP 500 |\\n| `REDIS_URL` | `redis://redis:6379` | |\\n| `USER_SERVICE_TIMEOUT_MS` | 1000 | |\\n\\n## Dashboards\\n- Kibana logs: Discover, filter `service: payment-service` (index `payment-prod-*`)\\n- Grafana: \\\"payment-service overview\\\" (request rate, 5xx rate, p95 latency, DB pool active/max)\\n- Alertmanager: `service=\\\"payment-service\\\"`\\n\\n## SLOs\\n- Availability 99.9% (5xx rate below 0.1% over 30 days)\\n- p95 latency of `POST /api/v1/pay` below 800 ms\\n\\n## Known failure modes\\n- DB pool exhaustion after config changes: [database-connection-pool](../runbooks/database-connection-pool.md)\\n- Cache outage: [redis-outage](../runbooks/redis-outage.md)\\n- Bad releases: [bad-deployment-rollback](../runbooks/bad-deployment-rollback.md)\",\n  \"outline\": [\n    {\n      \"heading_path\": \"payment-service > Overview\",\n      \"anchor\": \"overview\"\n    },\n    {\n      \"heading_path\": \"payment-service > Ownership\",\n      \"anchor\": \"ownership\"\n    },\n    {\n      \"heading_path\": \"payment-service > Dependencies\",\n      \"anchor\": \"dependencies\"\n    },\n    {\n      \"heading_path\": \"payment-service > Endpoints\",\n      \"anchor\": \"endpoints\"\n    },\n    {\n      \"heading_path\": \"payment-service > Configuration\",\n      \"anchor\": \"configuration\"\n    },\n    {\n      \"heading_path\": \"payment-service > Dashboards\",\n      \"anchor\": \"dashboards\"\n    },\n    {\n      \"heading_path\": \"payment-service > SLOs\",\n      \"anchor\": \"slos\"\n    },\n    {\n      \"heading_path\": \"payment-service > Known failure modes\",\n      \"anchor\": \"known-failure-modes\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/slow-database-queries.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# Slow database queries\n\n## Summary\nA query that used to take milliseconds now takes seconds. This happens because of a missing or unused index, a bad query plan after statistics changed, lock contention, or table bloat. Slow queries hold connections longer, which can exhaust the connection pool ([database-connection-pool](database-connection-pool.md)) and make callers time out ([dependency-timeouts](dependency-timeouts.md)).\n\n## Symptoms\n- Log pattern: `Slow query on stock_levels took 4200ms`.\n- The service's latency rises, while the error rate may stay low at first.\n- Callers log `Timeout calling <service>`.\n- Postgres: `pg_stat_activity` shows many active queries with a large `now() - query_start`.\n- Alerts: `SlowQueries`, `HighLatency`.\n\n## Diagnosis\n### 1. Find the slow statements\n- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;`\n- Live view: `SELECT pid, now() - query_start AS age, wait_event_type, wait_event, left(query, 120) FROM pg_stat_activity WHERE state = 'active' ORDER BY age DESC;`\n\n### 2. Why is it slow?\n- `EXPLAIN (ANALYZE, BUFFERS) <query>` on a replica: look for `Seq Scan` on a large table, or row estimates that are far off.\n- Locks: `SELECT * FROM pg_locks WHERE NOT granted;`, then find the blocker with `pg_blocking_pids(pid)`.\n- A recent migration or deploy that changed the query or dropped an index?\n\n## Mitigation\n1. Cancel runaway queries: `SELECT pg_cancel_backend(pid);` (use `pg_terminate_backend` only if cancelling doesn't work).\n2. Add the missing index concurrently: `CREATE INDEX CONCURRENTLY ...`.\n3. Run `ANALYZE <table>` if the statistics are stale.\n4. Serve cached data or reduce the query frequency in the calling service.\n\n## Rollback\n- If a migration or release introduced the query, roll back the release. Drop a harmful index only after the rollback.\n\n## Escalation\n- `#dba-oncall`, together with the owning service team.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "SlowQueries",
+              "HighLatency"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "dba",
+            "services": [
+              "inventory-service",
+              "order-service",
+              "payment-service",
+              "user-service"
+            ],
+            "tags": [
+              "database",
+              "postgres",
+              "slow-query",
+              "index",
+              "locks",
+              "latency"
+            ],
+            "title": "Slow database queries",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "Slow database queries > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "Slow database queries > Symptoms"
+            },
+            {
+              "anchor": "1-find-the-slow-statements",
+              "heading_path": "Slow database queries > Diagnosis > 1. Find the slow statements"
+            },
+            {
+              "anchor": "2-why-is-it-slow",
+              "heading_path": "Slow database queries > Diagnosis > 2. Why is it slow?"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "Slow database queries > Mitigation"
+            },
+            {
+              "anchor": "rollback",
+              "heading_path": "Slow database queries > Rollback"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "Slow database queries > Escalation"
+            }
+          ],
+          "path": "knowledge-base/runbooks/slow-database-queries.md",
+          "services": [
+            "inventory-service",
+            "order-service",
+            "payment-service",
+            "user-service"
+          ],
+          "tags": [
+            "database",
+            "postgres",
+            "slow-query",
+            "index",
+            "locks",
+            "latency"
+          ],
+          "title": "Slow database queries",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n  \"title\": \"Slow database queries\",\n  \"doc_type\": \"runbook\",\n  \"services\": [\n    \"inventory-service\",\n    \"order-service\",\n    \"payment-service\",\n    \"user-service\"\n  ],\n  \"tags\": [\n    \"database\",\n    \"postgres\",\n    \"slow-query\",\n    \"index\",\n    \"locks\",\n    \"latency\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"database\",\n      \"postgres\",\n      \"slow-query\",\n      \"index\",\n      \"locks\",\n      \"latency\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"dba\",\n    \"title\": \"Slow database queries\",\n    \"alerts\": [\n      \"SlowQueries\",\n      \"HighLatency\"\n    ],\n    \"services\": [\n      \"inventory-service\",\n      \"order-service\",\n      \"payment-service\",\n      \"user-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# Slow database queries\\n\\n## Summary\\nA query that used to take milliseconds now takes seconds. This happens because of a missing or unused index, a bad query plan after statistics changed, lock contention, or table bloat. Slow queries hold connections longer, which can exhaust the connection pool ([database-connection-pool](database-connection-pool.md)) and make callers time out ([dependency-timeouts](dependency-timeouts.md)).\\n\\n## Symptoms\\n- Log pattern: `Slow query on stock_levels took 4200ms`.\\n- The service's latency rises, while the error rate may stay low at first.\\n- Callers log `Timeout calling <service>`.\\n- Postgres: `pg_stat_activity` shows many active queries with a large `now() - query_start`.\\n- Alerts: `SlowQueries`, `HighLatency`.\\n\\n## Diagnosis\\n### 1. Find the slow statements\\n- `SELECT query, calls, mean_exec_time, max_exec_time FROM pg_stat_statements ORDER BY mean_exec_time DESC LIMIT 10;`\\n- Live view: `SELECT pid, now() - query_start AS age, wait_event_type, wait_event, left(query, 120) FROM pg_stat_activity WHERE state = 'active' ORDER BY age DESC;`\\n\\n### 2. Why is it slow?\\n- `EXPLAIN (ANALYZE, BUFFERS) <query>` on a replica: look for `Seq Scan` on a large table, or row estimates that are far off.\\n- Locks: `SELECT * FROM pg_locks WHERE NOT granted;`, then find the blocker with `pg_blocking_pids(pid)`.\\n- A recent migration or deploy that changed the query or dropped an index?\\n\\n## Mitigation\\n1. Cancel runaway queries: `SELECT pg_cancel_backend(pid);` (use `pg_terminate_backend` only if cancelling doesn't work).\\n2. Add the missing index concurrently: `CREATE INDEX CONCURRENTLY ...`.\\n3. Run `ANALYZE <table>` if the statistics are stale.\\n4. Serve cached data or reduce the query frequency in the calling service.\\n\\n## Rollback\\n- If a migration or release introduced the query, roll back the release. Drop a harmful index only after the rollback.\\n\\n## Escalation\\n- `#dba-oncall`, together with the owning service team.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"Slow database queries > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Diagnosis > 1. Find the slow statements\",\n      \"anchor\": \"1-find-the-slow-statements\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Diagnosis > 2. Why is it slow?\",\n      \"anchor\": \"2-why-is-it-slow\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Rollback\",\n      \"anchor\": \"rollback\"\n    },\n    {\n      \"heading_path\": \"Slow database queries > Escalation\",\n      \"anchor\": \"escalation\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/database-connection-pool.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# Database connection pool exhaustion\n\n## Summary\nEvery service talks to Postgres through a fixed-size connection pool (HikariCP in the JVM services, `DB_POOL_SIZE`). When all connections are busy, new requests wait for a free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and latency climbs for every request that touches the database.\n\nThe pool runs out for one of three reasons:\n- it is **too small** for the traffic, usually after a config change or a new release;\n- connections are **held too long**, because of slow queries, long transactions or a slow dependency called inside a transaction;\n- connections **leak**, because code paths never return them to the pool.\n\n## Symptoms\n- Log pattern: `Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=N, active=N, waiting=M)`.\n- Log pattern: `HikariPool-1 - Connection is not available, request timed out after 5000ms`.\n- HTTP 500 on endpoints that write to the database (for payment-service, `POST /api/v1/pay`).\n- p95 latency close to the pool timeout (\u22485 s), while CPU stays low.\n- Metrics: `db_pool_active == db_pool_max` (saturation at 100%) and a growing `db_pool_pending`.\n- Alerts: `DatabaseConnectionPoolExhausted`, followed by `HighErrorRate`.\n\n## Known issues\n- **Pool size lowered by a release (INC-2026-031).** payment-service `v1.8.2` shipped `DB_POOL_SIZE=2` (it was 20) in a commit titled \"tune db pool\". Within minutes of the rollout, requests queued for a connection, `waiting` climbed above 15 and `POST /api/v1/pay` returned HTTP 500. Fix: roll back to `v1.8.1`, then restore `DB_POOL_SIZE=20` in the ConfigMap.\n- **Long transaction around a remote call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every connection. See [dependency-timeouts](dependency-timeouts.md).\n\n## Diagnosis\n### 1. Confirm the pool is the bottleneck\n- Search the logs for `could not acquire a connection` or `Connection is not available`. Note the first-seen time and the `pool size` / `waiting` values in the message.\n- Check pool saturation: `max_over_time(db_pool_active{service=\"payment-service\"}[5m]) / db_pool_max`. A ratio of 1.0 means the pool is exhausted.\n\n### 2. Check what changed\n- Compare the first-seen time of the timeouts with the latest rollout (`kubectl rollout history deployment/payment-service -n prod`).\n- Diff the pool settings between the running and the previous version: `DB_POOL_SIZE`, `DB_POOL_TIMEOUT_MS`, `maximumPoolSize`.\n- Look for commits touching `config/<service>/` or the datasource configuration.\n\n### 3. Rule out the database itself\n- On Postgres, count connections per application: `SELECT application_name, state, count(*) FROM pg_stat_activity GROUP BY 1, 2;`\n- Look for long-running queries or lock waits: `SELECT pid, now() - query_start AS age, wait_event_type, query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY age DESC LIMIT 10;`\n- If Postgres is near `max_connections` or shows lock waits, the pool isn't the root cause. Go to [slow-database-queries](slow-database-queries.md).\n\n## Mitigation\n1. **If a release changed the pool settings, roll back first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then `kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\n3. If connections are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow [slow-database-queries](slow-database-queries.md).\n4. Shed load if needed: lower the ingress rate limit for the affected endpoint.\n\n## Rollback\n- `kubectl rollout undo deployment/<service> -n prod` restores the previous ReplicaSet, including its ConfigMap reference.\n- Verify with `kubectl rollout status` and watch the timeout pattern disappear within 2\u20133 minutes.\n- Revert the offending config commit in git so the next deploy doesn't reintroduce it.\n\n## Escalation\n- First: the owning team's on-call (see the service doc, e.g. [payment-service](../services/payment-service.md)).\n- If Postgres itself is saturated: `#dba-oncall`.\n- Customer-facing payment failures for more than 15 minutes: declare a SEV-2 in `#incidents`.\n\n## Prevention\n- Alert on pool saturation (`db_pool_active / db_pool_max > 0.9` for 5 minutes) before errors start.\n- Require review from the owning team for any change to `DB_POOL_*` settings.\n- Load-test pool settings in staging with production-like concurrency.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "DatabaseConnectionPoolExhausted",
+              "HighErrorRate"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [
+              "payment-service",
+              "order-service",
+              "user-service",
+              "inventory-service"
+            ],
+            "tags": [
+              "database",
+              "postgres",
+              "connection-pool",
+              "hikari",
+              "timeouts",
+              "http-500"
+            ],
+            "title": "Database connection pool exhaustion",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "Database connection pool exhaustion > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "Database connection pool exhaustion > Symptoms"
+            },
+            {
+              "anchor": "known-issues",
+              "heading_path": "Database connection pool exhaustion > Known issues"
+            },
+            {
+              "anchor": "1-confirm-the-pool-is-the-bottleneck",
+              "heading_path": "Database connection pool exhaustion > Diagnosis > 1. Confirm the pool is the bottleneck"
+            },
+            {
+              "anchor": "2-check-what-changed",
+              "heading_path": "Database connection pool exhaustion > Diagnosis > 2. Check what changed"
+            },
+            {
+              "anchor": "3-rule-out-the-database-itself",
+              "heading_path": "Database connection pool exhaustion > Diagnosis > 3. Rule out the database itself"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "Database connection pool exhaustion > Mitigation"
+            },
+            {
+              "anchor": "rollback",
+              "heading_path": "Database connection pool exhaustion > Rollback"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "Database connection pool exhaustion > Escalation"
+            },
+            {
+              "anchor": "prevention",
+              "heading_path": "Database connection pool exhaustion > Prevention"
+            }
+          ],
+          "path": "knowledge-base/runbooks/database-connection-pool.md",
+          "services": [
+            "payment-service",
+            "order-service",
+            "user-service",
+            "inventory-service"
+          ],
+          "tags": [
+            "database",
+            "postgres",
+            "connection-pool",
+            "hikari",
+            "timeouts",
+            "http-500"
+          ],
+          "title": "Database connection pool exhaustion",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n  \"title\": \"Database connection pool exhaustion\",\n  \"doc_type\": \"runbook\",\n  \"services\": [\n    \"payment-service\",\n    \"order-service\",\n    \"user-service\",\n    \"inventory-service\"\n  ],\n  \"tags\": [\n    \"database\",\n    \"postgres\",\n    \"connection-pool\",\n    \"hikari\",\n    \"timeouts\",\n    \"http-500\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"database\",\n      \"postgres\",\n      \"connection-pool\",\n      \"hikari\",\n      \"timeouts\",\n      \"http-500\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"Database connection pool exhaustion\",\n    \"alerts\": [\n      \"DatabaseConnectionPoolExhausted\",\n      \"HighErrorRate\"\n    ],\n    \"services\": [\n      \"payment-service\",\n      \"order-service\",\n      \"user-service\",\n      \"inventory-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# Database connection pool exhaustion\\n\\n## Summary\\nEvery service talks to Postgres through a fixed-size connection pool (HikariCP in the JVM services, `DB_POOL_SIZE`). When all connections are busy, new requests wait for a free connection. After `connectionTimeout` (5 s by default) the wait fails, the request returns **HTTP 500**, and latency climbs for every request that touches the database.\\n\\nThe pool runs out for one of three reasons:\\n- it is **too small** for the traffic, usually after a config change or a new release;\\n- connections are **held too long**, because of slow queries, long transactions or a slow dependency called inside a transaction;\\n- connections **leak**, because code paths never return them to the pool.\\n\\n## Symptoms\\n- Log pattern: `Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=N, active=N, waiting=M)`.\\n- Log pattern: `HikariPool-1 - Connection is not available, request timed out after 5000ms`.\\n- HTTP 500 on endpoints that write to the database (for payment-service, `POST /api/v1/pay`).\\n- p95 latency close to the pool timeout (\u22485 s), while CPU stays low.\\n- Metrics: `db_pool_active == db_pool_max` (saturation at 100%) and a growing `db_pool_pending`.\\n- Alerts: `DatabaseConnectionPoolExhausted`, followed by `HighErrorRate`.\\n\\n## Known issues\\n- **Pool size lowered by a release (INC-2026-031).** payment-service `v1.8.2` shipped `DB_POOL_SIZE=2` (it was 20) in a commit titled \\\"tune db pool\\\". Within minutes of the rollout, requests queued for a connection, `waiting` climbed above 15 and `POST /api/v1/pay` returned HTTP 500. Fix: roll back to `v1.8.1`, then restore `DB_POOL_SIZE=20` in the ConfigMap.\\n- **Long transaction around a remote call.** order-service once called inventory-service inside an open transaction. A slow inventory-service held every connection. See [dependency-timeouts](dependency-timeouts.md).\\n\\n## Diagnosis\\n### 1. Confirm the pool is the bottleneck\\n- Search the logs for `could not acquire a connection` or `Connection is not available`. Note the first-seen time and the `pool size` / `waiting` values in the message.\\n- Check pool saturation: `max_over_time(db_pool_active{service=\\\"payment-service\\\"}[5m]) / db_pool_max`. A ratio of 1.0 means the pool is exhausted.\\n\\n### 2. Check what changed\\n- Compare the first-seen time of the timeouts with the latest rollout (`kubectl rollout history deployment/payment-service -n prod`).\\n- Diff the pool settings between the running and the previous version: `DB_POOL_SIZE`, `DB_POOL_TIMEOUT_MS`, `maximumPoolSize`.\\n- Look for commits touching `config/<service>/` or the datasource configuration.\\n\\n### 3. Rule out the database itself\\n- On Postgres, count connections per application: `SELECT application_name, state, count(*) FROM pg_stat_activity GROUP BY 1, 2;`\\n- Look for long-running queries or lock waits: `SELECT pid, now() - query_start AS age, wait_event_type, query FROM pg_stat_activity WHERE state <> 'idle' ORDER BY age DESC LIMIT 10;`\\n- If Postgres is near `max_connections` or shows lock waits, the pool isn't the root cause. Go to [slow-database-queries](slow-database-queries.md).\\n\\n## Mitigation\\n1. **If a release changed the pool settings, roll back first.** See [bad-deployment-rollback](bad-deployment-rollback.md): `kubectl rollout undo deployment/payment-service -n prod`.\\n2. If no release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then `kubectl rollout restart`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\\n3. If connections are held by slow queries, kill the worst offenders (`SELECT pg_cancel_backend(pid)`) and follow [slow-database-queries](slow-database-queries.md).\\n4. Shed load if needed: lower the ingress rate limit for the affected endpoint.\\n\\n## Rollback\\n- `kubectl rollout undo deployment/<service> -n prod` restores the previous ReplicaSet, including its ConfigMap reference.\\n- Verify with `kubectl rollout status` and watch the timeout pattern disappear within 2\u20133 minutes.\\n- Revert the offending config commit in git so the next deploy doesn't reintroduce it.\\n\\n## Escalation\\n- First: the owning team's on-call (see the service doc, e.g. [payment-service](../services/payment-service.md)).\\n- If Postgres itself is saturated: `#dba-oncall`.\\n- Customer-facing payment failures for more than 15 minutes: declare a SEV-2 in `#incidents`.\\n\\n## Prevention\\n- Alert on pool saturation (`db_pool_active / db_pool_max > 0.9` for 5 minutes) before errors start.\\n- Require review from the owning team for any change to `DB_POOL_*` settings.\\n- Load-test pool settings in staging with production-like concurrency.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Known issues\",\n      \"anchor\": \"known-issues\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Diagnosis > 1. Confirm the pool is the bottleneck\",\n      \"anchor\": \"1-confirm-the-pool-is-the-bottleneck\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Diagnosis > 2. Check what changed\",\n      \"anchor\": \"2-check-what-changed\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Diagnosis > 3. Rule out the database itself\",\n      \"anchor\": \"3-rule-out-the-database-itself\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Rollback\",\n      \"anchor\": \"rollback\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Escalation\",\n      \"anchor\": \"escalation\"\n    },\n    {\n      \"heading_path\": \"Database connection pool exhaustion > Prevention\",\n      \"anchor\": \"prevention\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/dependency-timeouts.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# Downstream dependency timeouts\n\n## Summary\nA service calls another service (a *downstream dependency*) with a client timeout. When the dependency becomes slow, the caller waits until its timeout expires and then fails the request, usually with **HTTP 504** (gateway timeout) or 500. The errors show up in the **caller**, but the cause is in the **callee**. Always follow the chain downstream before changing the caller.\n\nRetries make it worse: every retry adds load to a dependency that is already slow.\n\n## Symptoms\n- Log pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\n- Caller latency is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\n- The dependency's own logs show slow requests or slow queries (for example `Slow query on stock_levels took 4200ms`), often without errors.\n- Thread or connection pools in the caller fill up with requests that are waiting.\n- Alerts: `DependencyTimeouts` on the caller, `HighLatency` on the dependency.\n\n## Known issues\n- **inventory-service slow `stock_levels` query (INC-2026-052).** A missing index on `stock_levels(sku, warehouse_id)` made stock lookups take 3\u20135 s. order-service calls to inventory-service time out after 3000 ms, so orders fail with HTTP 504. Fix: add the index; mitigate by serving cached stock levels.\n\n## Diagnosis\n### 1. Identify the slow dependency\n- Group the caller's timeout errors by target: the log message names the dependency and the endpoint (`Timeout calling <service> <method> <path>`).\n- Check the dependency's latency (p95/p99) and error rate over the same window. If its latency rose first, it is the cause.\n\n### 2. Look inside the dependency\n- Look for slow queries (`Slow query`), lock waits, GC pauses, CPU throttling or a recent deployment in the dependency.\n- Check the dependency's own dependencies (database, cache). Timeouts cascade.\n- Compare the dependency's traffic with the baseline. A retry storm from callers shows up as a traffic jump.\n\n### 3. Check the caller's settings\n- Client timeout, retry count and backoff. `retries \u00d7 timeout` must be lower than the caller's own SLA.\n- Is there a circuit breaker, and did it open?\n\n## Mitigation\n1. Fix or scale the **dependency** first (see [slow-database-queries](slow-database-queries.md) if queries are slow; roll back if a release caused it).\n2. Reduce the pressure: disable retries or lower them to 1 in the caller, and open the circuit breaker so the caller fails fast.\n3. Degrade gracefully: serve cached or default data (for example the last known stock level), or queue the work and confirm the order asynchronously.\n4. Don't raise the caller's timeout as a fix. It only moves the queue into the caller.\n\n## Rollback\n- If a release of the dependency made it slow: `kubectl rollout undo deployment/<dependency> -n prod`.\n- If the caller changed its timeout or retry settings recently, revert that config.\n\n## Escalation\n- The **dependency's** owning team (see its service doc, for example [inventory-service](../services/inventory-service.md)).\n- The caller's team stays involved for graceful degradation.\n\n## Prevention\n- Set timeouts and retry budgets per dependency, and add circuit breakers.\n- Alert on the dependency's latency SLO, not only on the caller's errors.\n- Avoid remote calls inside database transactions.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "DependencyTimeouts",
+              "HighLatency",
+              "HighErrorRate"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [
+              "order-service",
+              "payment-service",
+              "user-service",
+              "inventory-service"
+            ],
+            "tags": [
+              "dependency",
+              "downstream",
+              "timeouts",
+              "latency",
+              "http-504",
+              "circuit-breaker",
+              "retries"
+            ],
+            "title": "Downstream dependency timeouts",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "Downstream dependency timeouts > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "Downstream dependency timeouts > Symptoms"
+            },
+            {
+              "anchor": "known-issues",
+              "heading_path": "Downstream dependency timeouts > Known issues"
+            },
+            {
+              "anchor": "1-identify-the-slow-dependency",
+              "heading_path": "Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency"
+            },
+            {
+              "anchor": "2-look-inside-the-dependency",
+              "heading_path": "Downstream dependency timeouts > Diagnosis > 2. Look inside the dependency"
+            },
+            {
+              "anchor": "3-check-the-callers-settings",
+              "heading_path": "Downstream dependency timeouts > Diagnosis > 3. Check the caller's settings"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "Downstream dependency timeouts > Mitigation"
+            },
+            {
+              "anchor": "rollback",
+              "heading_path": "Downstream dependency timeouts > Rollback"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "Downstream dependency timeouts > Escalation"
+            },
+            {
+              "anchor": "prevention",
+              "heading_path": "Downstream dependency timeouts > Prevention"
+            }
+          ],
+          "path": "knowledge-base/runbooks/dependency-timeouts.md",
+          "services": [
+            "order-service",
+            "payment-service",
+            "user-service",
+            "inventory-service"
+          ],
+          "tags": [
+            "dependency",
+            "downstream",
+            "timeouts",
+            "latency",
+            "http-504",
+            "circuit-breaker",
+            "retries"
+          ],
+          "title": "Downstream dependency timeouts",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n  \"title\": \"Downstream dependency timeouts\",\n  \"doc_type\": \"runbook\",\n  \"services\": [\n    \"order-service\",\n    \"payment-service\",\n    \"user-service\",\n    \"inventory-service\"\n  ],\n  \"tags\": [\n    \"dependency\",\n    \"downstream\",\n    \"timeouts\",\n    \"latency\",\n    \"http-504\",\n    \"circuit-breaker\",\n    \"retries\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"dependency\",\n      \"downstream\",\n      \"timeouts\",\n      \"latency\",\n      \"http-504\",\n      \"circuit-breaker\",\n      \"retries\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"Downstream dependency timeouts\",\n    \"alerts\": [\n      \"DependencyTimeouts\",\n      \"HighLatency\",\n      \"HighErrorRate\"\n    ],\n    \"services\": [\n      \"order-service\",\n      \"payment-service\",\n      \"user-service\",\n      \"inventory-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# Downstream dependency timeouts\\n\\n## Summary\\nA service calls another service (a *downstream dependency*) with a client timeout. When the dependency becomes slow, the caller waits until its timeout expires and then fails the request, usually with **HTTP 504** (gateway timeout) or 500. The errors show up in the **caller**, but the cause is in the **callee**. Always follow the chain downstream before changing the caller.\\n\\nRetries make it worse: every retry adds load to a dependency that is already slow.\\n\\n## Symptoms\\n- Log pattern in the caller: `Timeout calling inventory-service GET /api/v1/stock/{id} after 3000ms`.\\n- Caller latency is capped close to its client timeout (for example p95 \u2248 3 s) and HTTP 504s appear.\\n- The dependency's own logs show slow requests or slow queries (for example `Slow query on stock_levels took 4200ms`), often without errors.\\n- Thread or connection pools in the caller fill up with requests that are waiting.\\n- Alerts: `DependencyTimeouts` on the caller, `HighLatency` on the dependency.\\n\\n## Known issues\\n- **inventory-service slow `stock_levels` query (INC-2026-052).** A missing index on `stock_levels(sku, warehouse_id)` made stock lookups take 3\u20135 s. order-service calls to inventory-service time out after 3000 ms, so orders fail with HTTP 504. Fix: add the index; mitigate by serving cached stock levels.\\n\\n## Diagnosis\\n### 1. Identify the slow dependency\\n- Group the caller's timeout errors by target: the log message names the dependency and the endpoint (`Timeout calling <service> <method> <path>`).\\n- Check the dependency's latency (p95/p99) and error rate over the same window. If its latency rose first, it is the cause.\\n\\n### 2. Look inside the dependency\\n- Look for slow queries (`Slow query`), lock waits, GC pauses, CPU throttling or a recent deployment in the dependency.\\n- Check the dependency's own dependencies (database, cache). Timeouts cascade.\\n- Compare the dependency's traffic with the baseline. A retry storm from callers shows up as a traffic jump.\\n\\n### 3. Check the caller's settings\\n- Client timeout, retry count and backoff. `retries \u00d7 timeout` must be lower than the caller's own SLA.\\n- Is there a circuit breaker, and did it open?\\n\\n## Mitigation\\n1. Fix or scale the **dependency** first (see [slow-database-queries](slow-database-queries.md) if queries are slow; roll back if a release caused it).\\n2. Reduce the pressure: disable retries or lower them to 1 in the caller, and open the circuit breaker so the caller fails fast.\\n3. Degrade gracefully: serve cached or default data (for example the last known stock level), or queue the work and confirm the order asynchronously.\\n4. Don't raise the caller's timeout as a fix. It only moves the queue into the caller.\\n\\n## Rollback\\n- If a release of the dependency made it slow: `kubectl rollout undo deployment/<dependency> -n prod`.\\n- If the caller changed its timeout or retry settings recently, revert that config.\\n\\n## Escalation\\n- The **dependency's** owning team (see its service doc, for example [inventory-service](../services/inventory-service.md)).\\n- The caller's team stays involved for graceful degradation.\\n\\n## Prevention\\n- Set timeouts and retry budgets per dependency, and add circuit breakers.\\n- Alert on the dependency's latency SLO, not only on the caller's errors.\\n- Avoid remote calls inside database transactions.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Known issues\",\n      \"anchor\": \"known-issues\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Diagnosis > 1. Identify the slow dependency\",\n      \"anchor\": \"1-identify-the-slow-dependency\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Diagnosis > 2. Look inside the dependency\",\n      \"anchor\": \"2-look-inside-the-dependency\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Diagnosis > 3. Check the caller's settings\",\n      \"anchor\": \"3-check-the-callers-settings\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Rollback\",\n      \"anchor\": \"rollback\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Escalation\",\n      \"anchor\": \"escalation\"\n    },\n    {\n      \"heading_path\": \"Downstream dependency timeouts > Prevention\",\n      \"anchor\": \"prevention\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Full-text search over runbook and service-doc sections, best first.\n\n        Args:\n            query: symptoms or keywords, e.g. 'could not acquire a connection from the pool HikariPool'.\n            k: number of sections to return (1-10).\n            services: only docs tagged with any of these services, e.g. ['payment-service'].\n                Generic runbooks (no services) are excluded by this filter; search again without it.\n            tags: only docs with any of these tags, e.g. ['database'].\n            match: 'any' (default) ranks sections by how many query words they contain;\n                'all' requires every word (web-search syntax: \"quoted phrase\", or, -exclude).\n            max_per_doc: at most this many sections per document (1-5), for diverse results.\n        ",
+      "input_schema": {
+        "properties": {
+          "k": {
+            "default": 5,
+            "title": "K",
+            "type": "integer"
+          },
+          "match": {
+            "default": "any",
+            "enum": [
+              "any",
+              "all"
+            ],
+            "title": "Match",
+            "type": "string"
+          },
+          "max_per_doc": {
+            "default": 3,
+            "title": "Max Per Doc",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "services": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Services"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tags"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "searchArguments",
+        "type": "object"
+      },
+      "name": "search"
+    },
+    {
+      "description": "Full markdown of one document, with its section outline (heading paths + anchors).\n\n        Args:\n            path: repo-relative path from search/list_docs, e.g. 'knowledge-base/runbooks/redis-outage.md'.\n        ",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "get_docArguments",
+        "type": "object"
+      },
+      "name": "get_doc"
+    },
+    {
+      "description": "List indexed documents (path, title, type, services, tags).\n\n        Args:\n            doc_type: optional 'runbook', 'service' or 'doc'.\n            service: optional service name; only docs tagged with it, e.g. 'payment-service'.\n        ",
+      "input_schema": {
+        "properties": {
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Doc Type"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          }
+        },
+        "title": "list_docsArguments",
+        "type": "object"
+      },
+      "name": "list_docs"
+    }
+  ]
+}

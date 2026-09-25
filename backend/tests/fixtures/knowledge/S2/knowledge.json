@@ -1,0 +1,1085 @@
+{
+  "calls": [
+    {
+      "arguments": {},
+      "result": {
+        "is_error": false,
+        "structured": {
+          "documents": [
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/bad-deployment-rollback.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "deployment",
+                "rollback",
+                "release",
+                "imagepullbackoff",
+                "replicas",
+                "kubernetes",
+                "capacity"
+              ],
+              "title": "Bad deployment and rollback"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "connection-pool",
+                "hikari",
+                "timeouts",
+                "http-500"
+              ],
+              "title": "Database connection pool exhaustion"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/dependency-timeouts.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "dependency",
+                "downstream",
+                "timeouts",
+                "latency",
+                "http-504",
+                "circuit-breaker",
+                "retries"
+              ],
+              "title": "Downstream dependency timeouts"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "services": [],
+              "tags": [
+                "errors",
+                "http-500",
+                "http-5xx",
+                "error-rate",
+                "slo",
+                "triage"
+              ],
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/high-latency.md",
+              "services": [],
+              "tags": [
+                "latency",
+                "p95",
+                "p99",
+                "slow",
+                "slo",
+                "saturation",
+                "triage"
+              ],
+              "title": "High latency (p95/p99)"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "memory",
+                "oom",
+                "oomkilled",
+                "heap",
+                "gc",
+                "jvm",
+                "restarts",
+                "http-503"
+              ],
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/pod-crashloop.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "kubernetes",
+                "crashloopbackoff",
+                "restarts",
+                "probes",
+                "startup",
+                "config"
+              ],
+              "title": "Pod CrashLoopBackOff"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "tags": [
+                "redis",
+                "cache",
+                "econnrefused",
+                "fallback",
+                "latency",
+                "database-load"
+              ],
+              "title": "Redis cache outage"
+            },
+            {
+              "doc_type": "runbook",
+              "path": "knowledge-base/runbooks/slow-database-queries.md",
+              "services": [
+                "inventory-service",
+                "order-service",
+                "payment-service",
+                "user-service"
+              ],
+              "tags": [
+                "database",
+                "postgres",
+                "slow-query",
+                "index",
+                "locks",
+                "latency"
+              ],
+              "title": "Slow database queries"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/inventory-service.md",
+              "services": [
+                "inventory-service"
+              ],
+              "tags": [
+                "service",
+                "inventory",
+                "stock",
+                "ownership"
+              ],
+              "title": "inventory-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/order-service.md",
+              "services": [
+                "order-service"
+              ],
+              "tags": [
+                "service",
+                "orders",
+                "checkout",
+                "ownership"
+              ],
+              "title": "order-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/payment-service.md",
+              "services": [
+                "payment-service"
+              ],
+              "tags": [
+                "service",
+                "payments",
+                "ownership"
+              ],
+              "title": "payment-service"
+            },
+            {
+              "doc_type": "service",
+              "path": "knowledge-base/services/user-service.md",
+              "services": [
+                "user-service"
+              ],
+              "tags": [
+                "service",
+                "identity",
+                "login",
+                "ownership"
+              ],
+              "title": "user-service"
+            }
+          ],
+          "returned": 13,
+          "total": 13,
+          "truncated": false
+        },
+        "text": "{\n  \"total\": 13,\n  \"returned\": 13,\n  \"truncated\": false,\n  \"documents\": [\n    {\n      \"path\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"title\": \"Bad deployment and rollback\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"deployment\",\n        \"rollback\",\n        \"release\",\n        \"imagepullbackoff\",\n        \"replicas\",\n        \"kubernetes\",\n        \"capacity\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"connection-pool\",\n        \"hikari\",\n        \"timeouts\",\n        \"http-500\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/dependency-timeouts.md\",\n      \"title\": \"Downstream dependency timeouts\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"dependency\",\n        \"downstream\",\n        \"timeouts\",\n        \"latency\",\n        \"http-504\",\n        \"circuit-breaker\",\n        \"retries\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"errors\",\n        \"http-500\",\n        \"http-5xx\",\n        \"error-rate\",\n        \"slo\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/high-latency.md\",\n      \"title\": \"High latency (p95/p99)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"tags\": [\n        \"latency\",\n        \"p95\",\n        \"p99\",\n        \"slow\",\n        \"slo\",\n        \"saturation\",\n        \"triage\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"memory\",\n        \"oom\",\n        \"oomkilled\",\n        \"heap\",\n        \"gc\",\n        \"jvm\",\n        \"restarts\",\n        \"http-503\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"title\": \"Pod CrashLoopBackOff\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"kubernetes\",\n        \"crashloopbackoff\",\n        \"restarts\",\n        \"probes\",\n        \"startup\",\n        \"config\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"redis\",\n        \"cache\",\n        \"econnrefused\",\n        \"fallback\",\n        \"latency\",\n        \"database-load\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/runbooks/slow-database-queries.md\",\n      \"title\": \"Slow database queries\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"inventory-service\",\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"database\",\n        \"postgres\",\n        \"slow-query\",\n        \"index\",\n        \"locks\",\n        \"latency\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/inventory-service.md\",\n      \"title\": \"inventory-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"inventory-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"inventory\",\n        \"stock\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"orders\",\n        \"checkout\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/payment-service.md\",\n      \"title\": \"payment-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"payment-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"payments\",\n        \"ownership\"\n      ]\n    },\n    {\n      \"path\": \"knowledge-base/services/user-service.md\",\n      \"title\": \"user-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"user-service\"\n      ],\n      \"tags\": [\n        \"service\",\n        \"identity\",\n        \"login\",\n        \"ownership\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "list_docs"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop",
+        "services": [
+          "order-service"
+        ]
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [
+              "order-service"
+            ],
+            "tags": []
+          },
+          "match": "any",
+          "query": "GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop",
+          "results": [
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Memory leak and OOMKilled containers > Symptoms",
+              "matched_terms": [
+                "approach",
+                "full",
+                "gc",
+                "heap",
+                "java",
+                "java.lang.outofmemoryerror",
+                "leak",
+                "limit",
+                "memori",
+                "oomkil",
+                "overhead",
+                "restart",
+                "space",
+                "usag"
+              ],
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "rank": 1,
+              "score": 0.7422,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern: `**GC** **overhead** **limit** **approaching**: **heap** **usage** 97% after **full** **GC**` (a warning that precedes the crash).\n- Log pattern: `**java.lang.OutOfMemoryError**: **Java** **heap** **space**`.\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service \u2026 **restarts** every few minutes.\n- Kubernetes: `Last State: Terminated, Reason: **OOMKilled**, Exit Code: 137`, and a growing **restart** count.\n- Metrics: container **memory** climbs in a saw-tooth pattern, and every drop matches a **restart**.\n- Callers",
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "anchor": "known-issues",
+              "doc_type": "runbook",
+              "heading": "Known issues",
+              "heading_path": "Memory leak and OOMKilled containers > Known issues",
+              "matched_terms": [
+                "gc",
+                "heap",
+                "java",
+                "leak",
+                "memori",
+                "oomkil",
+                "outofmemoryerror",
+                "restart",
+                "space",
+                "usag"
+              ],
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "rank": 2,
+              "score": 0.5815,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "request **leak** in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It **leaked** about 5 MB per request (`**LEAK**_MB_PER_REQ`). **Heap** **usage** reached \u2026 about 15 minutes after a deploy, followed by `**OutOfMemoryError**: **Java** **heap** **space**` and a **restart** roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus",
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "anchor": "1-read-the-last-crash",
+              "doc_type": "runbook",
+              "heading": "1. Read the last crash",
+              "heading_path": "Pod CrashLoopBackOff > Diagnosis > 1. Read the last crash",
+              "matched_terms": [
+                "error",
+                "leak",
+                "memori",
+                "oomkil",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/pod-crashloop.md",
+              "rank": 3,
+              "score": 0.2845,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "lines before the exit.\n- `kubectl describe pod   -n prod`: `Last State: Terminated`, `Reason` and `Exit Code`:\n  - **137 / **OOMKilled****: **memory**, see [**memory**-**leak**-oom](memory-leak-oom.md).\n  - **1**: an application **error** at startup (bad config, missing",
+              "title": "Pod CrashLoopBackOff"
+            },
+            {
+              "anchor": "configuration",
+              "doc_type": "service",
+              "heading": "Configuration",
+              "heading_path": "order-service > Configuration",
+              "matched_terms": [
+                "java",
+                "limit",
+                "memori",
+                "oomkil"
+              ],
+              "path": "knowledge-base/services/order-service.md",
+              "rank": 4,
+              "score": 0.2354,
+              "services": [
+                "order-service"
+              ],
+              "snippet": "Client timeout for inventory-service calls |\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\n| `**JAVA**_OPTS` | `-XX:MaxRAMPercentage=75` | |\n| **Memory** **limit** | 512Mi | **OOMKilled** when exceeded",
+              "title": "order-service"
+            },
+            {
+              "anchor": "known-failure-modes",
+              "doc_type": "service",
+              "heading": "Known failure modes",
+              "heading_path": "order-service > Known failure modes",
+              "matched_terms": [
+                "leak",
+                "memori",
+                "restart"
+              ],
+              "path": "knowledge-base/services/order-service.md",
+              "rank": 5,
+              "score": 0.2191,
+              "services": [
+                "order-service"
+              ],
+              "snippet": "**Memory** **leak** and OOM **restarts**: [**memory**-**leak**-oom](../runbooks/memory-leak-oom.md)\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md",
+              "title": "order-service"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Redis cache outage > Mitigation",
+              "matched_terms": [
+                "limit",
+                "rate",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 6,
+              "score": 0.1904,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or **restart** the container.\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or **rate** \u2026 **limit** expensive read endpoints.\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\n4. After recovery, watch the cache hit **rate** recover",
+              "title": "Redis cache outage"
+            },
+            {
+              "anchor": "summary",
+              "doc_type": "runbook",
+              "heading": "Summary",
+              "heading_path": "Bad deployment and rollback > Summary",
+              "matched_terms": [
+                "error",
+                "leak",
+                "memori"
+              ],
+              "path": "knowledge-base/runbooks/bad-deployment-rollback.md",
+              "rank": 7,
+              "score": 0.1726,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "missing image, registry auth) or **CrashLoopBackOff** (bad config, missing secret);\n- the new version starts but misbehaves: new **errors**, bad config values (pool sizes, timeouts), **memory** **leaks**;\n- the rollout stalls half-way, leaving **fewer ready replicas",
+              "title": "Bad deployment and rollback"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Database connection pool exhaustion > Mitigation",
+              "matched_terms": [
+                "limit",
+                "rate",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/database-connection-pool.md",
+              "rank": 8,
+              "score": 0.1718,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then `kubectl rollout **restart**`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\n3. If connections are held \u2026 cancel_backend(pid)`) and follow [slow-database-queries](slow-database-queries.md).\n4. Shed load if needed: lower the ingress **rate** **limit** for the affected endpoint",
+              "title": "Database connection pool exhaustion"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "5xx",
+            "approach",
+            "crashloop",
+            "error",
+            "full",
+            "gc",
+            "heap",
+            "java",
+            "java.lang.outofmemoryerror",
+            "leak",
+            "limit",
+            "memori",
+            "oomkil",
+            "outofmemoryerror",
+            "overhead",
+            "rate",
+            "restart",
+            "space",
+            "usag"
+          ],
+          "total_matches": 47
+        },
+        "text": "{\n  \"query\": \"GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"5xx\",\n    \"approach\",\n    \"crashloop\",\n    \"error\",\n    \"full\",\n    \"gc\",\n    \"heap\",\n    \"java\",\n    \"java.lang.outofmemoryerror\",\n    \"leak\",\n    \"limit\",\n    \"memori\",\n    \"oomkil\",\n    \"outofmemoryerror\",\n    \"overhead\",\n    \"rate\",\n    \"restart\",\n    \"space\",\n    \"usag\"\n  ],\n  \"filters\": {\n    \"services\": [\n      \"order-service\"\n    ],\n    \"tags\": []\n  },\n  \"total_matches\": 47,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Memory leak and OOMKilled containers > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern: `**GC** **overhead** **limit** **approaching**: **heap** **usage** 97% after **full** **GC**` (a warning that precedes the crash).\\n- Log pattern: `**java.lang.OutOfMemoryError**: **Java** **heap** **space**`.\\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service \u2026 **restarts** every few minutes.\\n- Kubernetes: `Last State: Terminated, Reason: **OOMKilled**, Exit Code: 137`, and a growing **restart** count.\\n- Metrics: container **memory** climbs in a saw-tooth pattern, and every drop matches a **restart**.\\n- Callers\",\n      \"score\": 0.7422,\n      \"matched_terms\": [\n        \"approach\",\n        \"full\",\n        \"gc\",\n        \"heap\",\n        \"java\",\n        \"java.lang.outofmemoryerror\",\n        \"leak\",\n        \"limit\",\n        \"memori\",\n        \"oomkil\",\n        \"overhead\",\n        \"restart\",\n        \"space\",\n        \"usag\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Known issues\",\n      \"heading_path\": \"Memory leak and OOMKilled containers > Known issues\",\n      \"anchor\": \"known-issues\",\n      \"snippet\": \"request **leak** in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It **leaked** about 5 MB per request (`**LEAK**_MB_PER_REQ`). **Heap** **usage** reached \u2026 about 15 minutes after a deploy, followed by `**OutOfMemoryError**: **Java** **heap** **space**` and a **restart** roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus\",\n      \"score\": 0.5815,\n      \"matched_terms\": [\n        \"gc\",\n        \"heap\",\n        \"java\",\n        \"leak\",\n        \"memori\",\n        \"oomkil\",\n        \"outofmemoryerror\",\n        \"restart\",\n        \"space\",\n        \"usag\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"title\": \"Pod CrashLoopBackOff\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"1. Read the last crash\",\n      \"heading_path\": \"Pod CrashLoopBackOff > Diagnosis > 1. Read the last crash\",\n      \"anchor\": \"1-read-the-last-crash\",\n      \"snippet\": \"lines before the exit.\\n- `kubectl describe pod   -n prod`: `Last State: Terminated`, `Reason` and `Exit Code`:\\n  - **137 / **OOMKilled****: **memory**, see [**memory**-**leak**-oom](memory-leak-oom.md).\\n  - **1**: an application **error** at startup (bad config, missing\",\n      \"score\": 0.2845,\n      \"matched_terms\": [\n        \"error\",\n        \"leak\",\n        \"memori\",\n        \"oomkil\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"heading\": \"Configuration\",\n      \"heading_path\": \"order-service > Configuration\",\n      \"anchor\": \"configuration\",\n      \"snippet\": \"Client timeout for inventory-service calls |\\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\\n| `**JAVA**_OPTS` | `-XX:MaxRAMPercentage=75` | |\\n| **Memory** **limit** | 512Mi | **OOMKilled** when exceeded\",\n      \"score\": 0.2354,\n      \"matched_terms\": [\n        \"java\",\n        \"limit\",\n        \"memori\",\n        \"oomkil\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"heading\": \"Known failure modes\",\n      \"heading_path\": \"order-service > Known failure modes\",\n      \"anchor\": \"known-failure-modes\",\n      \"snippet\": \"**Memory** **leak** and OOM **restarts**: [**memory**-**leak**-oom](../runbooks/memory-leak-oom.md)\\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md\",\n      \"score\": 0.2191,\n      \"matched_terms\": [\n        \"leak\",\n        \"memori\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Redis cache outage > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or **restart** the container.\\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or **rate** \u2026 **limit** expensive read endpoints.\\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\\n4. After recovery, watch the cache hit **rate** recover\",\n      \"score\": 0.1904,\n      \"matched_terms\": [\n        \"limit\",\n        \"rate\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"title\": \"Bad deployment and rollback\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Summary\",\n      \"heading_path\": \"Bad deployment and rollback > Summary\",\n      \"anchor\": \"summary\",\n      \"snippet\": \"missing image, registry auth) or **CrashLoopBackOff** (bad config, missing secret);\\n- the new version starts but misbehaves: new **errors**, bad config values (pool sizes, timeouts), **memory** **leaks**;\\n- the rollout stalls half-way, leaving **fewer ready replicas\",\n      \"score\": 0.1726,\n      \"matched_terms\": [\n        \"error\",\n        \"leak\",\n        \"memori\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/runbooks/database-connection-pool.md\",\n      \"title\": \"Database connection pool exhaustion\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Database connection pool exhaustion > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"release is involved, raise the pool size temporarily (ConfigMap `DB_POOL_SIZE`, then `kubectl rollout **restart**`). Keep `replicas \u00d7 DB_POOL_SIZE` below Postgres `max_connections` minus a 20% reserve.\\n3. If connections are held \u2026 cancel_backend(pid)`) and follow [slow-database-queries](slow-database-queries.md).\\n4. Shed load if needed: lower the ingress **rate** **limit** for the affected endpoint\",\n      \"score\": 0.1718,\n      \"matched_terms\": [\n        \"limit\",\n        \"rate\",\n        \"restart\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "k": 8,
+        "max_per_doc": 2,
+        "query": "GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "filters": {
+            "services": [],
+            "tags": []
+          },
+          "match": "any",
+          "query": "GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop",
+          "results": [
+            {
+              "anchor": "symptoms",
+              "doc_type": "runbook",
+              "heading": "Symptoms",
+              "heading_path": "Memory leak and OOMKilled containers > Symptoms",
+              "matched_terms": [
+                "approach",
+                "full",
+                "gc",
+                "heap",
+                "java",
+                "java.lang.outofmemoryerror",
+                "leak",
+                "limit",
+                "memori",
+                "oomkil",
+                "overhead",
+                "restart",
+                "space",
+                "usag"
+              ],
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "rank": 1,
+              "score": 0.7422,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "pattern: `**GC** **overhead** **limit** **approaching**: **heap** **usage** 97% after **full** **GC**` (a warning that precedes the crash).\n- Log pattern: `**java.lang.OutOfMemoryError**: **Java** **heap** **space**`.\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service \u2026 **restarts** every few minutes.\n- Kubernetes: `Last State: Terminated, Reason: **OOMKilled**, Exit Code: 137`, and a growing **restart** count.\n- Metrics: container **memory** climbs in a saw-tooth pattern, and every drop matches a **restart**.\n- Callers",
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "anchor": "known-issues",
+              "doc_type": "runbook",
+              "heading": "Known issues",
+              "heading_path": "Memory leak and OOMKilled containers > Known issues",
+              "matched_terms": [
+                "gc",
+                "heap",
+                "java",
+                "leak",
+                "memori",
+                "oomkil",
+                "outofmemoryerror",
+                "restart",
+                "space",
+                "usag"
+              ],
+              "path": "knowledge-base/runbooks/memory-leak-oom.md",
+              "rank": 2,
+              "score": 0.5815,
+              "services": [
+                "order-service",
+                "payment-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "request **leak** in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It **leaked** about 5 MB per request (`**LEAK**_MB_PER_REQ`). **Heap** **usage** reached \u2026 about 15 minutes after a deploy, followed by `**OutOfMemoryError**: **Java** **heap** **space**` and a **restart** roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus",
+              "title": "Memory leak and OOMKilled containers"
+            },
+            {
+              "anchor": "3-map-the-pattern-to-a-specific-runbook",
+              "doc_type": "runbook",
+              "heading": "3. Map the pattern to a specific runbook",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook",
+              "matched_terms": [
+                "5xx",
+                "crashloop",
+                "error",
+                "leak",
+                "memori",
+                "oomkil",
+                "outofmemoryerror",
+                "rate",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "rank": 3,
+              "score": 0.5352,
+              "services": [],
+              "snippet": "Pattern or signal | Runbook |\n|-------------------|---------|\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\n| `**OutOfMemoryError**`, **OOMKilled**, **restarts** | [**memory**-**leak**-oom](memory-leak-oom.md) |\n| `Timeout calling  ` | [dependency-timeouts](dependency-timeouts.md) |\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\n| CrashLoopBackOff \u2026 **crashloop**](pod-crashloop.md) |\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md",
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "High error rate (HTTP 5xx) > Mitigation",
+              "matched_terms": [
+                "5xx",
+                "error",
+                "limit",
+                "rate"
+              ],
+              "path": "knowledge-base/runbooks/high-error-rate.md",
+              "rank": 4,
+              "score": 0.3505,
+              "services": [],
+              "snippet": "time, roll it back.\n2. If one endpoint dominates, consider disabling it with a feature flag or **rate**-**limiting** it.\n3. Communicate: post the impact and ETA in `#incidents` if the **error** **rate** stays above",
+              "title": "High error rate (HTTP 5xx)"
+            },
+            {
+              "anchor": "1-read-the-last-crash",
+              "doc_type": "runbook",
+              "heading": "1. Read the last crash",
+              "heading_path": "Pod CrashLoopBackOff > Diagnosis > 1. Read the last crash",
+              "matched_terms": [
+                "error",
+                "leak",
+                "memori",
+                "oomkil",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/pod-crashloop.md",
+              "rank": 5,
+              "score": 0.2845,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "lines before the exit.\n- `kubectl describe pod   -n prod`: `Last State: Terminated`, `Reason` and `Exit Code`:\n  - **137 / **OOMKilled****: **memory**, see [**memory**-**leak**-oom](memory-leak-oom.md).\n  - **1**: an application **error** at startup (bad config, missing",
+              "title": "Pod CrashLoopBackOff"
+            },
+            {
+              "anchor": "configuration",
+              "doc_type": "service",
+              "heading": "Configuration",
+              "heading_path": "order-service > Configuration",
+              "matched_terms": [
+                "java",
+                "limit",
+                "memori",
+                "oomkil"
+              ],
+              "path": "knowledge-base/services/order-service.md",
+              "rank": 6,
+              "score": 0.2354,
+              "services": [
+                "order-service"
+              ],
+              "snippet": "Client timeout for inventory-service calls |\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\n| `**JAVA**_OPTS` | `-XX:MaxRAMPercentage=75` | |\n| **Memory** **limit** | 512Mi | **OOMKilled** when exceeded",
+              "title": "order-service"
+            },
+            {
+              "anchor": "known-failure-modes",
+              "doc_type": "service",
+              "heading": "Known failure modes",
+              "heading_path": "order-service > Known failure modes",
+              "matched_terms": [
+                "leak",
+                "memori",
+                "restart"
+              ],
+              "path": "knowledge-base/services/order-service.md",
+              "rank": 7,
+              "score": 0.2191,
+              "services": [
+                "order-service"
+              ],
+              "snippet": "**Memory** **leak** and OOM **restarts**: [**memory**-**leak**-oom](../runbooks/memory-leak-oom.md)\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md",
+              "title": "order-service"
+            },
+            {
+              "anchor": "mitigation",
+              "doc_type": "runbook",
+              "heading": "Mitigation",
+              "heading_path": "Redis cache outage > Mitigation",
+              "matched_terms": [
+                "limit",
+                "rate",
+                "restart"
+              ],
+              "path": "knowledge-base/runbooks/redis-outage.md",
+              "rank": 8,
+              "score": 0.1904,
+              "services": [
+                "payment-service",
+                "order-service",
+                "user-service",
+                "inventory-service"
+              ],
+              "snippet": "Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or **restart** the container.\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or **rate** \u2026 **limit** expensive read endpoints.\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\n4. After recovery, watch the cache hit **rate** recover",
+              "title": "Redis cache outage"
+            }
+          ],
+          "returned": 8,
+          "terms": [
+            "5xx",
+            "approach",
+            "crashloop",
+            "error",
+            "full",
+            "gc",
+            "heap",
+            "java",
+            "java.lang.outofmemoryerror",
+            "leak",
+            "limit",
+            "memori",
+            "oomkil",
+            "outofmemoryerror",
+            "overhead",
+            "rate",
+            "restart",
+            "space",
+            "usag"
+          ],
+          "total_matches": 62
+        },
+        "text": "{\n  \"query\": \"GC overhead limit approaching heap usage after full java.lang.OutOfMemoryError Java space error rate 5xx OutOfMemoryError OOMKilled memory leak restarts crashloop\",\n  \"match\": \"any\",\n  \"terms\": [\n    \"5xx\",\n    \"approach\",\n    \"crashloop\",\n    \"error\",\n    \"full\",\n    \"gc\",\n    \"heap\",\n    \"java\",\n    \"java.lang.outofmemoryerror\",\n    \"leak\",\n    \"limit\",\n    \"memori\",\n    \"oomkil\",\n    \"outofmemoryerror\",\n    \"overhead\",\n    \"rate\",\n    \"restart\",\n    \"space\",\n    \"usag\"\n  ],\n  \"filters\": {\n    \"services\": [],\n    \"tags\": []\n  },\n  \"total_matches\": 62,\n  \"returned\": 8,\n  \"results\": [\n    {\n      \"rank\": 1,\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Symptoms\",\n      \"heading_path\": \"Memory leak and OOMKilled containers > Symptoms\",\n      \"anchor\": \"symptoms\",\n      \"snippet\": \"pattern: `**GC** **overhead** **limit** **approaching**: **heap** **usage** 97% after **full** **GC**` (a warning that precedes the crash).\\n- Log pattern: `**java.lang.OutOfMemoryError**: **Java** **heap** **space**`.\\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service \u2026 **restarts** every few minutes.\\n- Kubernetes: `Last State: Terminated, Reason: **OOMKilled**, Exit Code: 137`, and a growing **restart** count.\\n- Metrics: container **memory** climbs in a saw-tooth pattern, and every drop matches a **restart**.\\n- Callers\",\n      \"score\": 0.7422,\n      \"matched_terms\": [\n        \"approach\",\n        \"full\",\n        \"gc\",\n        \"heap\",\n        \"java\",\n        \"java.lang.outofmemoryerror\",\n        \"leak\",\n        \"limit\",\n        \"memori\",\n        \"oomkil\",\n        \"overhead\",\n        \"restart\",\n        \"space\",\n        \"usag\"\n      ]\n    },\n    {\n      \"rank\": 2,\n      \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"title\": \"Memory leak and OOMKilled containers\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"order-service\",\n        \"payment-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Known issues\",\n      \"heading_path\": \"Memory leak and OOMKilled containers > Known issues\",\n      \"anchor\": \"known-issues\",\n      \"snippet\": \"request **leak** in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It **leaked** about 5 MB per request (`**LEAK**_MB_PER_REQ`). **Heap** **usage** reached \u2026 about 15 minutes after a deploy, followed by `**OutOfMemoryError**: **Java** **heap** **space**` and a **restart** roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus\",\n      \"score\": 0.5815,\n      \"matched_terms\": [\n        \"gc\",\n        \"heap\",\n        \"java\",\n        \"leak\",\n        \"memori\",\n        \"oomkil\",\n        \"outofmemoryerror\",\n        \"restart\",\n        \"space\",\n        \"usag\"\n      ]\n    },\n    {\n      \"rank\": 3,\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"3. Map the pattern to a specific runbook\",\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook\",\n      \"anchor\": \"3-map-the-pattern-to-a-specific-runbook\",\n      \"snippet\": \"Pattern or signal | Runbook |\\n|-------------------|---------|\\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\\n| `**OutOfMemoryError**`, **OOMKilled**, **restarts** | [**memory**-**leak**-oom](memory-leak-oom.md) |\\n| `Timeout calling  ` | [dependency-timeouts](dependency-timeouts.md) |\\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\\n| CrashLoopBackOff \u2026 **crashloop**](pod-crashloop.md) |\\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md\",\n      \"score\": 0.5352,\n      \"matched_terms\": [\n        \"5xx\",\n        \"crashloop\",\n        \"error\",\n        \"leak\",\n        \"memori\",\n        \"oomkil\",\n        \"outofmemoryerror\",\n        \"rate\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 4,\n      \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"title\": \"High error rate (HTTP 5xx)\",\n      \"doc_type\": \"runbook\",\n      \"services\": [],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"High error rate (HTTP 5xx) > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"time, roll it back.\\n2. If one endpoint dominates, consider disabling it with a feature flag or **rate**-**limiting** it.\\n3. Communicate: post the impact and ETA in `#incidents` if the **error** **rate** stays above\",\n      \"score\": 0.3505,\n      \"matched_terms\": [\n        \"5xx\",\n        \"error\",\n        \"limit\",\n        \"rate\"\n      ]\n    },\n    {\n      \"rank\": 5,\n      \"path\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"title\": \"Pod CrashLoopBackOff\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"1. Read the last crash\",\n      \"heading_path\": \"Pod CrashLoopBackOff > Diagnosis > 1. Read the last crash\",\n      \"anchor\": \"1-read-the-last-crash\",\n      \"snippet\": \"lines before the exit.\\n- `kubectl describe pod   -n prod`: `Last State: Terminated`, `Reason` and `Exit Code`:\\n  - **137 / **OOMKilled****: **memory**, see [**memory**-**leak**-oom](memory-leak-oom.md).\\n  - **1**: an application **error** at startup (bad config, missing\",\n      \"score\": 0.2845,\n      \"matched_terms\": [\n        \"error\",\n        \"leak\",\n        \"memori\",\n        \"oomkil\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 6,\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"heading\": \"Configuration\",\n      \"heading_path\": \"order-service > Configuration\",\n      \"anchor\": \"configuration\",\n      \"snippet\": \"Client timeout for inventory-service calls |\\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\\n| `**JAVA**_OPTS` | `-XX:MaxRAMPercentage=75` | |\\n| **Memory** **limit** | 512Mi | **OOMKilled** when exceeded\",\n      \"score\": 0.2354,\n      \"matched_terms\": [\n        \"java\",\n        \"limit\",\n        \"memori\",\n        \"oomkil\"\n      ]\n    },\n    {\n      \"rank\": 7,\n      \"path\": \"knowledge-base/services/order-service.md\",\n      \"title\": \"order-service\",\n      \"doc_type\": \"service\",\n      \"services\": [\n        \"order-service\"\n      ],\n      \"heading\": \"Known failure modes\",\n      \"heading_path\": \"order-service > Known failure modes\",\n      \"anchor\": \"known-failure-modes\",\n      \"snippet\": \"**Memory** **leak** and OOM **restarts**: [**memory**-**leak**-oom](../runbooks/memory-leak-oom.md)\\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md\",\n      \"score\": 0.2191,\n      \"matched_terms\": [\n        \"leak\",\n        \"memori\",\n        \"restart\"\n      ]\n    },\n    {\n      \"rank\": 8,\n      \"path\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"title\": \"Redis cache outage\",\n      \"doc_type\": \"runbook\",\n      \"services\": [\n        \"payment-service\",\n        \"order-service\",\n        \"user-service\",\n        \"inventory-service\"\n      ],\n      \"heading\": \"Mitigation\",\n      \"heading_path\": \"Redis cache outage > Mitigation\",\n      \"anchor\": \"mitigation\",\n      \"snippet\": \"Bring Redis back:** `kubectl scale statefulset/redis -n prod --replicas=1`, or **restart** the container.\\n2. Protect the database while the cache is cold: temporarily raise the pool sizes only if Postgres has headroom, or **rate** \u2026 **limit** expensive read endpoints.\\n3. If Redis can't be restored quickly, fail over to the replica (if configured) and point the clients at it.\\n4. After recovery, watch the cache hit **rate** recover\",\n      \"score\": 0.1904,\n      \"matched_terms\": [\n        \"limit\",\n        \"rate\",\n        \"restart\"\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "search"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/memory-leak-oom.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# Memory leak and OOMKilled containers\n\n## Summary\nA process that keeps allocating memory it never frees eventually hits its limit. In the JVM services the heap fills up first: garbage collection runs more and more often, latency rises, and finally the JVM throws `java.lang.OutOfMemoryError`. If the container limit is lower than what the process needs, Kubernetes kills the container instead (**OOMKilled**, exit code 137). Either way the pod restarts. While it is down, callers get **HTTP 503**.\n\n## Symptoms\n- Log pattern: `GC overhead limit approaching: heap usage 97% after full GC` (a warning that precedes the crash).\n- Log pattern: `java.lang.OutOfMemoryError: Java heap space`.\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service restarts every few minutes.\n- Kubernetes: `Last State: Terminated, Reason: OOMKilled, Exit Code: 137`, and a growing restart count.\n- Metrics: container memory climbs in a saw-tooth pattern, and every drop matches a restart.\n- Callers see HTTP 503 or connection resets while the pod restarts.\n- Alerts: `ContainerOOMKilled`, `PodRestartingFrequently`.\n\n## Known issues\n- **Per-request leak in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It leaked about 5 MB per request (`LEAK_MB_PER_REQ`). Heap usage reached 97% about 15 minutes after a deploy, followed by `OutOfMemoryError: Java heap space` and a restart roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus TTL).\n\n## Diagnosis\n### 1. Confirm the restarts are memory-related\n- `kubectl get pods -n prod -l app=<service>`: look at the RESTARTS column.\n- `kubectl describe pod <pod> -n prod`: `Reason: OOMKilled` means the container limit was hit, and exit code 137 means SIGKILL.\n- In the logs, look for `OutOfMemoryError` or `GC overhead` right before each `Starting <service>` line.\n\n### 2. Leak or undersized limit?\n- **Leak:** memory grows steadily with traffic and never plateaus, and it started with a release. Compare `container_memory_working_set_bytes` before and after the deploy.\n- **Undersized:** memory plateaus close to the limit, and the service is killed during traffic peaks or batch jobs.\n- Check whether a release happened just before the first OOM (`kubectl rollout history`).\n\n### 3. Find the leak (after mitigating)\n- Capture a heap dump before the kill (`-XX:+HeapDumpOnOutOfMemoryError`, or `jcmd <pid> GC.heap_dump`).\n- Look at the largest retained objects: unbounded caches, static collections, listeners that are never removed.\n- Review the diff of the suspect release for new caches, buffers or collections.\n\n## Mitigation\n1. **If a release introduced the leak, roll back.** See [bad-deployment-rollback](bad-deployment-rollback.md).\n2. Buy time: raise the memory limit temporarily (for example 512Mi to 1Gi) and scale out, so that restarts don't line up across replicas.\n3. Make sure the readiness probe fails quickly, so a pod that is about to die is taken out of the load balancer.\n4. If a single endpoint triggers the leak, rate-limit or feature-flag that endpoint.\n\n## Rollback\n- `kubectl rollout undo deployment/<service> -n prod`, then check that memory stays flat for 15 minutes.\n- Revert the memory limit change after the fix ships.\n\n## Escalation\n- The owning team's on-call (for example [order-service](../services/order-service.md): `#commerce-oncall`).\n- If several services are OOMKilled at the same time, check node memory pressure and page `#platform-oncall`.\n\n## Prevention\n- Alert on `container_memory_working_set_bytes / limit > 0.9` for 10 minutes.\n- Set `-XX:MaxRAMPercentage=75` so the heap leaves headroom inside the container.\n- Soak-test releases for 30 minutes in staging and watch memory growth.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "ContainerOOMKilled",
+              "PodRestartingFrequently",
+              "HighErrorRate"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [
+              "order-service",
+              "payment-service",
+              "user-service",
+              "inventory-service"
+            ],
+            "tags": [
+              "memory",
+              "oom",
+              "oomkilled",
+              "heap",
+              "gc",
+              "jvm",
+              "restarts",
+              "http-503"
+            ],
+            "title": "Memory leak and OOMKilled containers",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "Memory leak and OOMKilled containers > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "Memory leak and OOMKilled containers > Symptoms"
+            },
+            {
+              "anchor": "known-issues",
+              "heading_path": "Memory leak and OOMKilled containers > Known issues"
+            },
+            {
+              "anchor": "1-confirm-the-restarts-are-memory-related",
+              "heading_path": "Memory leak and OOMKilled containers > Diagnosis > 1. Confirm the restarts are memory-related"
+            },
+            {
+              "anchor": "2-leak-or-undersized-limit",
+              "heading_path": "Memory leak and OOMKilled containers > Diagnosis > 2. Leak or undersized limit?"
+            },
+            {
+              "anchor": "3-find-the-leak-after-mitigating",
+              "heading_path": "Memory leak and OOMKilled containers > Diagnosis > 3. Find the leak (after mitigating)"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "Memory leak and OOMKilled containers > Mitigation"
+            },
+            {
+              "anchor": "rollback",
+              "heading_path": "Memory leak and OOMKilled containers > Rollback"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "Memory leak and OOMKilled containers > Escalation"
+            },
+            {
+              "anchor": "prevention",
+              "heading_path": "Memory leak and OOMKilled containers > Prevention"
+            }
+          ],
+          "path": "knowledge-base/runbooks/memory-leak-oom.md",
+          "services": [
+            "order-service",
+            "payment-service",
+            "user-service",
+            "inventory-service"
+          ],
+          "tags": [
+            "memory",
+            "oom",
+            "oomkilled",
+            "heap",
+            "gc",
+            "jvm",
+            "restarts",
+            "http-503"
+          ],
+          "title": "Memory leak and OOMKilled containers",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n  \"title\": \"Memory leak and OOMKilled containers\",\n  \"doc_type\": \"runbook\",\n  \"services\": [\n    \"order-service\",\n    \"payment-service\",\n    \"user-service\",\n    \"inventory-service\"\n  ],\n  \"tags\": [\n    \"memory\",\n    \"oom\",\n    \"oomkilled\",\n    \"heap\",\n    \"gc\",\n    \"jvm\",\n    \"restarts\",\n    \"http-503\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"memory\",\n      \"oom\",\n      \"oomkilled\",\n      \"heap\",\n      \"gc\",\n      \"jvm\",\n      \"restarts\",\n      \"http-503\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"Memory leak and OOMKilled containers\",\n    \"alerts\": [\n      \"ContainerOOMKilled\",\n      \"PodRestartingFrequently\",\n      \"HighErrorRate\"\n    ],\n    \"services\": [\n      \"order-service\",\n      \"payment-service\",\n      \"user-service\",\n      \"inventory-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# Memory leak and OOMKilled containers\\n\\n## Summary\\nA process that keeps allocating memory it never frees eventually hits its limit. In the JVM services the heap fills up first: garbage collection runs more and more often, latency rises, and finally the JVM throws `java.lang.OutOfMemoryError`. If the container limit is lower than what the process needs, Kubernetes kills the container instead (**OOMKilled**, exit code 137). Either way the pod restarts. While it is down, callers get **HTTP 503**.\\n\\n## Symptoms\\n- Log pattern: `GC overhead limit approaching: heap usage 97% after full GC` (a warning that precedes the crash).\\n- Log pattern: `java.lang.OutOfMemoryError: Java heap space`.\\n- Frequent startup lines (`Starting order-service ...`) for the same version: the service restarts every few minutes.\\n- Kubernetes: `Last State: Terminated, Reason: OOMKilled, Exit Code: 137`, and a growing restart count.\\n- Metrics: container memory climbs in a saw-tooth pattern, and every drop matches a restart.\\n- Callers see HTTP 503 or connection resets while the pod restarts.\\n- Alerts: `ContainerOOMKilled`, `PodRestartingFrequently`.\\n\\n## Known issues\\n- **Per-request leak in order-service (INC-2026-044).** A request-scoped cache was stored in a static map and never evicted. It leaked about 5 MB per request (`LEAK_MB_PER_REQ`). Heap usage reached 97% about 15 minutes after a deploy, followed by `OutOfMemoryError: Java heap space` and a restart roughly every 4 minutes. Fix: roll back, then bound the cache (max entries plus TTL).\\n\\n## Diagnosis\\n### 1. Confirm the restarts are memory-related\\n- `kubectl get pods -n prod -l app=<service>`: look at the RESTARTS column.\\n- `kubectl describe pod <pod> -n prod`: `Reason: OOMKilled` means the container limit was hit, and exit code 137 means SIGKILL.\\n- In the logs, look for `OutOfMemoryError` or `GC overhead` right before each `Starting <service>` line.\\n\\n### 2. Leak or undersized limit?\\n- **Leak:** memory grows steadily with traffic and never plateaus, and it started with a release. Compare `container_memory_working_set_bytes` before and after the deploy.\\n- **Undersized:** memory plateaus close to the limit, and the service is killed during traffic peaks or batch jobs.\\n- Check whether a release happened just before the first OOM (`kubectl rollout history`).\\n\\n### 3. Find the leak (after mitigating)\\n- Capture a heap dump before the kill (`-XX:+HeapDumpOnOutOfMemoryError`, or `jcmd <pid> GC.heap_dump`).\\n- Look at the largest retained objects: unbounded caches, static collections, listeners that are never removed.\\n- Review the diff of the suspect release for new caches, buffers or collections.\\n\\n## Mitigation\\n1. **If a release introduced the leak, roll back.** See [bad-deployment-rollback](bad-deployment-rollback.md).\\n2. Buy time: raise the memory limit temporarily (for example 512Mi to 1Gi) and scale out, so that restarts don't line up across replicas.\\n3. Make sure the readiness probe fails quickly, so a pod that is about to die is taken out of the load balancer.\\n4. If a single endpoint triggers the leak, rate-limit or feature-flag that endpoint.\\n\\n## Rollback\\n- `kubectl rollout undo deployment/<service> -n prod`, then check that memory stays flat for 15 minutes.\\n- Revert the memory limit change after the fix ships.\\n\\n## Escalation\\n- The owning team's on-call (for example [order-service](../services/order-service.md): `#commerce-oncall`).\\n- If several services are OOMKilled at the same time, check node memory pressure and page `#platform-oncall`.\\n\\n## Prevention\\n- Alert on `container_memory_working_set_bytes / limit > 0.9` for 10 minutes.\\n- Set `-XX:MaxRAMPercentage=75` so the heap leaves headroom inside the container.\\n- Soak-test releases for 30 minutes in staging and watch memory growth.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Known issues\",\n      \"anchor\": \"known-issues\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Diagnosis > 1. Confirm the restarts are memory-related\",\n      \"anchor\": \"1-confirm-the-restarts-are-memory-related\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Diagnosis > 2. Leak or undersized limit?\",\n      \"anchor\": \"2-leak-or-undersized-limit\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Diagnosis > 3. Find the leak (after mitigating)\",\n      \"anchor\": \"3-find-the-leak-after-mitigating\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Rollback\",\n      \"anchor\": \"rollback\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Escalation\",\n      \"anchor\": \"escalation\"\n    },\n    {\n      \"heading_path\": \"Memory leak and OOMKilled containers > Prevention\",\n      \"anchor\": \"prevention\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/runbooks/high-error-rate.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# High error rate (HTTP 5xx)\n\n## Summary\nThis is a generic triage runbook for a service whose 5xx rate is above its SLO (for example above 1% for 5 minutes). A high error rate is a symptom, not a cause. The goal is to find out quickly **which** errors are new, **when** they started and **what** changed at that time, and then move to the specific runbook.\n\n## Symptoms\n- Alert `HighErrorRate`: `sum(rate(http_requests_total{status=~\"5..\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.01`.\n- An `ErrorBudgetBurn` page for a fast budget burn.\n- Users report failed requests, and callers log HTTP 500 / 502 / 503 / 504 from this service.\n\n## Diagnosis\n### 1. What kind of errors?\n- Group the error logs by message pattern, endpoint and status code. A **new** pattern is the strongest lead; patterns that also exist in the 24 h baseline are usually noise.\n- Status codes point in a direction:\n  - **500**: the application threw an error (database, bug or config).\n  - **502/503**: nothing healthy is serving (pods not ready, crash loops, capacity).\n  - **504**: a slow dependency or a timeout ([dependency-timeouts](dependency-timeouts.md)).\n\n### 2. When did it start, and what changed?\n- The first-seen time of the new pattern, compared with deployments, config changes, feature flags, traffic spikes and infrastructure events.\n- A release in the previous 30 minutes: see [bad-deployment-rollback](bad-deployment-rollback.md).\n\n### 3. Map the pattern to a specific runbook\n| Pattern or signal | Runbook |\n|-------------------|---------|\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\n| `Timeout calling <service>` | [dependency-timeouts](dependency-timeouts.md) |\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\n| CrashLoopBackOff | [pod-crashloop](pod-crashloop.md) |\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md) |\n\n## Mitigation\n1. If a change correlates with the start time, roll it back.\n2. If one endpoint dominates, consider disabling it with a feature flag or rate-limiting it.\n3. Communicate: post the impact and ETA in `#incidents` if the error rate stays above 5% for more than 10 minutes.\n\n## Escalation\n- The owning team's on-call (service docs in `knowledge-base/services/`).\n- SEV-2 if customer-facing errors stay above 5% for more than 15 minutes; SEV-1 if payments or login are fully down.",
+          "doc_type": "runbook",
+          "metadata": {
+            "alerts": [
+              "HighErrorRate",
+              "ErrorBudgetBurn"
+            ],
+            "last_reviewed": "2026-09-01",
+            "owner": "platform-sre",
+            "services": [],
+            "tags": [
+              "errors",
+              "http-500",
+              "http-5xx",
+              "error-rate",
+              "slo",
+              "triage"
+            ],
+            "title": "High error rate (HTTP 5xx)",
+            "type": "runbook"
+          },
+          "outline": [
+            {
+              "anchor": "summary",
+              "heading_path": "High error rate (HTTP 5xx) > Summary"
+            },
+            {
+              "anchor": "symptoms",
+              "heading_path": "High error rate (HTTP 5xx) > Symptoms"
+            },
+            {
+              "anchor": "1-what-kind-of-errors",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 1. What kind of errors?"
+            },
+            {
+              "anchor": "2-when-did-it-start-and-what-changed",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 2. When did it start, and what changed?"
+            },
+            {
+              "anchor": "3-map-the-pattern-to-a-specific-runbook",
+              "heading_path": "High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook"
+            },
+            {
+              "anchor": "mitigation",
+              "heading_path": "High error rate (HTTP 5xx) > Mitigation"
+            },
+            {
+              "anchor": "escalation",
+              "heading_path": "High error rate (HTTP 5xx) > Escalation"
+            }
+          ],
+          "path": "knowledge-base/runbooks/high-error-rate.md",
+          "services": [],
+          "tags": [
+            "errors",
+            "http-500",
+            "http-5xx",
+            "error-rate",
+            "slo",
+            "triage"
+          ],
+          "title": "High error rate (HTTP 5xx)",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/runbooks/high-error-rate.md\",\n  \"title\": \"High error rate (HTTP 5xx)\",\n  \"doc_type\": \"runbook\",\n  \"services\": [],\n  \"tags\": [\n    \"errors\",\n    \"http-500\",\n    \"http-5xx\",\n    \"error-rate\",\n    \"slo\",\n    \"triage\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"errors\",\n      \"http-500\",\n      \"http-5xx\",\n      \"error-rate\",\n      \"slo\",\n      \"triage\"\n    ],\n    \"type\": \"runbook\",\n    \"owner\": \"platform-sre\",\n    \"title\": \"High error rate (HTTP 5xx)\",\n    \"alerts\": [\n      \"HighErrorRate\",\n      \"ErrorBudgetBurn\"\n    ],\n    \"services\": [],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# High error rate (HTTP 5xx)\\n\\n## Summary\\nThis is a generic triage runbook for a service whose 5xx rate is above its SLO (for example above 1% for 5 minutes). A high error rate is a symptom, not a cause. The goal is to find out quickly **which** errors are new, **when** they started and **what** changed at that time, and then move to the specific runbook.\\n\\n## Symptoms\\n- Alert `HighErrorRate`: `sum(rate(http_requests_total{status=~\\\"5..\\\"}[5m])) / sum(rate(http_requests_total[5m])) > 0.01`.\\n- An `ErrorBudgetBurn` page for a fast budget burn.\\n- Users report failed requests, and callers log HTTP 500 / 502 / 503 / 504 from this service.\\n\\n## Diagnosis\\n### 1. What kind of errors?\\n- Group the error logs by message pattern, endpoint and status code. A **new** pattern is the strongest lead; patterns that also exist in the 24 h baseline are usually noise.\\n- Status codes point in a direction:\\n  - **500**: the application threw an error (database, bug or config).\\n  - **502/503**: nothing healthy is serving (pods not ready, crash loops, capacity).\\n  - **504**: a slow dependency or a timeout ([dependency-timeouts](dependency-timeouts.md)).\\n\\n### 2. When did it start, and what changed?\\n- The first-seen time of the new pattern, compared with deployments, config changes, feature flags, traffic spikes and infrastructure events.\\n- A release in the previous 30 minutes: see [bad-deployment-rollback](bad-deployment-rollback.md).\\n\\n### 3. Map the pattern to a specific runbook\\n| Pattern or signal | Runbook |\\n|-------------------|---------|\\n| `could not acquire a connection`, `HikariPool` | [database-connection-pool](database-connection-pool.md) |\\n| `OutOfMemoryError`, OOMKilled, restarts | [memory-leak-oom](memory-leak-oom.md) |\\n| `Timeout calling <service>` | [dependency-timeouts](dependency-timeouts.md) |\\n| `ECONNREFUSED` to Redis, cache fallback | [redis-outage](redis-outage.md) |\\n| CrashLoopBackOff | [pod-crashloop](pod-crashloop.md) |\\n| ready replicas below desired, ImagePullBackOff | [bad-deployment-rollback](bad-deployment-rollback.md) |\\n\\n## Mitigation\\n1. If a change correlates with the start time, roll it back.\\n2. If one endpoint dominates, consider disabling it with a feature flag or rate-limiting it.\\n3. Communicate: post the impact and ETA in `#incidents` if the error rate stays above 5% for more than 10 minutes.\\n\\n## Escalation\\n- The owning team's on-call (service docs in `knowledge-base/services/`).\\n- SEV-2 if customer-facing errors stay above 5% for more than 15 minutes; SEV-1 if payments or login are fully down.\",\n  \"outline\": [\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Summary\",\n      \"anchor\": \"summary\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Symptoms\",\n      \"anchor\": \"symptoms\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 1. What kind of errors?\",\n      \"anchor\": \"1-what-kind-of-errors\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 2. When did it start, and what changed?\",\n      \"anchor\": \"2-when-did-it-start-and-what-changed\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Diagnosis > 3. Map the pattern to a specific runbook\",\n      \"anchor\": \"3-map-the-pattern-to-a-specific-runbook\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Mitigation\",\n      \"anchor\": \"mitigation\"\n    },\n    {\n      \"heading_path\": \"High error rate (HTTP 5xx) > Escalation\",\n      \"anchor\": \"escalation\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    },
+    {
+      "arguments": {
+        "path": "knowledge-base/services/order-service.md"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "content": "# order-service\n\n## Overview\norder-service creates and tracks customer orders. At checkout it reserves stock in inventory-service, takes the payment through payment-service, and stores the order. It is the entry point for checkout traffic.\n\n## Ownership\n- **Team:** commerce\n- **On-call:** `#commerce-oncall` (PagerDuty schedule \"Commerce Primary\")\n- **Escalation:** commerce engineering manager, then `#incidents`\n- **Tier:** 1\n\n## Dependencies\n| Dependency | Why | Failure impact |\n|------------|-----|----------------|\n| inventory-service | Stock checks and reservations (`GET /api/v1/stock/{sku}`) | A slow inventory-service causes `Timeout calling inventory-service` and HTTP 504 |\n| payment-service | Payment for the order | Payment errors fail the checkout |\n| Postgres (`orders` database) | Order records | Pool exhaustion causes HTTP 500 |\n\n## Endpoints\n- `POST /api/v1/orders`: create an order (checkout)\n- `GET /api/v1/orders/{id}`: order status\n\n## Configuration\n| Setting | Default | Notes |\n|---------|---------|-------|\n| `INVENTORY_TIMEOUT_MS` | 3000 | Client timeout for inventory-service calls |\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\n| `JAVA_OPTS` | `-XX:MaxRAMPercentage=75` | |\n| Memory limit | 512Mi | OOMKilled when exceeded |\n\n## Dashboards\n- Kibana logs: Discover, filter `service: order-service` (index `order-prod-*`)\n- Grafana: \"order-service overview\" (checkout rate, 5xx/504 rate, p95 latency, JVM heap, restarts)\n\n## SLOs\n- Checkout success 99.5%\n- p95 latency of `POST /api/v1/orders` below 1.5 s\n\n## Known failure modes\n- Memory leak and OOM restarts: [memory-leak-oom](../runbooks/memory-leak-oom.md)\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md)",
+          "doc_type": "service",
+          "metadata": {
+            "last_reviewed": "2026-09-01",
+            "owner": "commerce",
+            "services": [
+              "order-service"
+            ],
+            "tags": [
+              "service",
+              "orders",
+              "checkout",
+              "ownership"
+            ],
+            "title": "order-service",
+            "type": "service"
+          },
+          "outline": [
+            {
+              "anchor": "overview",
+              "heading_path": "order-service > Overview"
+            },
+            {
+              "anchor": "ownership",
+              "heading_path": "order-service > Ownership"
+            },
+            {
+              "anchor": "dependencies",
+              "heading_path": "order-service > Dependencies"
+            },
+            {
+              "anchor": "endpoints",
+              "heading_path": "order-service > Endpoints"
+            },
+            {
+              "anchor": "configuration",
+              "heading_path": "order-service > Configuration"
+            },
+            {
+              "anchor": "dashboards",
+              "heading_path": "order-service > Dashboards"
+            },
+            {
+              "anchor": "slos",
+              "heading_path": "order-service > SLOs"
+            },
+            {
+              "anchor": "known-failure-modes",
+              "heading_path": "order-service > Known failure modes"
+            }
+          ],
+          "path": "knowledge-base/services/order-service.md",
+          "services": [
+            "order-service"
+          ],
+          "tags": [
+            "service",
+            "orders",
+            "checkout",
+            "ownership"
+          ],
+          "title": "order-service",
+          "truncated": false
+        },
+        "text": "{\n  \"path\": \"knowledge-base/services/order-service.md\",\n  \"title\": \"order-service\",\n  \"doc_type\": \"service\",\n  \"services\": [\n    \"order-service\"\n  ],\n  \"tags\": [\n    \"service\",\n    \"orders\",\n    \"checkout\",\n    \"ownership\"\n  ],\n  \"metadata\": {\n    \"tags\": [\n      \"service\",\n      \"orders\",\n      \"checkout\",\n      \"ownership\"\n    ],\n    \"type\": \"service\",\n    \"owner\": \"commerce\",\n    \"title\": \"order-service\",\n    \"services\": [\n      \"order-service\"\n    ],\n    \"last_reviewed\": \"2026-09-01\"\n  },\n  \"content\": \"# order-service\\n\\n## Overview\\norder-service creates and tracks customer orders. At checkout it reserves stock in inventory-service, takes the payment through payment-service, and stores the order. It is the entry point for checkout traffic.\\n\\n## Ownership\\n- **Team:** commerce\\n- **On-call:** `#commerce-oncall` (PagerDuty schedule \\\"Commerce Primary\\\")\\n- **Escalation:** commerce engineering manager, then `#incidents`\\n- **Tier:** 1\\n\\n## Dependencies\\n| Dependency | Why | Failure impact |\\n|------------|-----|----------------|\\n| inventory-service | Stock checks and reservations (`GET /api/v1/stock/{sku}`) | A slow inventory-service causes `Timeout calling inventory-service` and HTTP 504 |\\n| payment-service | Payment for the order | Payment errors fail the checkout |\\n| Postgres (`orders` database) | Order records | Pool exhaustion causes HTTP 500 |\\n\\n## Endpoints\\n- `POST /api/v1/orders`: create an order (checkout)\\n- `GET /api/v1/orders/{id}`: order status\\n\\n## Configuration\\n| Setting | Default | Notes |\\n|---------|---------|-------|\\n| `INVENTORY_TIMEOUT_MS` | 3000 | Client timeout for inventory-service calls |\\n| `INVENTORY_RETRIES` | 1 | Keep this low; retries amplify a slow dependency |\\n| `JAVA_OPTS` | `-XX:MaxRAMPercentage=75` | |\\n| Memory limit | 512Mi | OOMKilled when exceeded |\\n\\n## Dashboards\\n- Kibana logs: Discover, filter `service: order-service` (index `order-prod-*`)\\n- Grafana: \\\"order-service overview\\\" (checkout rate, 5xx/504 rate, p95 latency, JVM heap, restarts)\\n\\n## SLOs\\n- Checkout success 99.5%\\n- p95 latency of `POST /api/v1/orders` below 1.5 s\\n\\n## Known failure modes\\n- Memory leak and OOM restarts: [memory-leak-oom](../runbooks/memory-leak-oom.md)\\n- Slow inventory-service: [dependency-timeouts](../runbooks/dependency-timeouts.md)\",\n  \"outline\": [\n    {\n      \"heading_path\": \"order-service > Overview\",\n      \"anchor\": \"overview\"\n    },\n    {\n      \"heading_path\": \"order-service > Ownership\",\n      \"anchor\": \"ownership\"\n    },\n    {\n      \"heading_path\": \"order-service > Dependencies\",\n      \"anchor\": \"dependencies\"\n    },\n    {\n      \"heading_path\": \"order-service > Endpoints\",\n      \"anchor\": \"endpoints\"\n    },\n    {\n      \"heading_path\": \"order-service > Configuration\",\n      \"anchor\": \"configuration\"\n    },\n    {\n      \"heading_path\": \"order-service > Dashboards\",\n      \"anchor\": \"dashboards\"\n    },\n    {\n      \"heading_path\": \"order-service > SLOs\",\n      \"anchor\": \"slos\"\n    },\n    {\n      \"heading_path\": \"order-service > Known failure modes\",\n      \"anchor\": \"known-failure-modes\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_doc"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Full-text search over runbook and service-doc sections, best first.\n\n        Args:\n            query: symptoms or keywords, e.g. 'could not acquire a connection from the pool HikariPool'.\n            k: number of sections to return (1-10).\n            services: only docs tagged with any of these services, e.g. ['payment-service'].\n                Generic runbooks (no services) are excluded by this filter; search again without it.\n            tags: only docs with any of these tags, e.g. ['database'].\n            match: 'any' (default) ranks sections by how many query words they contain;\n                'all' requires every word (web-search syntax: \"quoted phrase\", or, -exclude).\n            max_per_doc: at most this many sections per document (1-5), for diverse results.\n        ",
+      "input_schema": {
+        "properties": {
+          "k": {
+            "default": 5,
+            "title": "K",
+            "type": "integer"
+          },
+          "match": {
+            "default": "any",
+            "enum": [
+              "any",
+              "all"
+            ],
+            "title": "Match",
+            "type": "string"
+          },
+          "max_per_doc": {
+            "default": 3,
+            "title": "Max Per Doc",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "services": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Services"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Tags"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "searchArguments",
+        "type": "object"
+      },
+      "name": "search"
+    },
+    {
+      "description": "Full markdown of one document, with its section outline (heading paths + anchors).\n\n        Args:\n            path: repo-relative path from search/list_docs, e.g. 'knowledge-base/runbooks/redis-outage.md'.\n        ",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "title": "get_docArguments",
+        "type": "object"
+      },
+      "name": "get_doc"
+    },
+    {
+      "description": "List indexed documents (path, title, type, services, tags).\n\n        Args:\n            doc_type: optional 'runbook', 'service' or 'doc'.\n            service: optional service name; only docs tagged with it, e.g. 'payment-service'.\n        ",
+      "input_schema": {
+        "properties": {
+          "doc_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Doc Type"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          }
+        },
+        "title": "list_docsArguments",
+        "type": "object"
+      },
+      "name": "list_docs"
+    }
+  ]
+}

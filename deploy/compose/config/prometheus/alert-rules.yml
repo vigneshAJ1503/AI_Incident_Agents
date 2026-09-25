@@ -87,7 +87,7 @@ groups:
           description: >-
             Pod {{ $labels.namespace }}/{{ $labels.pod }} restarted {{ $value | humanize }} times
             in the last 15 minutes.
-          runbook_url: knowledge-base/runbooks/pod-crashlooping.md
+          runbook_url: knowledge-base/runbooks/pod-crashloop.md
 
       - alert: PodOOMKilled
         expr: |
@@ -106,7 +106,7 @@ groups:
           description: >-
             A container of {{ $labels.namespace }}/{{ $labels.pod }} was killed for exceeding its
             memory limit (OOMKilled) and restarted in the last 10 minutes.
-          runbook_url: knowledge-base/runbooks/pod-oom-killed.md
+          runbook_url: knowledge-base/runbooks/memory-leak-oom.md
 
       - alert: DeploymentReplicasMismatch
         expr: |
@@ -126,7 +126,7 @@ groups:
           description: >-
             Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had fewer available
             replicas than desired for 5 minutes (image pull failures, failing probes, capacity).
-          runbook_url: knowledge-base/runbooks/deployment-replicas-mismatch.md
+          runbook_url: knowledge-base/runbooks/bad-deployment-rollback.md
 
   - name: aiops-dependencies
     rules:
@@ -142,4 +142,4 @@ groups:
           description: >-
             The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
             fall back to the database; expect higher latency everywhere.
-          runbook_url: knowledge-base/runbooks/redis-down.md
+          runbook_url: knowledge-base/runbooks/redis-outage.md

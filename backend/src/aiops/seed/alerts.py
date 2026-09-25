@@ -75,28 +75,28 @@ RULES: dict[str, RuleTemplate] = {
         "critical",
         "{service}: pod {pod} is crash looping",
         "Pod {namespace}/{pod} restarted {value} times in the last 15 minutes.",
-        "pod-crashlooping.md",
+        "pod-crashloop.md",
     ),
     "PodOOMKilled": RuleTemplate(
         "critical",
         "{service}: container OOMKilled in {pod}",
         "A container of {namespace}/{pod} was killed for exceeding its memory limit "
         "(OOMKilled) and restarted in the last 10 minutes.",
-        "pod-oom-killed.md",
+        "memory-leak-oom.md",
     ),
     "DeploymentReplicasMismatch": RuleTemplate(
         "warning",
         "{deployment}: available replicas do not match the spec",
         "Deployment {namespace}/{deployment} has had fewer available replicas than desired "
         "for 5 minutes (image pull failures, failing probes, capacity).",
-        "deployment-replicas-mismatch.md",
+        "bad-deployment-rollback.md",
     ),
     "RedisDown": RuleTemplate(
         "critical",
         "redis: cache is unreachable",
         "The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services "
         "fall back to the database; expect higher latency everywhere.",
-        "redis-down.md",
+        "redis-outage.md",
     ),
 }
 

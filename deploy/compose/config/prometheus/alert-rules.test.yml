@@ -59,7 +59,7 @@ tests:
               description: >-
                 A container of prod/order-service-7d9-x1 was killed for exceeding its memory
                 limit (OOMKilled) and restarted in the last 10 minutes.
-              runbook_url: knowledge-base/runbooks/pod-oom-killed.md
+              runbook_url: knowledge-base/runbooks/memory-leak-oom.md
 
   # S5: Redis unreachable for more than a minute.
   - interval: 1m
@@ -84,4 +84,4 @@ tests:
               description: >-
                 The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
                 fall back to the database; expect higher latency everywhere.
-              runbook_url: knowledge-base/runbooks/redis-down.md
+              runbook_url: knowledge-base/runbooks/redis-outage.md

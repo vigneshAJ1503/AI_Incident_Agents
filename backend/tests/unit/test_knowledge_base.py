@@ -55,3 +55,17 @@ def test_relative_links_point_to_existing_docs() -> None:
         base = (REPO / path).parent
         for target in link.findall(source.document.body):
             assert (base / target).resolve().is_file(), f"{path}: broken link {target}"
+
+
+def test_alert_runbook_urls_resolve() -> None:
+    """Alert rules (and the alert seeder) link runbooks by repo-relative path."""
+    import re
+
+    from aiops.seed.alerts import RULES
+
+    rules = (REPO / "deploy/compose/config/prometheus/alert-rules.yml").read_text()
+    urls = set(re.findall(r"runbook_url:\s*(\S+\.md)", rules))
+    urls |= {rule.runbook_url for rule in RULES.values()}
+    assert urls, "no runbook_url found in alert rules"
+    missing = sorted(u for u in urls if u not in DOCS)
+    assert not missing, f"alert runbook_url(s) without a runbook: {missing}"

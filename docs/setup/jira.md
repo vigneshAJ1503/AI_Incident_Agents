@@ -56,6 +56,6 @@ Links such as `http://localhost:8109/browse/OPS-12` open a minimal page served b
 ## Safety
 - Agents get only `jira_search` and `jira_get_issue` (`capabilities.tickets.tool_allowlist`).
 - Writes (`jira_create_issue`, `jira_add_comment`, `jira_update_issue`) are only executed by the
-  approval framework after an explicit human approval (PR-014).
+  approval framework after an explicit human approval: see [approvals](../guardrails/approvals.md).
 - Both servers restrict visible projects server-side (`ALLOWED_PROJECTS` / `JIRA_PROJECTS_FILTER`).
 - The API token lives only in `.env` (git-ignored); the container port is bound to 127.0.0.1.

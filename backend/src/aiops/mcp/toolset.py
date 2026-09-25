@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from collections.abc import Iterable
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict
@@ -55,7 +56,10 @@ class Toolset:
         guardrails: GuardrailsConfig,
         audit: AuditSink,
         investigation_id: str | None = None,
+        allowlist: Iterable[str] | None = None,
     ) -> None:
+        """``allowlist`` overrides ``config.tool_allowlist``; only the approval executor
+        passes one (``config.write_allowlist``, see MCPRegistry.write_toolset)."""
         self.capability = capability
         self.config = config
         self._client = client
@@ -63,7 +67,7 @@ class Toolset:
         self._guardrails = guardrails
         self._audit = audit
         self._investigation_id = investigation_id
-        self._allowed = set(config.tool_allowlist)
+        self._allowed = set(config.tool_allowlist if allowlist is None else allowlist)
 
     async def specs(self) -> list[ToolSpec]:
         """Tool definitions for the LLM — only allowlisted tools the server actually has."""

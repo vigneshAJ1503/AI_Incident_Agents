@@ -20,6 +20,26 @@ services:
     mem_limit: 256m
     restart: unless-stopped
 
+  knowledge-mcp:
+    build:
+      context: ../../mcp-servers/knowledge-mcp
+    image: aiops/knowledge-mcp:0.1.0
+    container_name: aiops-knowledge-mcp
+    environment:
+      # libpq settings; the server only ever opens read-only transactions (see its README).
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=${POSTGRES_USER:-aiops}
+      - PGPASSWORD=${POSTGRES_PASSWORD:-aiops-local-only}
+      - PGDATABASE=${POSTGRES_DB:-aiops}
+      - KNOWLEDGE_SCHEMA=${KNOWLEDGE_SCHEMA:-knowledge}
+      - MAX_K=${KNOWLEDGE_MAX_K:-10}
+      - STATEMENT_TIMEOUT_MS=${KNOWLEDGE_STATEMENT_TIMEOUT_MS:-5000}
+    ports:
+      - "127.0.0.1:${KNOWLEDGE_MCP_PORT:-8108}:8108"
+    mem_limit: 192m
+    restart: unless-stopped
+
 networks:
   default:
     name: aiops

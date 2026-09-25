@@ -100,6 +100,10 @@ record-fixtures: venv-fix ## Re-record Log agent MCP fixtures from the live stac
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_logs
 	@$(MAKE) --no-print-directory seed-logs S=S1
 
+.PHONY: ingest-knowledge
+ingest-knowledge: venv-fix ## Index knowledge-base/ runbooks into Postgres full-text search (idempotent)
+	cd $(BACKEND) && uv run --no-sync aiops knowledge ingest --path ../knowledge-base
+
 .PHONY: seed-logs
 seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1
 	cd $(BACKEND) && uv run --no-sync aiops seed logs --scenario $(S)

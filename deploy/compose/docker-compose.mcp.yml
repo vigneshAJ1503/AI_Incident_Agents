@@ -85,6 +85,21 @@ services:
     mem_limit: 512m
     restart: unless-stopped
 
+  alertmanager-mcp:
+    build:
+      context: ../../mcp-servers/alertmanager-mcp
+    image: aiops/alertmanager-mcp:0.1.0
+    container_name: aiops-alertmanager-mcp
+    environment:
+      - AM_URL=http://alertmanager:9093
+      - MAX_RESULTS=${ALERTS_MAX_RESULTS:-200}
+      - MAX_TIME_RANGE_HOURS=${ALERTS_MAX_TIME_RANGE_HOURS:-168}
+      - QUERY_TIMEOUT_S=${ALERTS_QUERY_TIMEOUT_S:-15}
+    ports:
+      - "127.0.0.1:${ALERTS_MCP_PORT:-8105}:8105"
+    mem_limit: 128m
+    restart: unless-stopped
+
 networks:
   default:
     name: aiops

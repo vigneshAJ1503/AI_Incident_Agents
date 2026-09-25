@@ -1,0 +1,337 @@
+{
+  "agent": "tickets",
+  "mode": "replay",
+  "environment": "local",
+  "generated_at": "2026-09-25T19:06:22.640674Z",
+  "anchor": "2026-09-25T10:30:00+00:00",
+  "results": [
+    {
+      "scenario": "S0",
+      "title": "Healthy baseline (no incident)",
+      "healthy": true,
+      "status": "no_signal",
+      "signals": [
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "6 evidence items (min 1)"
+        },
+        {
+          "name": "no_signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:similar_past_incident",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 6,
+      "tool_calls": 1,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 4.0,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S1",
+      "title": "DB connection pool misconfiguration (payment-service v1.8.2)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "known_issue_open",
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "7 evidence items (min 2)"
+        },
+        {
+          "name": "signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:OPS-12",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 7,
+      "tool_calls": 2,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.09,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S2",
+      "title": "Memory leak -> OOM restarts (order-service)",
+      "healthy": false,
+      "status": "no_signal",
+      "signals": [
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "9 evidence items (min 1)"
+        },
+        {
+          "name": "no_signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 9,
+      "tool_calls": 1,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 1.83,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S3",
+      "title": "Slow downstream dependency (inventory-service -> order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "dependency_known_issue_open",
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "10 evidence items (min 2)"
+        },
+        {
+          "name": "signal:dependency_known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:inventory",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 10,
+      "tool_calls": 2,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 1.98,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S4",
+      "title": "Bad deployment (user-service image cannot be pulled)",
+      "healthy": false,
+      "status": "no_signal",
+      "signals": [
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "3 evidence items (min 1)"
+        },
+        {
+          "name": "no_signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:similar_past_incident",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 3,
+      "tool_calls": 1,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 1.05,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S5",
+      "title": "Cache outage (Redis down)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "similar_past_incident",
+        "related_open_tickets"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "8 evidence items (min 2)"
+        },
+        {
+          "name": "signal:similar_past_incident",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:known_issue_open",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:redis",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 8,
+      "tool_calls": 2,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 1.63,
+      "model": "fake",
+      "prompt_version": "tickets/v1@2d64a95b8638",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    }
+  ],
+  "summary": {
+    "scenarios": 6,
+    "passed": 6,
+    "pass_rate": 1.0,
+    "healthy_scenarios": 1,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "findings": 6,
+    "valid_findings": 6,
+    "citation_validity": 1.0,
+    "avg_tool_calls": 1.5,
+    "avg_llm_calls": 1.0,
+    "avg_tokens": 0.0,
+    "total_tokens": 0,
+    "avg_latency_ms": 2.1,
+    "p50_latency_ms": 1.91
+  }
+}

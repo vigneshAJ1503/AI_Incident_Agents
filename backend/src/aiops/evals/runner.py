@@ -41,7 +41,14 @@ Mode = Literal["replay", "live"]
 MODES: tuple[Mode, ...] = ("replay", "live")
 
 #: Signals that don't claim a problem (a healthy scenario may report them).
-BENIGN_SIGNALS = frozenset({"no_errors"})
+BENIGN_SIGNALS = frozenset(
+    {
+        "no_errors",
+        # tickets: context only (open tickets exist on the service / nothing related found)
+        "related_open_tickets",
+        "no_related_tickets",
+    }
+)
 
 #: Default minimum pass rate per mode (live: MASTER_PLAN §15 target of >= 4/5 incidents).
 DEFAULT_MIN_PASS_RATE: dict[Mode, float] = {"replay": 1.0, "live": 0.8}

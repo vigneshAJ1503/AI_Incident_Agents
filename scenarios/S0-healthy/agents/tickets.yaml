@@ -1,0 +1,5 @@
+# Healthy baseline: open tickets exist for payment-service (e.g. OPS-12), but the question
+# names no symptom, so none may be claimed as a known issue for this (non-)incident.
+status: [no_signal]
+forbidden_signals: [known_issue_open, dependency_known_issue_open, similar_past_incident]
+min_evidence: 1

@@ -1,0 +1,7 @@
+# order-service timeouts: open timeout issues on its dependencies, incl. the inventory-service
+# slow query OPS-7. No order-service ticket matches, so no own known issue.
+status: [success]
+signals: [dependency_known_issue_open]
+forbidden_signals: [known_issue_open]
+must_mention: [inventory]
+min_evidence: 2

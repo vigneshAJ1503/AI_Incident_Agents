@@ -93,6 +93,9 @@ capabilities:
     settings:
       project_key: ${TICKETS_PROJECT_KEY:-OPS}
       write_requires_approval: true
+      resolved_lookback_days: 90    # "similar past incident" = resolved within this window
+      # Optional: replace the agent's symptom vocabulary (name: {triggers: regex, search: [terms]})
+      # symptom_terms: { timeout: { triggers: "time[ds]? ?outs?", search: [timeout] } }
       # {key} = issue key. Mock: a minimal page served by mock-tickets-mcp.
       ui_link_template: "${TICKETS_UI_URL:-http://localhost:8109}/browse/{key}"
 
@@ -105,3 +108,12 @@ agents:
       max_tool_calls: 10
       max_execution_s: 60
       max_tokens: 40000
+  tickets:
+    model_role: agent
+    # 1-3 deterministic searches (a labels-only retry if Jira rejects a component) + up to
+    # 3 LLM follow-ups (e.g. jira_get_issue for comments)
+    limits:
+      max_steps: 4
+      max_tool_calls: 6
+      max_execution_s: 45
+      max_tokens: 30000

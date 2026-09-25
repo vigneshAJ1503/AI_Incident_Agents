@@ -7,6 +7,7 @@ from aiops.cli import (
     agent_cmd,
     catalog_cmd,
     config_cmd,
+    eval_cmd,
     llm_cmd,
     mcp_cmd,
     prompts_cmd,
@@ -28,6 +29,7 @@ app.add_typer(prompts_cmd.app, name="prompts")
 app.add_typer(mcp_cmd.app, name="mcp")
 app.add_typer(agent_cmd.app, name="agent")
 app.add_typer(seed_cmd.app, name="seed")
+app.add_typer(eval_cmd.app, name="eval")
 
 
 @app.callback()

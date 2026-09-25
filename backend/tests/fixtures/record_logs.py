@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import asyncio
 import os
-from datetime import datetime
 from pathlib import Path
 
 from aiops.agents.deps import build_deps
@@ -19,8 +18,7 @@ from aiops.agents.log_agent import LogAgent
 from aiops.core.config import load_settings
 from aiops.llm.base import ChatMessage, LLMResponse, ToolSpec
 from aiops.llm.fake import FakeLLMProvider, tool_call
-from aiops.seed.elasticsearch import ElasticsearchSeeder
-from aiops.seed.logs import LogGenerator, SeedWindow, index_name
+from aiops.seed.elasticsearch import seed_scenario_logs
 from tests.fixtures.scenario_context import FIXED_NOW, task_for
 
 HERE = Path(__file__).parent
@@ -28,18 +26,8 @@ SCENARIOS = ["S0", "S1", "S2", "S3", "S4", "S5"]
 
 
 def seed(scenario: str) -> None:
-    window = SeedWindow.build(FIXED_NOW, hours=26)
-    seeder = ElasticsearchSeeder(os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200"))
-    try:
-        seeder.ensure_template()
-        seeder.delete_seeded_indices()
-        docs = (
-            (index_name(d["service"], "production", datetime.fromisoformat(d["@timestamp"])), d)
-            for d in LogGenerator(scenario, window).generate()
-        )
-        seeder.write_meta(scenario, window, 42, seeder.bulk(docs))
-    finally:
-        seeder.close()
+    url = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
+    seed_scenario_logs(url, scenario, FIXED_NOW)
 
 
 def responder(messages: list[ChatMessage], tools: list[ToolSpec] | None) -> LLMResponse:

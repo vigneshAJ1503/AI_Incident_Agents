@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from pathlib import Path
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from aiops.core.config import ConfigError, format_validation_error, load_yaml
-from aiops.core.models import AgentStatus
+from aiops.core.models import AgentStatus, AgentTask, IncidentContext, TimeRange
 
 
 class AgentExpectation(BaseModel):
@@ -32,6 +33,21 @@ class Scenario(BaseModel):
     window: str = "30m"
     root_cause: str | None = None  # None = healthy / no incident
     agents: dict[str, AgentExpectation] = Field(default_factory=dict)
+
+    @property
+    def healthy(self) -> bool:
+        """No ground-truth root cause: any reported anomaly is a false positive."""
+        return self.root_cause is None
+
+    def task(self, agent: str, now: datetime) -> AgentTask:
+        """The agent task an engineer's question produces, with the window ending at ``now``."""
+        context = IncidentContext(
+            question=self.question,
+            service=self.service,
+            environment=self.environment,
+            time_range=TimeRange.last(self.window, now=now),
+        )
+        return AgentTask(agent=agent, objective=self.question, context=context)
 
 
 def load_scenario(path: Path) -> Scenario:

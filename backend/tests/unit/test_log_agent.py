@@ -6,7 +6,7 @@ agent's deterministic investigation + guardrails, against scenario ground truth.
 
 from __future__ import annotations
 
-import re
+import asyncio
 from pathlib import Path
 
 import pytest
@@ -15,65 +15,45 @@ from aiops.agents.deps import build_deps
 from aiops.agents.log_agent import LogAgent
 from aiops.core.config import load_settings
 from aiops.core.models import AgentResult, AgentStatus, ClaimKind
-from aiops.evals.scoring import score_agent
-from aiops.llm.base import ChatMessage, LLMResponse, ToolSpec
-from aiops.llm.fake import FakeLLMProvider, tool_call
-from tests.fixtures.scenario_context import SCENARIOS, task_for
+from aiops.evals.replay import echo_responder
+from aiops.evals.runner import EvalReport, run_eval
+from aiops.llm.fake import FakeLLMProvider
+from tests.fixtures.scenario_context import task_for
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "logs"
 CONFIG = Path(__file__).resolve().parents[3] / "config"
-EVIDENCE = re.compile(r"\[(ev-[0-9a-f]+)\] (\w+)")
 
 
 def run_agent(scenario: str, llm: FakeLLMProvider) -> AgentResult:
-    import asyncio
-
     settings = load_settings("local", CONFIG)
     deps = build_deps(settings, llm=llm, replay_dir=FIXTURES / scenario)
     return asyncio.run(LogAgent(deps).run(task_for(scenario)))
 
 
-def overview(messages: list[ChatMessage]) -> str:
-    return (messages[1].content or "").split("## Overview", 1)[1]
-
-
-def evidence_ids(messages: list[ChatMessage]) -> dict[str, str]:
-    return {name: eid for eid, name in EVIDENCE.findall(overview(messages))}
-
-
-def echo_responder(status: str, signals: list[str] | None = None):  # type: ignore[no-untyped-def]
-    """Submit the overview as the summary, citing the patterns evidence."""
-
-    def respond(messages: list[ChatMessage], tools: list[ToolSpec] | None) -> LLMResponse:
-        ids = evidence_ids(messages)
-        return tool_call(
-            "submit",
-            {
-                "status": status,
-                "summary": overview(messages)[:1500],
-                "findings": [
-                    {
-                        "kind": "OBSERVATION",
-                        "type": "log_overview",
-                        "description": "Deterministic overview",
-                        "evidence_ids": [ids.get("patterns") or ids["volume"]],
-                    }
-                ],
-                "signals": signals or [],
-                "confidence": 0.5,
-            },
-        )
-
-    return respond
+@pytest.fixture(scope="module")
+def replay_report() -> EvalReport:
+    """The shared eval runner in replay mode (the same code as `make eval AGENT=logs`)."""
+    with pytest.MonkeyPatch.context() as mp:  # module scope: isolate from a developer .env
+        mp.setattr("aiops.core.config.load_dotenv", lambda *a, **k: False)
+        settings = load_settings("local", CONFIG)
+    return asyncio.run(run_eval(settings, "logs", mode="replay"))
 
 
 @pytest.mark.parametrize("scenario", ["S0", "S1", "S2", "S3", "S4", "S5"])
-def test_scenario_ground_truth(scenario: str) -> None:
+def test_scenario_ground_truth(replay_report: EvalReport, scenario: str) -> None:
     """Even an LLM that says 'no_signal' can't hide anomalies; S0 stays clean."""
-    result = run_agent(scenario, FakeLLMProvider(responder=echo_responder("no_signal")))
-    card = score_agent(scenario, result, SCENARIOS[scenario].agents["logs"])
-    failed = [f"{c.name}: {c.detail}" for c in card.checks if not c.passed]
-    assert card.passed, failed
+    result = next(r for r in replay_report.results if r.scenario == scenario)
+    assert result.passed, [f"{c.name}: {c.detail}" for c in result.failed_checks]
+    assert not result.false_positive
+    assert result.tokens == 0 and result.llm_calls == 1
+
+
+def test_replay_report_aggregates(replay_report: EvalReport) -> None:
+    summary = replay_report.summary
+    assert [r.scenario for r in replay_report.results] == ["S0", "S1", "S2", "S3", "S4", "S5"]
+    assert summary.pass_rate == 1.0
+    assert summary.healthy_scenarios == 1 and summary.false_positive_rate == 0.0
+    assert summary.citation_validity == 1.0 and summary.findings == 6
 
 
 def test_llm_cannot_add_data_signals_to_healthy_s0() -> None:
@@ -122,8 +102,6 @@ def test_s1_details() -> None:
 
 
 def test_unknown_service_index_fails_cleanly() -> None:
-    import asyncio
-
     task = task_for("S1")
     task = task.model_copy(update={"context": task.context.model_copy(update={"service": None})})
     settings = load_settings("local", CONFIG)

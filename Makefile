@@ -103,3 +103,11 @@ record-fixtures: venv-fix ## Re-record Log agent MCP fixtures from the live stac
 .PHONY: seed-logs
 seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1
 	cd $(BACKEND) && uv run --no-sync aiops seed logs --scenario $(S)
+
+# --- Evals (PR-011) ---------------------------------------------------------------------
+AGENT ?= logs
+MODE ?= replay
+
+.PHONY: eval
+eval: venv-fix ## Score an agent on scenarios: make eval AGENT=logs MODE=replay|live [SCENARIO=S1]
+	cd $(BACKEND) && uv run --no-sync aiops eval run --agent $(AGENT) --mode $(MODE) $(if $(SCENARIO),--scenario $(SCENARIO),)

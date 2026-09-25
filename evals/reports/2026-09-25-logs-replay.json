@@ -1,0 +1,327 @@
+{
+  "agent": "logs",
+  "mode": "replay",
+  "environment": "local",
+  "generated_at": "2026-09-25T18:45:07.132927Z",
+  "anchor": "2026-09-25T10:30:00+00:00",
+  "results": [
+    {
+      "scenario": "S0",
+      "title": "Healthy baseline (no incident)",
+      "healthy": true,
+      "status": "no_signal",
+      "signals": [],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "3 evidence items (min 1)"
+        },
+        {
+          "name": "no_signal:db_timeout_errors_up",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:error_rate_up",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:new_error_pattern",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 3,
+      "tool_calls": 3,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 4.11,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S1",
+      "title": "DB connection pool misconfiguration (payment-service v1.8.2)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "db_timeout_errors_up",
+        "error_rate_up",
+        "new_error_pattern",
+        "deployment_detected"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 1)"
+        },
+        {
+          "name": "signal:db_timeout_errors_up",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:connection",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 4.48,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S2",
+      "title": "Memory leak -> OOM restarts (order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "error_rate_up",
+        "new_error_pattern",
+        "oom_errors",
+        "service_restarts"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 1)"
+        },
+        {
+          "name": "signal:oom_errors",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:memory",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.89,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S3",
+      "title": "Slow downstream dependency (inventory-service -> order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "error_rate_up",
+        "new_error_pattern",
+        "dependency_timeouts"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 1)"
+        },
+        {
+          "name": "signal:dependency_timeouts",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:inventory",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 3.09,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S4",
+      "title": "Bad deployment (user-service image cannot be pulled)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "capacity_degraded"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 1)"
+        },
+        {
+          "name": "signal:capacity_degraded",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:replicas",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 4.94,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S5",
+      "title": "Cache outage (Redis down)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "error_rate_up",
+        "new_error_pattern",
+        "cache_connection_errors"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 1)"
+        },
+        {
+          "name": "signal:cache_connection_errors",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:redis",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "1/1 findings cite existing evidence"
+        }
+      ],
+      "findings": 1,
+      "valid_findings": 1,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 6.3,
+      "model": "fake",
+      "prompt_version": "logs/v2@cd449df3a662",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    }
+  ],
+  "summary": {
+    "scenarios": 6,
+    "passed": 6,
+    "pass_rate": 1.0,
+    "healthy_scenarios": 1,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "findings": 6,
+    "valid_findings": 6,
+    "citation_validity": 1.0,
+    "avg_tool_calls": 3.83,
+    "avg_llm_calls": 1.0,
+    "avg_tokens": 0.0,
+    "total_tokens": 0,
+    "avg_latency_ms": 4.3,
+    "p50_latency_ms": 4.29
+  }
+}

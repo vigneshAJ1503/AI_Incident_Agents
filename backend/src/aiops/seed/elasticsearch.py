@@ -5,11 +5,19 @@ from __future__ import annotations
 import json
 from collections import Counter
 from collections.abc import Iterable
+from datetime import datetime
 from typing import Any
 
 import httpx2
 
-from aiops.seed.logs import INDEX_TEMPLATE, SERVICES, SeedWindow
+from aiops.seed.logs import (
+    ENV_SHORT,
+    INDEX_TEMPLATE,
+    SERVICES,
+    LogGenerator,
+    SeedWindow,
+    index_name,
+)
 
 META_INDEX = "aiops-seed-meta"
 TEMPLATE_NAME = "aiops-app-logs"
@@ -111,3 +119,31 @@ class ElasticsearchSeeder:
             return None
         source: dict[str, Any] = self._check(response, "read seed metadata").get("_source", {})
         return source
+
+
+def seed_scenario_logs(
+    url: str,
+    scenario: str,
+    now: datetime,
+    *,
+    hours: float = 26.0,
+    seed: int = 42,
+    environment: str = "production",
+) -> tuple[SeedWindow, Counter[str]]:
+    """Replace the seeded log indices with ``scenario`` anchored at ``now``."""
+    window = SeedWindow.build(now, hours)
+    generator = LogGenerator(scenario, window, seed=seed, environment=environment)
+    seeder = ElasticsearchSeeder(url)
+    try:
+        seeder.ping()
+        seeder.ensure_template()
+        seeder.delete_seeded_indices(ENV_SHORT[environment])
+        docs = (
+            (index_name(d["service"], environment, datetime.fromisoformat(d["@timestamp"])), d)
+            for d in generator.generate()
+        )
+        counts = seeder.bulk(docs)
+        seeder.write_meta(scenario, window, seed, counts)
+    finally:
+        seeder.close()
+    return window, counts

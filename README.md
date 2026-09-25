@@ -32,7 +32,7 @@ cd backend && uv run aiops --help
 | Milestone | Scope | State |
 |-----------|-------|-------|
 | PR-001 | Repository bootstrap & CI | ✅ |
-| v0.1.0 | Log (ELK) agent with evals | ⏳ |
+| v0.1.0 | Log (ELK) agent with evals ([replay scorecard](evals/reports/2026-09-25-logs-replay.md): 6/6, 0 false positives) | ⏳ |
 | v0.2.0 | Jira agent + approvals | ⏳ |
 | v0.3.0 | Minikube runtime + fault injection | ⏳ |
 | v0.4.0 | All specialist agents | ⏳ |

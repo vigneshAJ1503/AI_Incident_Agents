@@ -1,0 +1,3 @@
+status: [no_signal]
+forbidden_signals: [db_timeout_errors_up, error_rate_up, new_error_pattern]
+min_evidence: 1

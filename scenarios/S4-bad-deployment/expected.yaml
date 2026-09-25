@@ -8,9 +8,4 @@ service: user-service
 environment: production
 window: 30m
 root_cause: user-service deployment with a nonexistent image tag (ImagePullBackOff) leaves 1/3 replicas ready.
-agents:
-  logs:
-    status: [success]
-    signals: [capacity_degraded]
-    must_mention: [replicas]
-    min_evidence: 1
+# Per-agent expectations live in agents/<agent>.yaml

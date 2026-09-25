@@ -1,0 +1,4 @@
+status: [success]
+signals: [dependency_timeouts]
+must_mention: [inventory]
+min_evidence: 1

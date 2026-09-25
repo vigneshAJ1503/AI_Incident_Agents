@@ -6,9 +6,4 @@ service: order-service
 environment: production
 window: 30m
 root_cause: Memory leak in order-service causes OutOfMemoryError and repeated container restarts (OOMKilled).
-agents:
-  logs:
-    status: [success]
-    signals: [oom_errors]
-    must_mention: [memory]
-    min_evidence: 1
+# Per-agent expectations live in agents/<agent>.yaml

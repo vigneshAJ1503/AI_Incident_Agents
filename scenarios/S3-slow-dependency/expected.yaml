@@ -6,9 +6,4 @@ service: order-service
 environment: production
 window: 30m
 root_cause: Slow stock_levels queries in inventory-service cause order-service upstream timeouts.
-agents:
-  logs:
-    status: [success]
-    signals: [dependency_timeouts]
-    must_mention: [inventory]
-    min_evidence: 1
+# Per-agent expectations live in agents/<agent>.yaml

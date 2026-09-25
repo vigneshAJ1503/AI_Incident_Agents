@@ -10,9 +10,4 @@ window: 30m
 root_cause: >
   Database connection pool misconfiguration introduced in payment-service v1.8.2
   (DB_POOL_SIZE 20 -> 2) causes connection timeouts and HTTP 500s.
-agents:
-  logs:
-    status: [success]
-    signals: [db_timeout_errors_up]
-    must_mention: [connection]
-    min_evidence: 1
+# Per-agent expectations live in agents/<agent>.yaml

@@ -16,6 +16,7 @@ Finally, an RCA agent returns an **evidence-backed** root-cause hypothesis with 
 - 📘 **Master development plan:** [MASTER_PLAN.md](MASTER_PLAN.md)
 - 🏗️ **Architecture:** [HLD](docs/architecture/HLD.png) · [Local deployment](docs/architecture/local-deployment.png)
 - 🧭 **Decisions:** [docs/adr](docs/adr)
+- 💸 **Runs for $0:** [docs/setup/zero-cost.md](docs/setup/zero-cost.md)
 
 ## Quick start
 

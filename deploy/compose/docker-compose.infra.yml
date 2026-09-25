@@ -13,12 +13,12 @@ services:
       - cluster.name=aiops-local
       - xpack.security.enabled=false
       - action.destructive_requires_name=true
-      - ES_JAVA_OPTS=-Xms1g -Xmx1g
+      - ES_JAVA_OPTS=-Xms${ES_HEAP:-512m} -Xmx${ES_HEAP:-512m}
     ports:
       - "127.0.0.1:${ES_PORT:-9200}:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
-    mem_limit: 2g
+    mem_limit: ${ES_MEM_LIMIT:-1g}
     healthcheck:
       test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"]
       interval: 10s

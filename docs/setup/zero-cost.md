@@ -31,18 +31,22 @@ Goal: build and run the entire platform **for free** on a 16 GB Apple-silicon Ma
 5. **Record once, replay forever:** `--record` saves real tool responses as fixtures for tests.
 6. **Retry with backoff** on HTTP 429 (rate limit); automatic fallback to a secondary provider is a later option.
 
-## Memory budget (16 GB Mac)
+## Memory budget: 5 GB for Docker
 
-| Component | RAM |
-|-----------|-----|
-| Elasticsearch (1 GB heap) | ~1.5 GB |
-| Kibana | ~0.8 GB |
-| Postgres + Redis | ~0.3 GB |
-| MCP servers + backend | ~0.5 GB |
-| Minikube (from PR-015) | ~3 GB |
-| Prometheus + Grafana + Alertmanager (from PR-020) | ~0.8 GB |
+The whole platform runs inside **5 GB** of Docker memory. Optional UIs are off by default.
 
-Bring up only the slice you're working on (`make infra-up` profiles). Stop Kibana when you don't need the UI.
+| Component | Memory | Notes |
+|-----------|--------|-------|
+| Elasticsearch (512 MB heap) | ~0.9 GB | `ES_HEAP`/`ES_MEM_LIMIT` in `.env` |
+| Postgres + Redis + Alertmanager | ~0.1 GB | |
+| MCP servers (5) | ~0.3 GB | |
+| Minikube: 4 sample services, Fluent Bit, kube-state-metrics (from PR-015) | ~2.2 GB | `minikube start --memory=2200 --cpus=2` |
+| Prometheus (from PR-020) | ~0.2 GB | short retention |
+| **Always-on total** | **~3.7 GB** | measured: 1.4 GB before Minikube |
+| Kibana (`make ui-up`) | +0.6 GB | optional, on demand |
+| Grafana (`make ui-up`, from PR-020) | +0.15 GB | optional, on demand |
+
+Agents, tests and evals never need the UIs. Use `make ui-up` to look at logs and dashboards, and `make ui-down` when you're done.
 
 ## One-time setup
 ```bash

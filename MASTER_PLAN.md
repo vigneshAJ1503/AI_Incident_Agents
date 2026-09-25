@@ -429,11 +429,11 @@ AI_Incident_Agents/
 ### 8.1 Hardware
 | Resource | Minimum | Recommended |
 |----------|---------|-------------|
-| RAM | 16 GB total, **10 GB given to Docker** | 32 GB total, 14 GB given to Docker |
+| RAM | 16 GB total, **5 GB given to Docker** (lean budget) | 16 GB+ total, 8 GB given to Docker |
 | CPU | 4 cores | 8 cores |
 | Disk free | 30 GB | 50 GB |
 
-> Elasticsearch (~2 GB), Minikube (~4 GB), and Prometheus + Grafana + Kibana + Postgres + Redis + MCP servers + app (~3–4 GB) add up quickly. Use `make up-lite` (added in PR-007) to skip Kibana and Grafana when memory is tight.
+> **Lean budget (adopted):** the always-on stack needs about 3.7 GB (Elasticsearch 512 MB heap, Minikube with 2.2 GB, Prometheus). Kibana and Grafana are opt-in (`make ui-up`). See `docs/setup/zero-cost.md`.
 
 ### 8.2 Software (macOS)
 

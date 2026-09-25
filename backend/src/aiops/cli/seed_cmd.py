@@ -128,3 +128,39 @@ def seed_alerts(
         f"{len(alerts)} firing (until {until}), {cleared} previously seeded alert(s) resolved · "
         f"incident starts {window.incident_start:%H:%M} UTC"
     )
+
+
+@app.command("tickets")
+def seed_tickets(
+    now: datetime | None = typer.Option(
+        None, help="Anchor time, UTC (e.g. 2026-09-25T10:30:00). Default: now."
+    ),
+    dsn: str | None = typer.Option(
+        None, "--dsn", help="Postgres DSN. Default: built from POSTGRES_* env vars (.env)."
+    ),
+    schema: str = typer.Option("tickets", help="Schema owned by mock-tickets-mcp."),
+) -> None:
+    """Replace the mock tickets backlog (projects OPS, WEB) with the deterministic seed."""
+    from dotenv import load_dotenv
+
+    from aiops.core.config import find_config_dir
+    from aiops.seed.tickets import TICKETS, PostgresTicketSeeder, TicketSeedError, default_dsn
+
+    load_dotenv(find_config_dir().parent / ".env", override=False)
+    anchor = (now.replace(tzinfo=UTC) if now.tzinfo is None else now) if now else datetime.now(UTC)
+    try:
+        counts = PostgresTicketSeeder(dsn or default_dsn(), schema).seed(anchor)
+    except TicketSeedError as exc:
+        err_console.print(f"[red]Seeding failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    table = Table(title=f"Seeded {len(TICKETS)} tickets into Postgres schema '{schema}'")
+    table.add_column("Key")
+    table.add_column("Status")
+    table.add_column("Summary")
+    for ticket in TICKETS:
+        table.add_row(ticket.key, ticket.status, ticket.summary)
+    console.print(table)
+    console.print(
+        f"anchor {anchor:%Y-%m-%d %H:%M} UTC · "
+        + ", ".join(f"{k}: {v}" for k, v in sorted(counts.items()))
+    )

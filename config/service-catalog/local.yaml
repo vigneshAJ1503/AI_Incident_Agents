@@ -16,6 +16,7 @@ services:
     runbooks: [database-connection-pool.md, payment-service.md]
     capabilities:
       logs: { service_value: payment-service }
+      tickets: { components: [payments], labels: [payment-service] }
     environments:
       production:
         capabilities:
@@ -32,6 +33,7 @@ services:
     runbooks: [order-service.md, dependency-timeouts.md]
     capabilities:
       logs: { service_value: order-service }
+      tickets: { components: [orders], labels: [order-service] }
     environments:
       production:
         capabilities:
@@ -45,6 +47,7 @@ services:
     runbooks: [user-service.md]
     capabilities:
       logs: { service_value: user-service }
+      tickets: { components: [identity], labels: [user-service] }
     environments:
       production:
         capabilities:
@@ -58,6 +61,7 @@ services:
     runbooks: [inventory-service.md]
     capabilities:
       logs: { service_value: inventory-service }
+      tickets: { components: [inventory], labels: [inventory-service] }
     environments:
       production:
         capabilities:

@@ -1,0 +1,61 @@
+# Local development environment (MASTER_PLAN.md §10.1).
+# Agents bind to capabilities, never to vendors. To onboard another environment,
+# copy this file, change providers/URLs/field mappings, and set AIOPS_ENV.
+# ${VAR} = required env var, ${VAR:-default} = optional.
+
+environment: local
+service_catalog: local
+
+llm:
+  provider: ${LLM_PROVIDER:-openai_compat}   # openai_compat (hosted Groq/Gemini) | fake
+  base_url: ${OPENAI_COMPAT_BASE_URL:-https://api.groq.com/openai/v1}
+  api_key: ${OPENAI_COMPAT_API_KEY:-}
+  models:
+    fast: ${LLM_MODEL_FAST:-}
+    agent: ${LLM_MODEL_AGENT:-}
+    rca: ${LLM_MODEL_RCA:-}
+  timeout_s: 60
+  max_retries: 4
+
+limits:
+  max_steps: 8
+  max_tool_calls: 10
+  max_execution_s: 60
+  max_tokens: 60000
+
+guardrails:
+  read_only: true
+  redact: [emails, ip_addresses, jwt, bearer_tokens, api_keys, credit_cards]
+  max_tool_output_chars: 8000
+  audit_log_path: .data/audit.jsonl
+
+capabilities:
+  logs:
+    provider: elasticsearch
+    mcp:
+      transport: http
+      url: ${LOGS_MCP_URL:-http://localhost:8101/mcp}
+      timeout_s: 30
+    tool_allowlist: [list_indices, get_mapping, search_logs, execute_esql]
+    limits:
+      max_results: 1000
+      max_time_range_hours: 48
+      query_timeout_s: 30
+    settings:
+      # Field mapping = portability. Change these to match another company's log schema.
+      fields:
+        timestamp: "@timestamp"
+        level: level
+        message: message
+        service: service
+        environment: environment
+        trace_id: trace_id
+        status_code: status_code
+        endpoint: endpoint
+        version: version
+      error_levels: [ERROR, FATAL, CRITICAL]
+      ui_link_template: "${KIBANA_URL:-http://localhost:5601}/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))"
+
+agents:
+  logs:
+    model_role: agent

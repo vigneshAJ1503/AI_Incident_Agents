@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from typer.testing import CliRunner
 
 from aiops import __version__
@@ -15,3 +17,25 @@ def test_version_command_prints_version() -> None:
 def test_no_args_shows_help() -> None:
     result = runner.invoke(app, [])
     assert "Usage" in result.stdout
+
+
+def test_config_validate() -> None:
+    result = runner.invoke(app, ["config", "validate"])
+    assert result.exit_code == 0, result.output
+    assert "logs" in result.stdout
+
+
+def test_catalog_resolve_alias_with_environment() -> None:
+    result = runner.invoke(app, ["catalog", "resolve", "payments api", "-E", "prod"])
+    assert result.exit_code == 0, result.output
+    assert "payment-prod-*" in result.stdout
+
+
+def test_catalog_resolve_unknown_service_exits_1() -> None:
+    result = runner.invoke(app, ["catalog", "resolve", "billing-engine"])
+    assert result.exit_code == 1
+
+
+def test_config_error_exits_2() -> None:
+    result = runner.invoke(app, ["config", "validate", "--env", "does-not-exist"])
+    assert result.exit_code == 2

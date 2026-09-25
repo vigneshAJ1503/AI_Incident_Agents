@@ -2,19 +2,20 @@
 
 Goal: build and run the entire platform **for free** on a 16 GB Apple-silicon Mac.
 
+> **Rule: no AI model ever runs on the local machine.** All LLM inference uses hosted free tiers. Tests and CI use a fake LLM. Knowledge search uses Postgres full-text search, which involves no model.
+
 ## Cost map
 
 | Need | Free choice | Notes |
 |------|-------------|-------|
 | **LLM (primary)** | **Groq free tier** via the `openai_compat` provider (`https://api.groq.com/openai/v1`) | No credit card. Fast; open-weight models with tool calling. Rate limits apply (tokens/requests per minute), so agents are designed to be lean |
 | **LLM (backup)** | **Google Gemini API free tier** via its OpenAI-compatible endpoint (`https://generativelanguage.googleapis.com/v1beta/openai/`) | Switch with 2 lines in `.env` if Groq limits are hit |
-| **LLM (offline)** | **Ollama** (`http://localhost:11434/v1`) with a 7–8B tool-calling model | Only when the Docker stack is **not** running. 16 GB RAM can't hold ES + Minikube + a local model at once |
 | **LLM in tests/CI** | `FakeLLMProvider` + recorded MCP fixtures | **Zero tokens.** Every unit test and all CI run without any LLM |
 | Containers | Docker Desktop (free for personal use), or Colima (open source, lighter) | Give Docker 8–10 GB |
 | Kubernetes | Minikube | Free |
 | Logs / metrics / alerts | Elasticsearch & Kibana (basic license), Prometheus, Grafana OSS, Alertmanager | Free |
 | MCP servers | Our own FastMCP servers + open-source community servers | Free |
-| Embeddings | `fastembed` (local ONNX, small model) | Free; no API |
+| Knowledge search | **Postgres full-text search** (`tsvector` + ranking), no model | Optional later: hosted free-tier embeddings (e.g. Gemini) + pgvector, switchable in config |
 | Database / cache | Postgres + pgvector, Redis | Free |
 | Tickets | **Jira Cloud Free** (≤ 10 users) **+** our `mock-tickets-mcp` | CI and offline use run against the mock |
 | Git hosting / CI | GitHub public repo + GitHub Actions | Unlimited minutes for public repos |

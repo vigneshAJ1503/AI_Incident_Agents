@@ -9,6 +9,7 @@ from pathlib import Path
 from aiops.core.config import Settings
 from aiops.core.guardrails.audit import AuditSink, JsonlAuditSink
 from aiops.mcp.client import MCPClient, ServerTarget
+from aiops.mcp.fixtures import RecordingMCPClient, ReplayMCPClient
 from aiops.mcp.toolset import Toolset
 
 
@@ -19,11 +20,20 @@ class MCPRegistry:
         *,
         audit: AuditSink | None = None,
         overrides: Mapping[str, ServerTarget] | None = None,
+        record_dir: Path | None = None,
+        replay_dir: Path | None = None,
     ) -> None:
-        """``overrides`` maps capability -> server target (e.g. an in-process test server)."""
+        """
+        ``overrides`` maps capability -> server target (e.g. an in-process test server).
+        ``record_dir`` saves live MCP exchanges as fixtures; ``replay_dir`` serves them back.
+        """
+        if record_dir and replay_dir:
+            raise ValueError("record_dir and replay_dir are mutually exclusive")
         self.settings = settings
         self.audit = audit or JsonlAuditSink(self._audit_path(settings))
         self._overrides = dict(overrides or {})
+        self._record_dir = record_dir
+        self._replay_dir = replay_dir
 
     @staticmethod
     def _audit_path(settings: Settings) -> Path:
@@ -32,11 +42,16 @@ class MCPRegistry:
 
     def client(self, capability: str) -> MCPClient:
         config = self.settings.capability(capability)
-        if capability in self._overrides:
-            return MCPClient(
-                capability, self._overrides[capability], timeout_s=config.mcp.timeout_s
-            )
-        return MCPClient.from_config(capability, config.mcp)
+        if self._replay_dir is not None:
+            return ReplayMCPClient(capability, self._replay_dir / f"{capability}.json")
+        client = (
+            MCPClient(capability, self._overrides[capability], timeout_s=config.mcp.timeout_s)
+            if capability in self._overrides
+            else MCPClient.from_config(capability, config.mcp)
+        )
+        if self._record_dir is not None:
+            return RecordingMCPClient(client, self._record_dir / f"{capability}.json")
+        return client
 
     @asynccontextmanager
     async def toolset(

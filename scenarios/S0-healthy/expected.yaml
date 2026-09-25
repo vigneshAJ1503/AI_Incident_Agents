@@ -1,0 +1,13 @@
+id: S0
+title: Healthy baseline (no incident)
+description: Normal traffic and background noise only. Agents must not hallucinate a problem.
+question: Is anything wrong with payment-service in production?
+service: payment-service
+environment: production
+window: 30m
+root_cause: null
+agents:
+  logs:
+    status: [no_signal]
+    forbidden_signals: [db_timeout_errors_up, error_rate_up, new_error_pattern]
+    min_evidence: 1

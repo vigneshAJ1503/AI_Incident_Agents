@@ -1,0 +1,18 @@
+id: S1
+title: DB connection pool misconfiguration (payment-service v1.8.2)
+description: >
+  v1.8.2 of payment-service lowered DB_POOL_SIZE from 20 to 2. Requests queue for a
+  connection and time out, causing HTTP 500s and a latency spike on /api/v1/pay.
+question: Payment API is returning HTTP 500 in production
+service: payment-service
+environment: production
+window: 30m
+root_cause: >
+  Database connection pool misconfiguration introduced in payment-service v1.8.2
+  (DB_POOL_SIZE 20 -> 2) causes connection timeouts and HTTP 500s.
+agents:
+  logs:
+    status: [success]
+    signals: [db_timeout_errors_up]
+    must_mention: [connection]
+    min_evidence: 1

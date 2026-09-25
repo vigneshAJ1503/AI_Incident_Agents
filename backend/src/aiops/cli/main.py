@@ -9,6 +9,7 @@ from aiops.cli import (
     catalog_cmd,
     config_cmd,
     eval_cmd,
+    fault_cmd,
     knowledge_cmd,
     llm_cmd,
     mcp_cmd,
@@ -36,6 +37,7 @@ app.add_typer(eval_cmd.app, name="eval")
 app.add_typer(knowledge_cmd.app, name="knowledge")
 app.add_typer(approvals_cmd.app, name="approvals")
 app.add_typer(tickets_cmd.app, name="tickets")
+app.add_typer(fault_cmd.app, name="fault")
 
 
 @app.callback()

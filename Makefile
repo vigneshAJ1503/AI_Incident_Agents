@@ -146,6 +146,23 @@ k8s-down: ## Stop the cluster (keeps it; frees its memory)
 k8s-delete: ## DELETE the cluster entirely
 	minikube delete -p aiops
 
+# --- Fault injection (PR-017): one scenario at a time, guarded by .data/cluster.lock ---
+.PHONY: inject-fault
+inject-fault: venv-fix ## Inject a live incident: make inject-fault S=S1 (or TYPE=db-timeout)
+	cd $(BACKEND) && uv run --no-sync aiops fault inject $(or $(TYPE),$(S))
+
+.PHONY: revert-fault
+revert-fault: venv-fix ## Restore the healthy baseline in the cluster
+	cd $(BACKEND) && uv run --no-sync aiops fault revert
+
+.PHONY: test-faults
+test-faults: venv-fix ## Live fault-injection tests S1-S5 against Minikube (~12 min; needs k8s-up)
+	cd $(BACKEND) && uv run --no-sync pytest -m faults -o addopts="" -v
+
+.PHONY: fault-status
+fault-status: venv-fix ## Show which scenario (if any) is active
+	cd $(BACKEND) && uv run --no-sync aiops fault status
+
 .PHONY: seed-logs
 seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1
 	cd $(BACKEND) && uv run --no-sync aiops seed logs --scenario $(S)

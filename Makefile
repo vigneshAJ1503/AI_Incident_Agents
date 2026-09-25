@@ -41,8 +41,17 @@ typecheck: venv-fix ## Static type checking
 test: venv-fix ## Unit tests
 	cd $(BACKEND) && uv run pytest
 
+.PHONY: check-mcp
+check-mcp: ## Lint, typecheck and test every MCP server
+	@for d in mcp-servers/*/; do \
+		echo "== $$d"; \
+		(cd $$d && uv sync -q && { [[ "$$(uname)" != Darwin ]] || chflags -R nohidden .venv; } && \
+		uv run --no-sync ruff check . && uv run --no-sync ruff format --check . && \
+		uv run --no-sync mypy && uv run --no-sync pytest -q) || exit 1; \
+	done
+
 .PHONY: check
-check: lint typecheck test ## Everything CI runs
+check: lint typecheck test check-mcp ## Everything CI runs
 
 .PHONY: test-integration
 test-integration: venv-fix ## Integration tests against the local stack (needs make infra-up)
@@ -71,6 +80,20 @@ infra-reset: ## Stop the stack and DELETE its data volumes
 .PHONY: infra-status
 infra-status: ## Show container health
 	$(COMPOSE) --profile ui ps
+
+MCP_COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f deploy/compose/docker-compose.mcp.yml
+
+.PHONY: mcp-up
+mcp-up: ## Build and start the MCP servers (needs make infra-up)
+	$(MCP_COMPOSE) up -d --build --wait
+
+.PHONY: mcp-down
+mcp-down: ## Stop the MCP servers
+	$(MCP_COMPOSE) down
+
+.PHONY: mcp-logs
+mcp-logs: ## Tail MCP server logs
+	$(MCP_COMPOSE) logs -f --tail=100
 
 .PHONY: seed-logs
 seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1

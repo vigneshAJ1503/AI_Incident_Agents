@@ -34,6 +34,32 @@ jobs:
       - name: Unit tests
         run: uv run pytest --cov=aiops --cov-report=term-missing
 
+  mcp-servers:
+    name: mcp-servers (lint · typecheck · test)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server: [elasticsearch-mcp]
+    defaults:
+      run:
+        working-directory: mcp-servers/${{ matrix.server }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: mcp-servers/${{ matrix.server }}/uv.lock
+      - name: Install
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Typecheck
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest
+      - name: Docker build
+        run: docker build -t aiops/${{ matrix.server }}:ci .
+
   secrets:
     name: secret scan
     runs-on: ubuntu-latest

@@ -90,7 +90,7 @@ The best parts of each were kept. The design changes against the original diagra
 | **Service Catalog + capability config** (agents bind to `logs`, not `elasticsearch`) | Included; the core of the SaaS portability goal | Plan A |
 | **2-round investigation** (broad sweep → targeted follow-ups) | Included | Plan A |
 | **Repo layout** | **Modular monolith**: one Python package with `agents/*` modules, plus `mcp-servers/`, `frontend/`, `deploy/`. Not one deployable service per agent (yet) | Plan A. Plan B's `services/<agent>` split adds Docker/CI overhead for no local benefit. The agent contracts keep a later split (A2A) cheap |
-| **LLM** | `LLMProvider` interface with **two implementations from day one**: `anthropic` (Claude) and `openai_compat`, which covers OpenAI, Groq and Ollama/vLLM with one class | Both (Plan A = Claude; Plan B = OpenAI/Groq/Local) |
+| **LLM** | `LLMProvider` interface with **two implementations from day one**: `anthropic` (Claude) and `openai_compat`, which covers hosted Groq, Gemini and OpenAI with one class (no local models) | Both (Plan A = Claude; Plan B = OpenAI/Groq/Local) |
 | **Kubernetes** | **Minikube** | Your instruction (both plans said Kind/K3d) |
 | **A2A protocol** | Deferred to the backlog; only added once individual agents are reliable | Plan B (§14 "what not to build initially") |
 
@@ -102,7 +102,7 @@ The best parts of each were kept. The design changes against the original diagra
 | **D2** | **One agent roster:** Log, Jira, K8s, Metrics, Alert, Code, Knowledge, plus RCA (and Remediation proposals later) | Each diagram was missing agents the other had |
 | **D3** | **Service Catalog + capability/connector config** | Enables the "configure, don't code" portability to any company |
 | **D4** | **Minikube**; the Compose stack joins the `minikube` Docker network | Your preference; simple networking |
-| **D5** | Knowledge = **local Markdown runbooks + pgvector** behind a custom `knowledge-mcp`; Confluence is a config option | No free self-hosted Confluence; git-versioned runbooks |
+| **D5** | Knowledge = **local Markdown runbooks + Postgres full-text search** (no local model) behind a custom `knowledge-mcp`; Confluence is a config option | No free self-hosted Confluence; git-versioned runbooks |
 | **D6** | Jira = **free Jira Cloud site** plus a **mock-tickets MCP** for offline use and CI | Self-hosted Jira needs a license; CI can't depend on a SaaS |
 | **D7** | Code agent uses **local Git MCP** locally and the GitHub/GitLab MCP in companies | Fully offline; you control the "bad commit" |
 | **D8** | Custom **`alertmanager-mcp`** (FastMCP) | Community servers don't cleanly cover Alertmanager |
@@ -148,7 +148,7 @@ The best parts of each were kept. The design changes against the original diagra
       ┌──────────────┬──────────────┬───────────────┼──────────────┬──────────────┬──────────────┐
       ▼              ▼              ▼               ▼              ▼              ▼              ▼
  elasticsearch-  jira-mcp     prometheus-mcp  alertmanager-mcp  kubernetes-mcp  git-mcp     knowledge-mcp
- mcp            (atlassian)   (+grafana-mcp)  (custom)          (read-only SA)              (custom, pgvector)
+ mcp            (atlassian)   (+grafana-mcp)  (custom)          (read-only SA)              (custom, Postgres FTS)
       │              │              │               │              │              │              │
  Elasticsearch   Jira Cloud    Prometheus      Alertmanager     Minikube       Local git      Postgres
  + Kibana        / mock        + Grafana                        cluster        repo           + runbooks
@@ -173,12 +173,12 @@ Each major decision is recorded as an ADR in `docs/adr/`.
 | Package manager | **uv** | poetry, pip | Fast, lockfile, manages Python versions |
 | API | **FastAPI** + SSE | Flask, Django | Async, typed, OpenAPI for free |
 | Agent orchestration | **Custom, lightweight** (asyncio + Pydantic) | LangGraph, CrewAI, Claude Agent SDK | You learn and own every piece. No framework lock-in. The contracts in §10 make swapping in LangGraph later possible |
-| LLM | `LLMProvider` interface. **`openai_compat`** from PR-004 covers **Groq free tier (default)**, Gemini free tier, Ollama and OpenAI. Anthropic, Bedrock and Vertex come as optional enterprise providers in PR-043 | Single vendor | **Zero cost:** see `docs/setup/zero-cost.md` |
+| LLM | `LLMProvider` interface. **`openai_compat`** from PR-004 covers **Groq free tier (default)** and Gemini free tier (hosted; **no model runs locally**). Anthropic, Bedrock and Vertex come as optional enterprise providers in PR-043 | Single vendor | **Zero cost:** see `docs/setup/zero-cost.md` |
 | Default models | Set per role (`fast`, `agent`, `rca`) in `.env` / YAML, using free-tier models (e.g. a small Llama for `fast`, the largest free tool-calling model for `rca`) | — | No model is hard-coded |
 | MCP | Official **`mcp` Python SDK** (client); **FastMCP** for our custom servers | — | Standard protocol, so tools can be swapped |
 | Validation | **Pydantic v2** | dataclasses | Structured LLM output, config validation |
-| Storage | **Postgres 16 + pgvector**, **Redis 7** | — | Investigations, audit, embeddings; Redis for event pub/sub and cache |
-| Embeddings | **fastembed** (local, `BAAI/bge-small-en-v1.5`) | Voyage AI, OpenAI | No API key, runs offline. Swappable in config |
+| Storage | **Postgres 16 + pgvector**, **Redis 7** | — | Investigations, audit, full-text knowledge search; Redis for event pub/sub and cache |
+| Knowledge search | **Postgres full-text search** (no model) | Local embeddings (rejected: no local AI models), hosted embeddings | $0 and no model on the machine. Hosted free-tier embeddings + pgvector are an optional later upgrade |
 | Frontend | **Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Recharts** | Vite + React | Matches the design; production-grade |
 | Kubernetes (local) | **Minikube** (docker driver) | Kind, k3d | Your preference; addons for metrics-server |
 | Log shipping | **Fluent Bit** DaemonSet | Filebeat, Logstash | Light; standard in Kubernetes |
@@ -370,7 +370,7 @@ AI_Incident_Agents/
 │   │   │   ├── planner.py             # intent + params + plan
 │   │   │   ├── executor.py            # DAG, parallelism, rounds, timeouts
 │   │   │   └── response_builder.py
-│   │   ├── knowledge/                 # ingestion (chunk, embed, upsert)
+│   │   ├── knowledge/                 # ingestion (chunk, index, upsert)
 │   │   ├── storage/                   # SQLAlchemy models, Alembic migrations
 │   │   ├── api/                       # FastAPI app, routes, SSE
 │   │   └── cli/                       # `aiops` Typer CLI
@@ -462,7 +462,7 @@ brew install pre-commit
 
 | What | Needed from | How |
 |------|-------------|-----|
-| **Free** Groq API key (backup: Gemini free tier; offline: Ollama) | PR-004 | console.anthropic.com → API keys → set `ANTHROPIC_API_KEY` in `.env` |
+| **Free** Groq API key (backup: Gemini free tier) | PR-004 | console.groq.com → API Keys → set `OPENAI_COMPAT_API_KEY` in `.env` |
 | GitHub account + `gh auth login` | PR-001 | To create the repo and open PRs |
 | Jira Cloud free site + API token | PR-012 | atlassian.com → Jira free → create project `OPS` → id.atlassian.com → API tokens |
 | (optional) Slack workspace/app | PR-048 | Slack integration later |
@@ -526,7 +526,7 @@ These contracts are the backbone. Get them right in PR-002/003 and every later P
 ```yaml
 environment: local
 llm:
-  provider: openai_compat             # openai_compat (Groq/Gemini/Ollama/OpenAI via base_url) | anthropic (optional, later)
+  provider: openai_compat             # openai_compat (hosted Groq/Gemini via base_url) | anthropic (optional, later)
   base_url: ${OPENAI_COMPAT_BASE_URL}
   api_key: ${OPENAI_COMPAT_API_KEY}
   models:
@@ -557,7 +557,7 @@ capabilities:                          # Agents bind to capabilities, NOT vendor
   alerts:    { provider: alertmanager, mcp: { transport: http, url: http://localhost:8105/mcp } }
   k8s:       { provider: kubernetes,   mcp: { transport: http, url: http://localhost:8106/mcp } }
   code:      { provider: git,          mcp: { transport: http, url: http://localhost:8107/mcp } }
-  knowledge: { provider: pgvector,     mcp: { transport: http, url: http://localhost:8108/mcp } }
+  knowledge: { provider: postgres_fts,    mcp: { transport: http, url: http://localhost:8108/mcp } }
 
 limits:
   agent_timeout_s: 60
@@ -829,7 +829,7 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 - **Branch:** `feat/004-llm-provider`
 - **Scope:**
   - the `LLMProvider` protocol (`generate(messages, tools, output_schema, role)`)
-  - `OpenAICompatProvider` (Groq / Gemini / Ollama / OpenAI, selected by `base_url`), with 429 backoff
+  - `OpenAICompatProvider` (hosted Groq / Gemini / OpenAI, selected by `base_url`), with 429 backoff
   - `FakeLLMProvider` for tests
   - retries and backoff; token and cost accounting
   - model routing by role (`planner/agent/rca/fast`)
@@ -1062,7 +1062,7 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 - **Branch:** `feat/028-knowledge-mcp`
 - **Scope:**
   - 8–10 runbooks in `knowledge-base/runbooks/` plus service ownership docs
-  - `aiops knowledge ingest`: heading-aware chunking, fastembed embeddings, pgvector upsert; idempotent
+  - `aiops knowledge ingest`: heading-aware chunking into Postgres with a full-text `tsvector` index (no model); idempotent
   - the custom `knowledge-mcp` with `search`, `get_doc`
 - ✅ Search returns the correct runbook for each scenario.
 

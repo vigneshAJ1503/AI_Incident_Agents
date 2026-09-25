@@ -1,0 +1,64 @@
+# Service Catalog (MASTER_PLAN.md §10.2): service -> identifiers per capability.
+# Capability blocks at service level are defaults; environments.<env>.capabilities override them.
+
+environments:
+  production:
+    aliases: [prod, prd, live]
+  staging:
+    aliases: [stage, stg]
+
+services:
+  - name: payment-service
+    description: Processes card payments for orders.
+    aliases: [payment, payments, payment-api, payments-api, pay]
+    owners: { team: payments, slack: "#payments-oncall" }
+    depends_on: [postgres, redis, user-service]
+    runbooks: [database-connection-pool.md, payment-service.md]
+    capabilities:
+      logs: { service_value: payment-service }
+    environments:
+      production:
+        capabilities:
+          logs: { index_pattern: "payment-prod-*" }
+      staging:
+        capabilities:
+          logs: { index_pattern: "payment-staging-*" }
+
+  - name: order-service
+    description: Creates and tracks customer orders.
+    aliases: [order, orders, orders-api, checkout]
+    owners: { team: commerce, slack: "#commerce-oncall" }
+    depends_on: [payment-service, inventory-service, postgres]
+    runbooks: [order-service.md, dependency-timeouts.md]
+    capabilities:
+      logs: { service_value: order-service }
+    environments:
+      production:
+        capabilities:
+          logs: { index_pattern: "order-prod-*" }
+
+  - name: user-service
+    description: User accounts, authentication and profiles.
+    aliases: [user, users, auth, login, accounts]
+    owners: { team: identity, slack: "#identity-oncall" }
+    depends_on: [postgres, redis]
+    runbooks: [user-service.md]
+    capabilities:
+      logs: { service_value: user-service }
+    environments:
+      production:
+        capabilities:
+          logs: { index_pattern: "user-prod-*" }
+
+  - name: inventory-service
+    description: Stock levels and reservations.
+    aliases: [inventory, stock]
+    owners: { team: commerce, slack: "#commerce-oncall" }
+    depends_on: [postgres]
+    runbooks: [inventory-service.md]
+    capabilities:
+      logs: { service_value: inventory-service }
+    environments:
+      production:
+        capabilities:
+          logs: { index_pattern: "inventory-prod-*" }

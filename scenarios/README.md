@@ -10,6 +10,16 @@ scenarios/<id>/
 ```
 
 - **Synthetic data:** PR-007 seeds log data for each scenario (`make seed-logs S=S1`); PR-023 seeds the matching Alertmanager alerts (`make seed-alerts S=S1`, see `docs/setup/alerts.md`).
+- **Sample Git repo:** PR-026 builds `.data/sample-repo` for each scenario (`make seed-repo S=S1`): ~2 weeks of shared history, plus the scenario's change, timed consistently with the logs (incident at now−20m, S1 rollout at now−22m). Release tags are `<service>/<version>`.
+
+  | Scenario | Change in the repo |
+  |----------|--------------------|
+  | S0 | none (only harmless docs/refactor/test commits) |
+  | S1 | `tune db pool`: payment-service `DB_POOL_SIZE` 20 → 2 (now−2h10m), released as `payment-service/v1.8.2` (now−35m) |
+  | S2 | order-service: unbounded in-memory order cache (now−5h) and memory limit 1Gi → 512Mi (now−1h10m) |
+  | S3 | inventory-service: case-insensitive stock query + `DROP INDEX idx_stock_levels_sku` migration (now−3h) |
+  | S4 | user-service manifest bumped to image `v3.2.0` (now−28m); no such release tag or image exists |
+  | S5 | none: the Redis outage is infrastructure-level (a negative case for the Code agent) |
 - **Live data:** PR-017 adds live fault injection (`inject.sh` / `revert.sh`).
 
 `expected.yaml` fields:

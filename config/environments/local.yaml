@@ -47,12 +47,14 @@ capabilities:
         timestamp: "@timestamp"
         level: level
         message: message
+        message_keyword: message.keyword
         service: service
         environment: environment
         trace_id: trace_id
         status_code: status_code
         endpoint: endpoint
         version: version
+        error_type: error_type
       error_levels: [ERROR, FATAL, CRITICAL]
       ui_link_template: "${KIBANA_URL:-http://localhost:5601}/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))"
 

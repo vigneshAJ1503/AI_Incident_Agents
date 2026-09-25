@@ -21,7 +21,9 @@ def seed_logs(
     hours: float = typer.Option(
         26.0, help="History length (>=24.5h so a 24h-earlier baseline exists)."
     ),
-    now: datetime | None = typer.Option(None, help="Anchor time (UTC ISO). Default: now."),
+    now: datetime | None = typer.Option(
+        None, help="Anchor time, UTC (e.g. 2026-09-25T10:30:00). Default: now."
+    ),
     seed: int = typer.Option(42, help="Random seed; same inputs -> same documents."),
     environment: str = typer.Option("production", "--environment", "-E"),
     es_url: str = typer.Option(
@@ -37,7 +39,8 @@ def seed_logs(
         raise typer.BadParameter(f"scenario must be one of {SCENARIOS}")
     if environment not in ENV_SHORT:
         raise typer.BadParameter(f"environment must be one of {sorted(ENV_SHORT)}")
-    window = SeedWindow.build(now or datetime.now(UTC), hours)
+    anchor = (now.replace(tzinfo=UTC) if now.tzinfo is None else now) if now else datetime.now(UTC)
+    window = SeedWindow.build(anchor, hours)
     generator = LogGenerator(scenario, window, seed=seed, environment=environment)
     seeder = ElasticsearchSeeder(es_url)
     try:

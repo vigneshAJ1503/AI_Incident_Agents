@@ -9,7 +9,7 @@ scenarios/<id>/
 └── agents/<agent>.yaml  # expectations for one agent (status, signals, ...)
 ```
 
-- **Synthetic data:** PR-007 seeds log data for each scenario.
+- **Synthetic data:** PR-007 seeds log data for each scenario (`make seed-logs S=S1`); PR-023 seeds the matching Alertmanager alerts (`make seed-alerts S=S1`, see `docs/setup/alerts.md`).
 - **Live data:** PR-017 adds live fault injection (`inject.sh` / `revert.sh`).
 
 `expected.yaml` fields:

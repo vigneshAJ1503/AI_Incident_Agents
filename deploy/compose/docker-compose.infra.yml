@@ -77,9 +77,34 @@ services:
       timeout: 3s
       retries: 20
 
+  # PR-023. Alerts are seeded through its API (`make seed-alerts S=S1`) until Prometheus
+  # (PR-020) evaluates deploy/compose/config/prometheus/alert-rules.yml. Alerts live in
+  # memory only: a restart drops them (silences survive in the am-data volume).
+  alertmanager:
+    image: prom/alertmanager:${ALERTMANAGER_VERSION:-v0.34.1}
+    container_name: aiops-alertmanager
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --storage.path=/alertmanager
+      - --web.listen-address=:9093
+      - --web.external-url=${ALERTMANAGER_URL:-http://localhost:9093}
+      - --cluster.listen-address=   # single instance, no gossip
+    ports:
+      - "127.0.0.1:${ALERTMANAGER_PORT:-9093}:9093"
+    volumes:
+      - ./config/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+      - am-data:/alertmanager
+    mem_limit: 128m
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9093/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
 volumes:
   es-data:
   pg-data:
+  am-data:
 
 networks:
   default:

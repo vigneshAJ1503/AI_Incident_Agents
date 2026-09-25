@@ -62,7 +62,7 @@ COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f
 S ?= S1
 
 .PHONY: infra-up
-infra-up: ## Start Elasticsearch, Kibana, Postgres, Redis (waits until healthy)
+infra-up: ## Start Elasticsearch, Kibana, Postgres, Redis, Alertmanager (waits until healthy)
 	$(COMPOSE) --profile ui up -d --wait
 
 .PHONY: infra-up-lite
@@ -111,3 +111,24 @@ MODE ?= replay
 .PHONY: eval
 eval: venv-fix ## Score an agent on scenarios: make eval AGENT=logs MODE=replay|live [SCENARIO=S1]
 	cd $(BACKEND) && uv run --no-sync aiops eval run --agent $(AGENT) --mode $(MODE) $(if $(SCENARIO),--scenario $(SCENARIO),)
+
+# --- Alerts (PR-023) ------------------------------------------------------------------
+PROMETHEUS_IMAGE := prom/prometheus:v3.15.0
+ALERTMANAGER_IMAGE := prom/alertmanager:v0.34.1
+
+.PHONY: alertmanager-up
+alertmanager-up: ## Start only Alertmanager (part of infra-up too)
+	$(COMPOSE) up -d --wait alertmanager
+
+.PHONY: seed-alerts
+seed-alerts: venv-fix ## Post a scenario's firing alerts to Alertmanager: make seed-alerts S=S1
+	cd $(BACKEND) && uv run --no-sync aiops seed alerts --scenario $(S)
+
+.PHONY: check-rules
+check-rules: ## Validate the alert rules (promtool check + unit tests) and alertmanager.yml (Docker)
+	docker run --rm --entrypoint promtool -v "$(CURDIR)/deploy/compose/config/prometheus:/rules:ro" \
+		-w /rules $(PROMETHEUS_IMAGE) check rules alert-rules.yml
+	docker run --rm --entrypoint promtool -v "$(CURDIR)/deploy/compose/config/prometheus:/rules:ro" \
+		-w /rules $(PROMETHEUS_IMAGE) test rules alert-rules.test.yml
+	docker run --rm --entrypoint amtool -v "$(CURDIR)/deploy/compose/config/alertmanager:/cfg:ro" \
+		$(ALERTMANAGER_IMAGE) check-config /cfg/alertmanager.yml

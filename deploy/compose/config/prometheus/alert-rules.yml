@@ -1,0 +1,145 @@
+# Prometheus alert rules (PR-023). Loaded by Prometheus from PR-020; validate with
+#   make check-rules          (promtool in a pinned prom/prometheus container)
+#
+# Until Prometheus exists, `aiops seed alerts --scenario S1` posts the SAME alerts
+# (same alertname / labels / annotations) straight to Alertmanager, so the Alert agent
+# works on seeded data first and on real alerts later with no code change.
+#
+# Every alert carries:
+#   labels:      service, severity (critical|warning), team, namespace
+#   annotations: summary, description, runbook_url (knowledge-base/runbooks/<name>.md)
+#
+# Metric names are the contract for PR-020 (sample services + kube-state-metrics):
+#   http_requests_total{service,team,namespace,status}
+#   http_request_duration_seconds_bucket{service,team,namespace,le}
+#   db_pool_connections_active / db_pool_connections_max / db_pool_connections_pending
+#   kube-state-metrics with --metric-labels-allowlist=pods=[app,team],deployments=[app,team]
+#   redis_up (redis_exporter)
+
+groups:
+  - name: aiops-service-slo
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          sum by (namespace, service, team) (rate(http_requests_total{status=~"5.."}[5m]))
+            /
+          sum by (namespace, service, team) (rate(http_requests_total[5m]))
+            > 0.05
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }}: {{ $value | humanizePercentage }} of requests fail with 5xx"
+          description: >-
+            More than 5% of {{ $labels.service }} requests in {{ $labels.namespace }} returned
+            HTTP 5xx over the last 5 minutes (current {{ $value | humanizePercentage }}).
+          runbook_url: knowledge-base/runbooks/high-error-rate.md
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum by (namespace, service, team, le) (rate(http_request_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.service }}: p95 latency {{ $value | humanizeDuration }}"
+          description: >-
+            The 95th percentile latency of {{ $labels.service }} in {{ $labels.namespace }}
+            has been above 1s for 5 minutes (current {{ $value | humanizeDuration }}).
+          runbook_url: knowledge-base/runbooks/high-latency.md
+
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          (
+            sum by (namespace, service, team) (db_pool_connections_active)
+              /
+            sum by (namespace, service, team) (db_pool_connections_max)
+          ) >= 0.95
+          and on (namespace, service, team)
+          sum by (namespace, service, team) (db_pool_connections_pending) > 0
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.service }}: database connection pool exhausted"
+          description: >-
+            {{ $labels.service }} in {{ $labels.namespace }} is using at least 95% of its database
+            connection pool and requests are waiting for a connection.
+          runbook_url: knowledge-base/runbooks/database-connection-pool.md
+
+  - name: aiops-kubernetes
+    rules:
+      - alert: PodCrashLooping
+        expr: |
+          (
+            sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[15m])) > 2
+          )
+          * on (namespace, pod) group_left (label_app, label_team) kube_pod_labels
+        for: 1m
+        labels:
+          severity: critical
+          service: "{{ $labels.label_app }}"
+          team: "{{ $labels.label_team }}"
+        annotations:
+          summary: "{{ $labels.label_app }}: pod {{ $labels.pod }} is crash looping"
+          description: >-
+            Pod {{ $labels.namespace }}/{{ $labels.pod }} restarted {{ $value | humanize }} times
+            in the last 15 minutes.
+          runbook_url: knowledge-base/runbooks/pod-crashlooping.md
+
+      - alert: PodOOMKilled
+        expr: |
+          (
+            max by (namespace, pod) (kube_pod_container_status_last_terminated_reason{reason="OOMKilled"}) == 1
+            and on (namespace, pod)
+            sum by (namespace, pod) (increase(kube_pod_container_status_restarts_total[10m])) > 0
+          )
+          * on (namespace, pod) group_left (label_app, label_team) kube_pod_labels
+        labels:
+          severity: critical
+          service: "{{ $labels.label_app }}"
+          team: "{{ $labels.label_team }}"
+        annotations:
+          summary: "{{ $labels.label_app }}: container OOMKilled in {{ $labels.pod }}"
+          description: >-
+            A container of {{ $labels.namespace }}/{{ $labels.pod }} was killed for exceeding its
+            memory limit (OOMKilled) and restarted in the last 10 minutes.
+          runbook_url: knowledge-base/runbooks/pod-oom-killed.md
+
+      - alert: DeploymentReplicasMismatch
+        expr: |
+          (
+            max by (namespace, deployment) (kube_deployment_spec_replicas)
+              !=
+            max by (namespace, deployment) (kube_deployment_status_replicas_available)
+          )
+          * on (namespace, deployment) group_left (label_app, label_team) kube_deployment_labels
+        for: 5m
+        labels:
+          severity: warning
+          service: "{{ $labels.label_app }}"
+          team: "{{ $labels.label_team }}"
+        annotations:
+          summary: "{{ $labels.deployment }}: available replicas do not match the spec"
+          description: >-
+            Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had fewer available
+            replicas than desired for 5 minutes (image pull failures, failing probes, capacity).
+          runbook_url: knowledge-base/runbooks/deployment-replicas-mismatch.md
+
+  - name: aiops-dependencies
+    rules:
+      - alert: RedisDown
+        expr: max by (namespace) (redis_up) == 0 or absent(redis_up)
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+          team: platform
+        annotations:
+          summary: "redis: cache is unreachable"
+          description: >-
+            The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
+            fall back to the database; expect higher latency everywhere.
+          runbook_url: knowledge-base/runbooks/redis-down.md

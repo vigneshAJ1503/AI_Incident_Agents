@@ -1,0 +1,87 @@
+# Unit tests for alert-rules.yml:  make check-rules  (promtool test rules)
+rule_files: [alert-rules.yml]
+evaluation_interval: 1m
+
+tests:
+  # S1: payment-service returns 30% HTTP 500 -> HighErrorRate fires after `for: 2m`.
+  - interval: 1m
+    input_series:
+      - series: 'http_requests_total{namespace="prod",service="payment-service",team="payments",status="200"}'
+        values: "0+70x15"
+      - series: 'http_requests_total{namespace="prod",service="payment-service",team="payments",status="500"}'
+        values: "0+30x15"
+      - series: 'http_requests_total{namespace="prod",service="user-service",team="identity",status="200"}'
+        values: "0+100x15"
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: HighErrorRate
+        exp_alerts: []
+      - eval_time: 10m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels:
+              alertname: HighErrorRate
+              severity: critical
+              namespace: prod
+              service: payment-service
+              team: payments
+            exp_annotations:
+              summary: "payment-service: 30% of requests fail with 5xx"
+              description: >-
+                More than 5% of payment-service requests in prod returned HTTP 5xx over the
+                last 5 minutes (current 30%).
+              runbook_url: knowledge-base/runbooks/high-error-rate.md
+
+  # S2: order-service container OOMKilled and restarting.
+  - interval: 1m
+    input_series:
+      - series: 'kube_pod_container_status_last_terminated_reason{namespace="prod",pod="order-service-7d9-x1",container="order-service",reason="OOMKilled"}'
+        values: "1x15"
+      - series: 'kube_pod_container_status_restarts_total{namespace="prod",pod="order-service-7d9-x1",container="order-service"}'
+        values: "0 0 0 1 1 1 2 2 2 3 3 3 4 4 4 5"
+      - series: 'kube_pod_labels{namespace="prod",pod="order-service-7d9-x1",label_app="order-service",label_team="commerce"}'
+        values: "1x15"
+    alert_rule_test:
+      - eval_time: 12m
+        alertname: PodOOMKilled
+        exp_alerts:
+          - exp_labels:
+              alertname: PodOOMKilled
+              severity: critical
+              namespace: prod
+              pod: order-service-7d9-x1
+              label_app: order-service
+              label_team: commerce
+              service: order-service
+              team: commerce
+            exp_annotations:
+              summary: "order-service: container OOMKilled in order-service-7d9-x1"
+              description: >-
+                A container of prod/order-service-7d9-x1 was killed for exceeding its memory
+                limit (OOMKilled) and restarted in the last 10 minutes.
+              runbook_url: knowledge-base/runbooks/pod-oom-killed.md
+
+  # S5: Redis unreachable for more than a minute.
+  - interval: 1m
+    input_series:
+      - series: 'redis_up{namespace="prod",instance="redis:9121"}'
+        values: "1 1 0 0 0 0"
+    alert_rule_test:
+      - eval_time: 1m
+        alertname: RedisDown
+        exp_alerts: []
+      - eval_time: 5m
+        alertname: RedisDown
+        exp_alerts:
+          - exp_labels:
+              alertname: RedisDown
+              severity: critical
+              namespace: prod
+              service: redis
+              team: platform
+            exp_annotations:
+              summary: "redis: cache is unreachable"
+              description: >-
+                The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
+                fall back to the database; expect higher latency everywhere.
+              runbook_url: knowledge-base/runbooks/redis-down.md

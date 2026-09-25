@@ -72,6 +72,14 @@ jobs:
       - name: Docker build
         run: docker build -t aiops/${{ matrix.server }}:ci .
 
+  alert-rules:
+    name: alert rules (promtool · amtool)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate + unit-test alert rules, validate alertmanager.yml
+        run: make check-rules
+
   secrets:
     name: secret scan
     runs-on: ubuntu-latest

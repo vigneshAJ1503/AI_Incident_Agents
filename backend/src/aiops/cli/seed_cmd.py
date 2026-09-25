@@ -4,14 +4,17 @@ from __future__ import annotations
 
 import os
 from datetime import UTC, datetime, timedelta
+from pathlib import Path
 
 import typer
 from rich.table import Table
 
 from aiops.cli.common import console, err_console
+from aiops.core.config import ConfigError, find_config_dir
 from aiops.seed.alertmanager import AlertmanagerSeeder
 from aiops.seed.alerts import DEFAULT_TTL, NAMESPACE, scenario_alerts
 from aiops.seed.elasticsearch import ElasticsearchSeeder, SeedError
+from aiops.seed.git_repo import RepoSeedError, build_sample_repo
 from aiops.seed.logs import ENV_SHORT, SCENARIOS, LogGenerator, SeedWindow, index_name
 
 app = typer.Typer(help="Seed local infrastructure with scenario data.", no_args_is_help=True)
@@ -163,4 +166,54 @@ def seed_tickets(
     console.print(
         f"anchor {anchor:%Y-%m-%d %H:%M} UTC · "
         + ", ".join(f"{k}: {v}" for k, v in sorted(counts.items()))
+    )
+
+
+def default_repo_path() -> Path:
+    """``<project root>/.data/sample-repo`` (git-ignored), independent of the cwd."""
+    try:
+        return find_config_dir().parent / ".data" / "sample-repo"
+    except ConfigError:
+        return Path(".data") / "sample-repo"
+
+
+@app.command("repo")
+def seed_repo(
+    scenario: str = typer.Option("S1", "--scenario", "-S", help=f"One of {', '.join(SCENARIOS)}."),
+    now: datetime | None = typer.Option(
+        None, help="Anchor time, UTC (e.g. 2026-09-25T10:30:00). Default: now."
+    ),
+    path: Path | None = typer.Option(
+        None, help="Where to build the repo. Default: <project>/.data/sample-repo."
+    ),
+) -> None:
+    """(Re)build the deterministic sample Git repo: ~2 weeks of history + the scenario's change."""
+    scenario = scenario.upper()
+    if scenario not in SCENARIOS:
+        raise typer.BadParameter(f"scenario must be one of {SCENARIOS}")
+    anchor = (now.replace(tzinfo=UTC) if now.tzinfo is None else now) if now else datetime.now(UTC)
+    target = (path or default_repo_path()).expanduser().resolve()
+    try:
+        summary = build_sample_repo(target, scenario, anchor)
+    except RepoSeedError as exc:
+        err_console.print(f"[red]Building the sample repo failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+
+    table = Table(title=f"Sample repo for scenario {scenario}: last 24h")
+    for column in ("SHA", "Date (UTC)", "Author", "Subject", "Tags"):
+        table.add_column(column)
+    recent = [c for c in summary.commits if c.date >= summary.now - timedelta(hours=24)]
+    for commit in recent:
+        table.add_row(
+            commit.sha[:10],
+            f"{commit.date:%m-%d %H:%M}",
+            commit.author,
+            commit.subject,
+            ", ".join(commit.tags),
+            style="bold" if commit.scenario else None,
+        )
+    console.print(table)
+    console.print(
+        f"{len(summary.commits)} commits, {len(summary.tags)} release tags · "
+        f"HEAD {summary.head[:10]} · {target}"
     )

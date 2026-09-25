@@ -161,3 +161,7 @@ seed-tickets: venv-fix ## Seed the mock tickets backlog (OPS project) into Postg
 .PHONY: record-tickets-fixtures
 record-tickets-fixtures: venv-fix ## Re-record Tickets agent fixtures from mock-tickets-mcp (reseeds at FIXED_NOW)
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_tickets
+
+.PHONY: seed-repo
+seed-repo: venv-fix ## Build the sample Git repo (.data/sample-repo) for a scenario: make seed-repo S=S1
+	cd $(BACKEND) && uv run --no-sync aiops seed repo --scenario $(S) $(if $(NOW),--now $(NOW),)

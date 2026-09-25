@@ -155,3 +155,12 @@ agents:
       max_tool_calls: 12
       max_execution_s: 45
       max_tokens: 30000
+  alerts:
+    model_role: agent
+    # service alerts + one call per depends_on service + silences (deterministic, <= ~6),
+    # then <= 2 LLM follow-ups (get_alert, get_alert_groups, ...)
+    limits:
+      max_steps: 4
+      max_tool_calls: 10
+      max_execution_s: 45
+      max_tokens: 30000

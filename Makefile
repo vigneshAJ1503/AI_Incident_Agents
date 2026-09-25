@@ -132,6 +132,10 @@ alertmanager-up: ## Start only Alertmanager (part of infra-up too)
 seed-alerts: venv-fix ## Post a scenario's firing alerts to Alertmanager: make seed-alerts S=S1
 	cd $(BACKEND) && uv run --no-sync aiops seed alerts --scenario $(S)
 
+.PHONY: record-fixtures-alerts
+record-fixtures-alerts: venv-fix ## Re-record Alert agent fixtures (needs alertmanager-up + alertmanager-mcp)
+	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_alerts
+
 .PHONY: check-rules
 check-rules: ## Validate the alert rules (promtool check + unit tests) and alertmanager.yml (Docker)
 	docker run --rm --entrypoint promtool -v "$(CURDIR)/deploy/compose/config/prometheus:/rules:ro" \

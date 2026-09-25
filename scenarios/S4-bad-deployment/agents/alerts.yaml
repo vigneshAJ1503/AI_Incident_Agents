@@ -1,0 +1,6 @@
+# Only a warning: the replicas mismatch (ImagePullBackOff itself is the K8s agent's).
+status: [success]
+signals: [alerts_firing]
+forbidden_signals: [no_active_alerts, critical_alert_firing, dependency_alert_firing, alert_precedes_incident]
+must_mention: [DeploymentReplicasMismatch]
+min_evidence: 2

@@ -1,0 +1,6 @@
+# Cross-service: order-service alerts plus a latency alert on its dependency.
+status: [success]
+signals: [alerts_firing, critical_alert_firing, dependency_alert_firing]
+forbidden_signals: [no_active_alerts, alert_precedes_incident]
+must_mention: [inventory-service, HighLatencyP95]
+min_evidence: 2

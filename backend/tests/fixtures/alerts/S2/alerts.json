@@ -1,0 +1,502 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "labels": {
+          "namespace": "prod",
+          "service": "order-service"
+        },
+        "limit": 50,
+        "state": "all"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "alerts": [
+            {
+              "alertname": "HighErrorRate",
+              "description": "More than 5% of order-service requests in prod returned HTTP 5xx over the last 5 minutes (current 14.8%).",
+              "fingerprint": "0f89f9a03973a74f",
+              "generator_url": "aiops-seed://S2/HighErrorRate",
+              "inhibited_by": [],
+              "labels": {
+                "alertname": "HighErrorRate",
+                "namespace": "prod",
+                "service": "order-service",
+                "severity": "critical",
+                "team": "commerce"
+              },
+              "runbook_url": "knowledge-base/runbooks/high-error-rate.md",
+              "service": "order-service",
+              "severity": "critical",
+              "silenced_by": [],
+              "starts_at": "2026-09-25T10:12:00.000Z",
+              "state": "active",
+              "summary": "order-service: 14.8% of requests fail with 5xx"
+            },
+            {
+              "alertname": "PodOOMKilled",
+              "description": "A container of prod/order-service-7d9f6b5c4-x2k8p was killed for exceeding its memory limit (OOMKilled) and restarted in the last 10 minutes.",
+              "fingerprint": "83bb7385a2b96002",
+              "generator_url": "aiops-seed://S2/PodOOMKilled",
+              "inhibited_by": [],
+              "labels": {
+                "alertname": "PodOOMKilled",
+                "namespace": "prod",
+                "pod": "order-service-7d9f6b5c4-x2k8p",
+                "service": "order-service",
+                "severity": "critical",
+                "team": "commerce"
+              },
+              "runbook_url": "knowledge-base/runbooks/memory-leak-oom.md",
+              "service": "order-service",
+              "severity": "critical",
+              "silenced_by": [],
+              "starts_at": "2026-09-25T10:13:00.000Z",
+              "state": "active",
+              "summary": "order-service: container OOMKilled in order-service-7d9f6b5c4-x2k8p"
+            },
+            {
+              "alertname": "PodCrashLooping",
+              "description": "Pod prod/order-service-7d9f6b5c4-x2k8p restarted 3 times in the last 15 minutes.",
+              "fingerprint": "07a1f468dbaa69b9",
+              "generator_url": "aiops-seed://S2/PodCrashLooping",
+              "inhibited_by": [],
+              "labels": {
+                "alertname": "PodCrashLooping",
+                "namespace": "prod",
+                "pod": "order-service-7d9f6b5c4-x2k8p",
+                "service": "order-service",
+                "severity": "critical",
+                "team": "commerce"
+              },
+              "runbook_url": "knowledge-base/runbooks/pod-crashloop.md",
+              "service": "order-service",
+              "severity": "critical",
+              "silenced_by": [],
+              "starts_at": "2026-09-25T10:22:00.000Z",
+              "state": "active",
+              "summary": "order-service: pod order-service-7d9f6b5c4-x2k8p is crash looping"
+            }
+          ],
+          "by_severity": {
+            "critical": 3
+          },
+          "filters": [
+            "namespace=\"prod\"",
+            "service=\"order-service\""
+          ],
+          "returned": 3,
+          "state": "all",
+          "total": 3,
+          "truncated": false
+        },
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"namespace=\\\"prod\\\"\",\n    \"service=\\\"order-service\\\"\"\n  ],\n  \"total\": 3,\n  \"returned\": 3,\n  \"truncated\": false,\n  \"by_severity\": {\n    \"critical\": 3\n  },\n  \"alerts\": [\n    {\n      \"fingerprint\": \"0f89f9a03973a74f\",\n      \"alertname\": \"HighErrorRate\",\n      \"service\": \"order-service\",\n      \"severity\": \"critical\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:12:00.000Z\",\n      \"summary\": \"order-service: 14.8% of requests fail with 5xx\",\n      \"description\": \"More than 5% of order-service requests in prod returned HTTP 5xx over the last 5 minutes (current 14.8%).\",\n      \"runbook_url\": \"knowledge-base/runbooks/high-error-rate.md\",\n      \"labels\": {\n        \"alertname\": \"HighErrorRate\",\n        \"namespace\": \"prod\",\n        \"service\": \"order-service\",\n        \"severity\": \"critical\",\n        \"team\": \"commerce\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S2/HighErrorRate\"\n    },\n    {\n      \"fingerprint\": \"83bb7385a2b96002\",\n      \"alertname\": \"PodOOMKilled\",\n      \"service\": \"order-service\",\n      \"severity\": \"critical\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:13:00.000Z\",\n      \"summary\": \"order-service: container OOMKilled in order-service-7d9f6b5c4-x2k8p\",\n      \"description\": \"A container of prod/order-service-7d9f6b5c4-x2k8p was killed for exceeding its memory limit (OOMKilled) and restarted in the last 10 minutes.\",\n      \"runbook_url\": \"knowledge-base/runbooks/memory-leak-oom.md\",\n      \"labels\": {\n        \"alertname\": \"PodOOMKilled\",\n        \"namespace\": \"prod\",\n        \"pod\": \"order-service-7d9f6b5c4-x2k8p\",\n        \"service\": \"order-service\",\n        \"severity\": \"critical\",\n        \"team\": \"commerce\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S2/PodOOMKilled\"\n    },\n    {\n      \"fingerprint\": \"07a1f468dbaa69b9\",\n      \"alertname\": \"PodCrashLooping\",\n      \"service\": \"order-service\",\n      \"severity\": \"critical\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:22:00.000Z\",\n      \"summary\": \"order-service: pod order-service-7d9f6b5c4-x2k8p is crash looping\",\n      \"description\": \"Pod prod/order-service-7d9f6b5c4-x2k8p restarted 3 times in the last 15 minutes.\",\n      \"runbook_url\": \"knowledge-base/runbooks/pod-crashloop.md\",\n      \"labels\": {\n        \"alertname\": \"PodCrashLooping\",\n        \"namespace\": \"prod\",\n        \"pod\": \"order-service-7d9f6b5c4-x2k8p\",\n        \"service\": \"order-service\",\n        \"severity\": \"critical\",\n        \"team\": \"commerce\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S2/PodCrashLooping\"\n    }\n  ]\n}"
+      },
+      "tool": "list_alerts"
+    },
+    {
+      "arguments": {
+        "labels": {
+          "namespace": "prod",
+          "service": "payment-service"
+        },
+        "limit": 20,
+        "state": "all"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "alerts": [],
+          "by_severity": {},
+          "filters": [
+            "namespace=\"prod\"",
+            "service=\"payment-service\""
+          ],
+          "returned": 0,
+          "state": "all",
+          "total": 0,
+          "truncated": false
+        },
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"namespace=\\\"prod\\\"\",\n    \"service=\\\"payment-service\\\"\"\n  ],\n  \"total\": 0,\n  \"returned\": 0,\n  \"truncated\": false,\n  \"by_severity\": {},\n  \"alerts\": []\n}"
+      },
+      "tool": "list_alerts"
+    },
+    {
+      "arguments": {
+        "labels": {
+          "namespace": "prod",
+          "service": "inventory-service"
+        },
+        "limit": 20,
+        "state": "all"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "alerts": [],
+          "by_severity": {},
+          "filters": [
+            "namespace=\"prod\"",
+            "service=\"inventory-service\""
+          ],
+          "returned": 0,
+          "state": "all",
+          "total": 0,
+          "truncated": false
+        },
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"namespace=\\\"prod\\\"\",\n    \"service=\\\"inventory-service\\\"\"\n  ],\n  \"total\": 0,\n  \"returned\": 0,\n  \"truncated\": false,\n  \"by_severity\": {},\n  \"alerts\": []\n}"
+      },
+      "tool": "list_alerts"
+    },
+    {
+      "arguments": {
+        "labels": {
+          "service": "postgres"
+        },
+        "limit": 20,
+        "state": "all"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "alerts": [],
+          "by_severity": {},
+          "filters": [
+            "service=\"postgres\""
+          ],
+          "returned": 0,
+          "state": "all",
+          "total": 0,
+          "truncated": false
+        },
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"service=\\\"postgres\\\"\"\n  ],\n  \"total\": 0,\n  \"returned\": 0,\n  \"truncated\": false,\n  \"by_severity\": {},\n  \"alerts\": []\n}"
+      },
+      "tool": "list_alerts"
+    },
+    {
+      "arguments": {
+        "labels": {
+          "namespace": "prod",
+          "service": "order-service"
+        },
+        "limit": 20,
+        "state": "active"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "returned": 0,
+          "silences": [],
+          "state": "active",
+          "total": 0,
+          "truncated": false
+        },
+        "text": "{\n  \"state\": \"active\",\n  \"total\": 0,\n  \"returned\": 0,\n  \"truncated\": false,\n  \"silences\": []\n}"
+      },
+      "tool": "list_silences"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List alerts currently known to Alertmanager, most severe first.\n\n        Args:\n            service: filter on the 'service' label, e.g. 'payment-service'.\n            severity: filter on the 'severity' label, e.g. 'critical' or 'warning'.\n            alertname: filter on the alert name, e.g. 'HighErrorRate'.\n            labels: more equality filters, e.g. {\"namespace\": \"prod\"}.\n            state: 'active' (firing, not muted), 'suppressed' (silenced or inhibited) or 'all'.\n            limit: max alerts to return (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "alertname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alertname"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "state": {
+            "default": "active",
+            "enum": [
+              "active",
+              "suppressed",
+              "all"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "title": "list_alertsArguments",
+        "type": "object"
+      },
+      "name": "list_alerts"
+    },
+    {
+      "description": "Full details of one alert by its fingerprint (from list_alerts).",
+      "input_schema": {
+        "properties": {
+          "fingerprint": {
+            "title": "Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "fingerprint"
+        ],
+        "title": "get_alertArguments",
+        "type": "object"
+      },
+      "name": "get_alert"
+    },
+    {
+      "description": "List silences (muted alerts) that could apply to the given labels.\n\n        Args:\n            service: only silences that could mute alerts of this service.\n            labels: more labels to check against the silences' matchers, e.g. {\"alertname\": \"HighErrorRate\"}.\n            state: 'active', 'pending' (starts later), 'expired' or 'all'.\n            limit: max silences to return (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          },
+          "state": {
+            "default": "active",
+            "enum": [
+              "active",
+              "pending",
+              "expired",
+              "all"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "title": "list_silencesArguments",
+        "type": "object"
+      },
+      "name": "list_silences"
+    },
+    {
+      "description": "Alerts grouped the way Alertmanager notifies (by service and alert name here).\n\n        Args:\n            service / severity / alertname / labels: equality filters, as in list_alerts.\n            state: 'active', 'suppressed' or 'all'.\n            limit: max alerts returned across all groups (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "alertname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alertname"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "state": {
+            "default": "active",
+            "enum": [
+              "active",
+              "suppressed",
+              "all"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "title": "get_alert_groupsArguments",
+        "type": "object"
+      },
+      "name": "get_alert_groups"
+    },
+    {
+      "description": "Alerts that were firing at some point in [start, end] (ISO-8601 UTC), oldest first.\n\n        Limited while Alertmanager is the only source: see 'complete' and 'note' in the result.\n        Args:\n            start: window start, e.g. '2026-09-25T10:00:00Z'.\n            end: window end.\n            service / severity / alertname / labels: equality filters, as in list_alerts.\n            limit: max alerts to return (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "alertname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Alertname"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "labels": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Labels"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "service": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Service"
+          },
+          "severity": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Severity"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "start",
+          "end"
+        ],
+        "title": "alert_historyArguments",
+        "type": "object"
+      },
+      "name": "alert_history"
+    }
+  ]
+}

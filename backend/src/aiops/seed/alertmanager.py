@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta
 from typing import Any
 
 import httpx2
 
-from aiops.seed.alerts import GENERATOR_PREFIX, resolved
+from aiops.seed.alerts import DEFAULT_TTL, GENERATOR_PREFIX, resolved, scenario_alerts
 from aiops.seed.elasticsearch import SeedError
+from aiops.seed.logs import SeedWindow
 
 
 class AlertmanagerSeeder:
@@ -49,3 +51,24 @@ class AlertmanagerSeeder:
         previous = self.seeded_alerts()
         self.post(resolved(previous))
         return len(previous)
+
+
+def seed_scenario_alerts(
+    url: str,
+    scenario: str,
+    now: datetime,
+    *,
+    ttl: timedelta = DEFAULT_TTL,
+    environment: str = "production",
+) -> tuple[SeedWindow, list[dict[str, Any]]]:
+    """Replace the seeded alerts with ``scenario``'s, anchored at ``now`` (S0 = none)."""
+    window = SeedWindow.build(now, hours=1)
+    alerts = scenario_alerts(scenario, window, ttl=ttl, environment=environment)
+    seeder = AlertmanagerSeeder(url)
+    try:
+        seeder.ping()
+        seeder.clear()
+        seeder.post(alerts)
+    finally:
+        seeder.close()
+    return window, alerts

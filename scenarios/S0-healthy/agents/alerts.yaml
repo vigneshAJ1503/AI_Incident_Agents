@@ -1,0 +1,6 @@
+# Healthy: nothing fires. The agent must say so explicitly (HLD: "No active alerts").
+status: [no_signal]
+signals: [no_active_alerts]
+forbidden_signals: [alerts_firing, critical_alert_firing, dependency_alert_firing, alert_precedes_incident]
+must_mention: [no active alerts]
+min_evidence: 1

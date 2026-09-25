@@ -10,6 +10,7 @@
 | **Created** | 2026-09-25 |
 | **Source designs** | `docs/architecture/HLD.png`, `docs/architecture/local-deployment.png`, `docs/planning/AI_SRE_Platform_Master_Development_Plan.md` |
 | **Repository** | https://github.com/vigneshAJ1503/AI_Incident_Agents |
+| **Cost** | **$0**: see [docs/setup/zero-cost.md](docs/setup/zero-cost.md) |
 | **Delivery model** | Small, reviewable Pull Requests (PR-001 → PR-049), one feature per PR |
 
 ---
@@ -172,8 +173,8 @@ Each major decision is recorded as an ADR in `docs/adr/`.
 | Package manager | **uv** | poetry, pip | Fast, lockfile, manages Python versions |
 | API | **FastAPI** + SSE | Flask, Django | Async, typed, OpenAPI for free |
 | Agent orchestration | **Custom, lightweight** (asyncio + Pydantic) | LangGraph, CrewAI, Claude Agent SDK | You learn and own every piece. No framework lock-in. The contracts in §10 make swapping in LangGraph later possible |
-| LLM | `LLMProvider` interface with **`anthropic`** (Claude) and **`openai_compat`** (OpenAI, Groq, Ollama/vLLM) from PR-004 | Single vendor | Use whichever key you have. Bedrock/Vertex can be added for enterprises |
-| Default models | Planner and agents: `claude-sonnet-5`; RCA: `claude-opus-5-5`; cheap classification: `claude-haiku-4-5-20251001` | — | Configurable per role in YAML |
+| LLM | `LLMProvider` interface. **`openai_compat`** from PR-004 covers **Groq free tier (default)**, Gemini free tier, Ollama and OpenAI. Anthropic, Bedrock and Vertex come as optional enterprise providers in PR-043 | Single vendor | **Zero cost:** see `docs/setup/zero-cost.md` |
+| Default models | Set per role (`fast`, `agent`, `rca`) in `.env` / YAML, using free-tier models (e.g. a small Llama for `fast`, the largest free tool-calling model for `rca`) | — | No model is hard-coded |
 | MCP | Official **`mcp` Python SDK** (client); **FastMCP** for our custom servers | — | Standard protocol, so tools can be swapped |
 | Validation | **Pydantic v2** | dataclasses | Structured LLM output, config validation |
 | Storage | **Postgres 16 + pgvector**, **Redis 7** | — | Investigations, audit, embeddings; Redis for event pub/sub and cache |
@@ -461,7 +462,7 @@ brew install pre-commit
 
 | What | Needed from | How |
 |------|-------------|-----|
-| LLM key (Anthropic, or OpenAI/Groq; or local Ollama) | PR-004 | console.anthropic.com → API keys → set `ANTHROPIC_API_KEY` in `.env` |
+| **Free** Groq API key (backup: Gemini free tier; offline: Ollama) | PR-004 | console.anthropic.com → API keys → set `ANTHROPIC_API_KEY` in `.env` |
 | GitHub account + `gh auth login` | PR-001 | To create the repo and open PRs |
 | Jira Cloud free site + API token | PR-012 | atlassian.com → Jira free → create project `OPS` → id.atlassian.com → API tokens |
 | (optional) Slack workspace/app | PR-048 | Slack integration later |
@@ -525,12 +526,13 @@ These contracts are the backbone. Get them right in PR-002/003 and every later P
 ```yaml
 environment: local
 llm:
-  provider: anthropic                 # anthropic | openai_compat (OpenAI/Groq/Ollama via base_url)
+  provider: openai_compat             # openai_compat (Groq/Gemini/Ollama/OpenAI via base_url) | anthropic (optional, later)
+  base_url: ${OPENAI_COMPAT_BASE_URL}
+  api_key: ${OPENAI_COMPAT_API_KEY}
   models:
-    planner: claude-sonnet-5
-    agent:   claude-sonnet-5
-    rca:     claude-opus-5-5
-    fast:    claude-haiku-4-5-20251001
+    fast:  ${LLM_MODEL_FAST}
+    agent: ${LLM_MODEL_AGENT}
+    rca:   ${LLM_MODEL_RCA}
   max_tokens_per_investigation: 400000
 
 capabilities:                          # Agents bind to capabilities, NOT vendors
@@ -827,8 +829,7 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 - **Branch:** `feat/004-llm-provider`
 - **Scope:**
   - the `LLMProvider` protocol (`generate(messages, tools, output_schema, role)`)
-  - `AnthropicProvider` (Claude)
-  - `OpenAICompatProvider` (OpenAI / Groq / Ollama, selected by `base_url`)
+  - `OpenAICompatProvider` (Groq / Gemini / Ollama / OpenAI, selected by `base_url`), with 429 backoff
   - `FakeLLMProvider` for tests
   - retries and backoff; token and cost accounting
   - model routing by role (`planner/agent/rca/fast`)
@@ -876,7 +877,7 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-008 · Elasticsearch MCP integration
 - **Branch:** `feat/008-elasticsearch-mcp`
 - **Scope:**
-  - add the ES MCP server to `docker-compose.mcp.yml` (spike: official Elastic server vs a thin FastMCP wrapper; decide with an ADR)
+  - **our own FastMCP `elasticsearch-mcp`** (ADR-0003: guardrails are enforced server-side, no license or vendor lock-in), added to `docker-compose.mcp.yml`
   - tools `list_indices, get_mapping, search_logs, execute_esql`
   - enforce allowed indices, maximum time range, maximum result size and query timeout
   - a read-only ES role
@@ -1218,13 +1219,14 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 
 ### Phase 12 — SaaS readiness (EPIC-015)
 
-#### PR-043 · Portability proof + onboarding
+#### PR-043 · Portability proof + onboarding + enterprise LLM providers
 - **Branch:** `feat/043-portability`
 - **Scope:**
   - a second logs backend (OpenSearch or Loki) via config
   - `example-saas.yaml`
   - `docs/onboarding-new-environment.md` (§17)
   - `aiops doctor` checks connectivity and permissions for every capability
+  - optional `anthropic` (Claude), Bedrock and Vertex providers for companies that have keys
 - 🎯 UC-12
 - ✅ The Log agent evals pass on the second backend with **zero agent code change**.
 

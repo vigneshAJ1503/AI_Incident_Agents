@@ -1,0 +1,409 @@
+{
+  "agent": "knowledge",
+  "mode": "replay",
+  "environment": "local",
+  "generated_at": "2026-09-25T19:06:48.593770Z",
+  "anchor": "2026-09-25T10:30:00+00:00",
+  "results": [
+    {
+      "scenario": "S0",
+      "title": "Healthy baseline (no incident)",
+      "healthy": true,
+      "status": "no_signal",
+      "signals": [
+        "no_relevant_docs"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "2 evidence items (min 1)"
+        },
+        {
+          "name": "signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "2/2 findings cite existing evidence"
+        }
+      ],
+      "findings": 2,
+      "valid_findings": 2,
+      "evidence": 2,
+      "tool_calls": 2,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.49,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S1",
+      "title": "DB connection pool misconfiguration (payment-service v1.8.2)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "runbook_found",
+        "known_issue_documented",
+        "mitigation_available"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "9 evidence items (min 3)"
+        },
+        {
+          "name": "signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:knowledge-base/runbooks/database-connection-pool.md",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "9/9 findings cite existing evidence"
+        }
+      ],
+      "findings": 9,
+      "valid_findings": 9,
+      "evidence": 9,
+      "tool_calls": 9,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 7.18,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S2",
+      "title": "Memory leak -> OOM restarts (order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "runbook_found",
+        "known_issue_documented",
+        "mitigation_available"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "6 evidence items (min 3)"
+        },
+        {
+          "name": "signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:knowledge-base/runbooks/memory-leak-oom.md",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "7/7 findings cite existing evidence"
+        }
+      ],
+      "findings": 7,
+      "valid_findings": 7,
+      "evidence": 6,
+      "tool_calls": 6,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 4.51,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S3",
+      "title": "Slow downstream dependency (inventory-service -> order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "runbook_found",
+        "known_issue_documented",
+        "mitigation_available"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "9 evidence items (min 3)"
+        },
+        {
+          "name": "signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:knowledge-base/runbooks/dependency-timeouts.md",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "9/9 findings cite existing evidence"
+        }
+      ],
+      "findings": 9,
+      "valid_findings": 9,
+      "evidence": 9,
+      "tool_calls": 9,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 9.92,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S4",
+      "title": "Bad deployment (user-service image cannot be pulled)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "runbook_found",
+        "known_issue_documented",
+        "mitigation_available"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "7 evidence items (min 3)"
+        },
+        {
+          "name": "signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:knowledge-base/runbooks/bad-deployment-rollback.md",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "8/8 findings cite existing evidence"
+        }
+      ],
+      "findings": 8,
+      "valid_findings": 8,
+      "evidence": 7,
+      "tool_calls": 7,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 6.73,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S5",
+      "title": "Cache outage (Redis down)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "runbook_found",
+        "known_issue_documented",
+        "mitigation_available"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "8 evidence items (min 3)"
+        },
+        {
+          "name": "signal:runbook_found",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:known_issue_documented",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:mitigation_available",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:no_relevant_docs",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:knowledge-base/runbooks/redis-outage.md",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "8/8 findings cite existing evidence"
+        }
+      ],
+      "findings": 8,
+      "valid_findings": 8,
+      "evidence": 8,
+      "tool_calls": 8,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 6.53,
+      "model": "fake",
+      "prompt_version": "knowledge/v1@92f99521e906",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    }
+  ],
+  "summary": {
+    "scenarios": 6,
+    "passed": 6,
+    "pass_rate": 1.0,
+    "healthy_scenarios": 1,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "findings": 43,
+    "valid_findings": 43,
+    "citation_validity": 1.0,
+    "avg_tool_calls": 6.83,
+    "avg_llm_calls": 1.0,
+    "avg_tokens": 0.0,
+    "total_tokens": 0,
+    "avg_latency_ms": 6.23,
+    "p50_latency_ms": 6.63
+  }
+}

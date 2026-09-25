@@ -1,0 +1,6 @@
+# Hints = what the Log agent reports for S0 in replay: no signals, no anomalous patterns.
+hints: {signals: [], patterns: []}
+status: [no_signal]
+signals: [no_relevant_docs]
+forbidden_signals: [runbook_found, known_issue_documented, mitigation_available]
+min_evidence: 1

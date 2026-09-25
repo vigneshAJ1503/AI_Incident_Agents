@@ -47,6 +47,8 @@ BENIGN_SIGNALS = frozenset(
         # tickets: context only (open tickets exist on the service / nothing related found)
         "related_open_tickets",
         "no_related_tickets",
+        # knowledge: no runbook matched (nothing claimed)
+        "no_relevant_docs",
     }
 )
 

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -19,6 +20,9 @@ class AgentExpectation(BaseModel):
     forbidden_signals: list[str] = Field(default_factory=list)
     must_mention: list[str] = Field(default_factory=list)  # case-insensitive, summary+findings
     min_evidence: int = 0
+    # Task input for this agent when evaluated standalone, e.g. representative upstream
+    # findings: {"signals": [...], "patterns": [...]}. The orchestrator passes real ones.
+    hints: dict[str, Any] = Field(default_factory=dict)
 
 
 class Scenario(BaseModel):
@@ -47,7 +51,9 @@ class Scenario(BaseModel):
             environment=self.environment,
             time_range=TimeRange.last(self.window, now=now),
         )
-        return AgentTask(agent=agent, objective=self.question, context=context)
+        expectation = self.agents.get(agent)
+        hints = dict(expectation.hints) if expectation else {}
+        return AgentTask(agent=agent, objective=self.question, context=context, hints=hints)
 
 
 def load_scenario(path: Path) -> Scenario:

@@ -1,0 +1,11 @@
+# Hints = the Log agent's S4 replay result: only the capacity symptom (the
+# ImagePullBackOff cause comes from the K8s agent later).
+hints:
+  signals: [capacity_degraded]
+  patterns:
+    - "Request queue depth high: <NUM> pending (ready replicas <NUM>/<NUM>)"
+status: [success]
+signals: [runbook_found, known_issue_documented, mitigation_available]
+forbidden_signals: [no_relevant_docs]
+must_mention: [knowledge-base/runbooks/bad-deployment-rollback.md]
+min_evidence: 3

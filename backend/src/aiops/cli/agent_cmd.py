@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import json
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -78,10 +79,24 @@ def run(
     replay: Path | None = typer.Option(
         None, "--replay", help="Serve MCP responses from fixtures here."
     ),
+    hints: str | None = typer.Option(
+        None,
+        "--hints",
+        help='Findings from other agents as JSON, e.g. \'{"signals": ["db_timeout_errors_up"]}\'.',
+    ),
+    symptoms: list[str] = typer.Option(
+        [], "--symptom", help="A known symptom, e.g. 'HTTP 500 on /pay' (repeatable)."
+    ),
     as_json: bool = typer.Option(False, "--json", help="Print the AgentResult as JSON."),
     env: str | None = EnvOption,
 ) -> None:
     """Run one agent on one question (no orchestrator)."""
+    try:
+        task_hints = json.loads(hints) if hints else {}
+    except json.JSONDecodeError as exc:
+        raise typer.BadParameter(f"--hints is not valid JSON: {exc}") from exc
+    if not isinstance(task_hints, dict):
+        raise typer.BadParameter("--hints must be a JSON object")
     settings = load_settings(env)
     sink = CallbackEventSink(_print_event) if not as_json else None
     deps = build_deps(settings, events=sink, record_dir=record, replay_dir=replay)
@@ -99,9 +114,10 @@ def run(
         service=resolution.service.name,
         environment=env_name,
         time_range=TimeRange.last(since, now=window_end),
+        symptoms=symptoms,
     )
     agent = AGENTS.get(name)(deps)
-    task = AgentTask(agent=name, objective=question, context=context)
+    task = AgentTask(agent=name, objective=question, context=context, hints=task_hints)
     result = asyncio.run(agent.run(task))
     if as_json:
         console.print_json(result.model_dump_json())

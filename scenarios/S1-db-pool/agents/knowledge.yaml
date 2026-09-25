@@ -1,0 +1,12 @@
+# Hints = the Log agent's S1 replay result (signals + top anomalous patterns);
+# kept in sync by backend/tests/unit/test_knowledge_agent.py.
+hints:
+  signals: [db_timeout_errors_up, error_rate_up, new_error_pattern, deployment_detected]
+  patterns:
+    - "Database connection timeout: could not acquire a connection from the pool within <NUM>ms (pool size=<NUM>, active=<NUM>, waiting=<NUM>)"
+    - "HikariPool-<NUM> - Connection is not available, request timed out after <NUM>ms"
+status: [success]
+signals: [runbook_found, known_issue_documented, mitigation_available]
+forbidden_signals: [no_relevant_docs]
+must_mention: [knowledge-base/runbooks/database-connection-pool.md]   # cited among the top 3
+min_evidence: 3

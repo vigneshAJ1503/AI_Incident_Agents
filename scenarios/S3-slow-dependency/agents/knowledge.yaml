@@ -1,0 +1,10 @@
+# Hints = the Log agent's S3 replay result (signals + top anomalous pattern).
+hints:
+  signals: [error_rate_up, new_error_pattern, dependency_timeouts]
+  patterns:
+    - "Timeout calling inventory-service GET /api/v1/stock/<NUM> after <NUM>ms"
+status: [success]
+signals: [runbook_found, known_issue_documented, mitigation_available]
+forbidden_signals: [no_relevant_docs]
+must_mention: [knowledge-base/runbooks/dependency-timeouts.md]
+min_evidence: 3

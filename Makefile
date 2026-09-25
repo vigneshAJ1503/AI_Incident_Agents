@@ -17,12 +17,16 @@ preflight: ## Check local prerequisites (tools, versions, Docker memory, ports)
 .PHONY: setup
 setup: ## Install backend dependencies and git hooks
 	cd $(BACKEND) && uv sync
-	@# macOS (iCloud-synced Desktop/Documents) marks files hidden; Python 3.12+ then skips .pth files
-	@if [[ "$$(uname)" == Darwin ]]; then chflags -R nohidden $(BACKEND)/.venv; fi
+	@$(MAKE) --no-print-directory venv-fix
 	@if command -v pre-commit >/dev/null; then pre-commit install; else echo "pre-commit not installed: brew install pre-commit"; fi
 
+.PHONY: venv-fix
+venv-fix: ## macOS iCloud folders hide new files; Python 3.12+ then skips .pth files — unhide them
+	@cd $(BACKEND) && uv sync -q
+	@if [[ "$$(uname)" == Darwin && -d $(BACKEND)/.venv ]]; then chflags -R nohidden $(BACKEND)/.venv; fi
+
 .PHONY: lint
-lint: ## Lint and format-check
+lint: venv-fix ## Lint and format-check
 	cd $(BACKEND) && uv run ruff check . && uv run ruff format --check .
 
 .PHONY: format
@@ -30,11 +34,11 @@ format: ## Auto-format code
 	cd $(BACKEND) && uv run ruff check --fix . && uv run ruff format .
 
 .PHONY: typecheck
-typecheck: ## Static type checking
+typecheck: venv-fix ## Static type checking
 	cd $(BACKEND) && uv run mypy
 
 .PHONY: test
-test: ## Unit tests
+test: venv-fix ## Unit tests
 	cd $(BACKEND) && uv run pytest
 
 .PHONY: check

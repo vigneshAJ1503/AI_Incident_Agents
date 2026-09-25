@@ -486,13 +486,13 @@ Pin exact versions in `.env` (`ES_VERSION=…`, etc.) during PR-007, using the l
 
 | Component | Image | Port(s) | Added in |
 |-----------|-------|---------|----------|
-| Elasticsearch | `docker.elastic.co/elasticsearch/elasticsearch:8.x` (security disabled locally) | 9200 | PR-007 |
-| Kibana | `docker.elastic.co/kibana/kibana:8.x` | 5601 | PR-007 |
+| Elasticsearch | `docker.elastic.co/elasticsearch/elasticsearch:8.19.4` (security disabled locally, bound to 127.0.0.1) | 9200 | PR-007 |
+| Kibana | `docker.elastic.co/kibana/kibana:8.19.4` | 5601 | PR-007 |
 | Prometheus | `prom/prometheus` | 9090 | PR-020 |
 | Alertmanager | `prom/alertmanager` | 9093 | PR-023 |
 | Grafana | `grafana/grafana` | 3000 | PR-020 |
-| Postgres + pgvector | `pgvector/pgvector:pg16` | 5432 | PR-007 |
-| Redis | `redis:7-alpine` | 6379 | PR-007 |
+| Postgres | `postgres:16-alpine` (knowledge search uses built-in full-text search) | 15432 | PR-007 |
+| Redis | `redis:7.4-alpine` | 16379 | PR-007 |
 | Fluent Bit (in Minikube) | `fluent/fluent-bit` | — | PR-016 |
 | kube-state-metrics (in Minikube) | `registry.k8s.io/kube-state-metrics/kube-state-metrics` | NodePort 30080 | PR-020 |
 | Sample services (in Minikube) | built locally: `aiops/<svc>:<ver>` (`minikube image load`) | NodePort 30001–30004 | PR-015 |

@@ -1,0 +1,14 @@
+id: S2
+title: Memory leak -> OOM restarts (order-service)
+description: order-service leaks memory; the JVM throws OutOfMemoryError and the container restarts every few minutes.
+question: Orders are failing intermittently in production
+service: order-service
+environment: production
+window: 30m
+root_cause: Memory leak in order-service causes OutOfMemoryError and repeated container restarts (OOMKilled).
+agents:
+  logs:
+    status: [success]
+    signals: [oom_errors]
+    must_mention: [memory]
+    min_evidence: 1

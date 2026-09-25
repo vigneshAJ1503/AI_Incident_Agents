@@ -1,0 +1,14 @@
+id: S3
+title: Slow downstream dependency (inventory-service -> order-service)
+description: Slow queries in inventory-service make order-service calls time out (504).
+question: Why are orders timing out in production?
+service: order-service
+environment: production
+window: 30m
+root_cause: Slow stock_levels queries in inventory-service cause order-service upstream timeouts.
+agents:
+  logs:
+    status: [success]
+    signals: [dependency_timeouts]
+    must_mention: [inventory]
+    min_evidence: 1

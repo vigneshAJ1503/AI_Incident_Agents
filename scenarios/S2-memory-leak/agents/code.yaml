@@ -1,0 +1,6 @@
+# Unbounded in-memory order cache + memory limit 1Gi -> 512Mi.
+status: [success]
+signals: [risky_config_change, recent_deployment_change]
+forbidden_signals: [no_recent_changes, image_tag_change]
+must_mention: [memory, cache]
+min_evidence: 3

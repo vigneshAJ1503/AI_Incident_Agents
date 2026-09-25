@@ -51,6 +51,8 @@ BENIGN_SIGNALS = frozenset(
         "no_relevant_docs",
         # alerts: nothing firing (the explicit "all clear")
         "no_active_alerts",
+        # code: no risky change in the lookback window
+        "no_recent_changes",
     }
 )
 
@@ -286,6 +288,7 @@ def require_live_llm(settings: Settings) -> None:
 def seed_live(scenario: Scenario, capabilities: Sequence[str], es_url: str) -> datetime:
     """Seed the data sources the agent reads for ``scenario``; returns the window end."""
     from aiops.seed.elasticsearch import SeedError, seed_scenario_logs
+    from aiops.seed.git_repo import RepoSeedError, build_sample_repo, default_repo_path
     from aiops.seed.logs import SCENARIOS as LOG_SCENARIOS
 
     now = datetime.now(UTC)
@@ -306,6 +309,11 @@ def seed_live(scenario: Scenario, capabilities: Sequence[str], es_url: str) -> d
         except SeedError as exc:
             raise EvalError(f"Seeding {scenario.id} alerts failed: {exc}") from exc
         now = window.now
+    if "code" in capabilities:
+        try:  # git-mcp mounts this directory read-only and sees the rebuild immediately
+            now = build_sample_repo(default_repo_path(), scenario.id, now).now
+        except RepoSeedError as exc:
+            raise EvalError(f"Building the sample repo for {scenario.id} failed: {exc}") from exc
     return now
 
 

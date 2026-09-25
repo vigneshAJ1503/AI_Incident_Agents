@@ -1,0 +1,6 @@
+# "tune db pool" (DB_POOL_SIZE 20 -> 2) released as payment-service/v1.8.2.
+status: [success]
+signals: [risky_config_change, recent_deployment_change]
+forbidden_signals: [no_recent_changes, unreleased_image_tag, dependency_service_change]
+must_mention: [tune db pool, DB_POOL_SIZE]
+min_evidence: 3

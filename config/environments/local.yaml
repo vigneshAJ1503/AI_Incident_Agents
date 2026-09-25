@@ -61,6 +61,20 @@ capabilities:
       startup_pattern: "Starting*"                     # app startup lines -> deployments/restarts
       ui_link_template: "${KIBANA_URL:-http://localhost:5601}/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))"
 
+  knowledge:
+    provider: postgres_fts          # markdown runbooks -> Postgres full-text search (no models)
+    mcp:
+      transport: http
+      url: ${KNOWLEDGE_MCP_URL:-http://localhost:8108/mcp}
+      timeout_s: 15
+    tool_allowlist: [search, get_doc, list_docs]
+    limits:
+      max_results: 10
+      query_timeout_s: 10
+    settings:
+      # Where a cited doc opens: {path} is repo-relative, e.g. knowledge-base/runbooks/redis-outage.md
+      ui_link_template: "https://github.com/vigneshAJ1503/AI_Incident_Agents/blob/main/{path}"
+
 agents:
   logs:
     model_role: agent

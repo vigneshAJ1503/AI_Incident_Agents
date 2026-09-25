@@ -26,6 +26,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "LLM_MODEL_RCA",
         "LOGS_MCP_URL",
         "KIBANA_URL",
+        "KNOWLEDGE_MCP_URL",
+        "KNOWLEDGE_DATABASE_URL",
     ]:
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr("aiops.core.config.load_dotenv", lambda *a, **k: False)

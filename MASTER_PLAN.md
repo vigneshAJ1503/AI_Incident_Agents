@@ -177,7 +177,7 @@ Each major decision is recorded as an ADR in `docs/adr/`.
 | Default models | Set per role (`fast`, `agent`, `rca`) in `.env` / YAML, using free-tier models (e.g. a small Llama for `fast`, the largest free tool-calling model for `rca`) | — | No model is hard-coded |
 | MCP | Official **`mcp` Python SDK** (client); **FastMCP** for our custom servers | — | Standard protocol, so tools can be swapped |
 | Validation | **Pydantic v2** | dataclasses | Structured LLM output, config validation |
-| Storage | **Postgres 16 + pgvector**, **Redis 7** | — | Investigations, audit, full-text knowledge search; Redis for event pub/sub and cache |
+| Storage | **Postgres 16** (built-in full-text search), **Redis 7** | — | Investigations, audit, full-text knowledge search; Redis for event pub/sub and cache |
 | Knowledge search | **Postgres full-text search** (no model) | Local embeddings (rejected: no local AI models), hosted embeddings | $0 and no model on the machine. Hosted free-tier embeddings + pgvector are an optional later upgrade |
 | Frontend | **Next.js (App Router) + TypeScript + Tailwind + shadcn/ui + Recharts** | Vite + React | Matches the design; production-grade |
 | Kubernetes (local) | **Minikube** (docker driver) | Kind, k3d | Your preference; addons for metrics-server |
@@ -251,7 +251,7 @@ Each use case has an ID that PRs, tests and eval scenarios refer to.
 - **Acceptance:** In S1, identifies commit `abc123` "tune db pool" that changed `DB_POOL_SIZE` from 20 to 2
 
 ### UC-09 — Search runbooks and known issues
-- **Flow:** Semantic search over runbooks using the symptoms (log patterns, alert names); return the relevant sections.
+- **Flow:** Full-text search (Postgres FTS, no models; ADR-0004) over runbooks using the symptoms (log patterns, alert names); return the relevant sections.
 - **Output:** Top runbook sections with titles, links and matching steps
 - **Acceptance:** In S1, returns `runbooks/database-connection-pool.md` in the top 3
 
@@ -1063,7 +1063,7 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 - **Scope:**
   - 8–10 runbooks in `knowledge-base/runbooks/` plus service ownership docs
   - `aiops knowledge ingest`: heading-aware chunking into Postgres with a full-text `tsvector` index (no model); idempotent
-  - the custom `knowledge-mcp` with `search`, `get_doc`
+  - the custom `knowledge-mcp` with `search`, `get_doc`, `list_docs` (read-only; ADR-0004)
 - ✅ Search returns the correct runbook for each scenario.
 
 #### PR-029 · Knowledge Agent

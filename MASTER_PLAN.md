@@ -952,10 +952,11 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
     - `/health`, `/ready`, `/metrics`
     - JSON logs with `trace_id` and `version`
     - fault flags via env vars and ConfigMap
-  - Postgres and Redis used via `host.minikube.internal`
-  - a traffic generator
+  - **the sample system's own Postgres and Redis run inside the cluster** (they are the "production" dependencies being investigated; S5 = scaling Redis to 0). Changed from the original `host.minikube.internal` idea
+  - a traffic generator (~6 rps: the lean budget)
   - manifests in `deploy/k8s/base` (namespace `prod`)
-- ✅ `make k8s-up` shows all pods Ready and about 20 rps of traffic.
+  - **lean:** Minikube 2.2 GB / 2 CPUs on the `aiops` Docker network (pods reach `aiops-*` compose containers by name; Prometheus reaches NodePorts 30081–30084 at 172.21.0.100)
+- ✅ `make k8s-up` shows all pods Ready, a healthy baseline (0 errors, payment p95 < 1 s), and S1 reproducible live by setting `DB_POOL_SIZE=2`.
 
 #### PR-016 · Real log shipping (Fluent Bit → Elasticsearch)
 - **Branch:** `feat/016-log-shipping`

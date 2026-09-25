@@ -1,0 +1,62 @@
+# user-service. Fault flags live in the ConfigMap (PR-017 changes them to inject incidents).
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: user-service-config
+  labels: { app: user-service }
+data:
+  APP_VERSION: "v3.1.4"
+  TEAM: "identity"
+  ENVIRONMENT: "production"
+  DB_POOL_SIZE: "10"
+  DB_TIMEOUT_MS: "5000"
+  REDIS_URL: "redis://redis:6379/1"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  labels: { app: user-service, team: identity }
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: user-service } }
+  template:
+    metadata:
+      labels: { app: user-service, team: identity }
+    spec:
+      containers:
+        - name: app
+          image: aiops/sample-service:0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: user-service }
+            - name: POD_NAMESPACE
+              valueFrom: { fieldRef: { fieldPath: metadata.namespace } }
+            - name: DATABASE_URL
+              valueFrom: { secretKeyRef: { name: app-db, key: DATABASE_URL } }
+          envFrom: [{ configMapRef: { name: user-service-config } }]
+          ports: [{ name: http, containerPort: 8080 }]
+          readinessProbe:
+            httpGet: { path: /ready, port: http }
+            periodSeconds: 5
+          livenessProbe:
+            httpGet: { path: /health, port: http }
+            periodSeconds: 10
+            failureThreshold: 6
+          resources:
+            requests: { memory: 64Mi, cpu: 25m }
+            limits: { memory: 160Mi }
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  labels: { app: user-service, team: identity }
+  annotations: { prometheus.io/scrape: "true", prometheus.io/port: "8080" }
+spec:
+  type: NodePort
+  selector: { app: user-service }
+  ports: [{ name: http, port: 8080, targetPort: http, nodePort: 30083 }]

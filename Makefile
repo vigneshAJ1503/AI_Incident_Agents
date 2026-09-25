@@ -41,6 +41,12 @@ typecheck: venv-fix ## Static type checking
 test: venv-fix ## Unit tests
 	cd $(BACKEND) && uv run pytest
 
+.PHONY: check-sample
+check-sample: ## Lint, typecheck and test the sample services
+	@cd sample-services && uv sync -q && { [[ "$$(uname)" != Darwin ]] || chflags -R nohidden .venv; } && \
+		uv run --no-sync ruff check . && uv run --no-sync ruff format --check . && \
+		uv run --no-sync mypy && uv run --no-sync pytest -q
+
 .PHONY: check-mcp
 check-mcp: ## Lint, typecheck and test every MCP server
 	@for d in mcp-servers/*/; do \
@@ -51,7 +57,7 @@ check-mcp: ## Lint, typecheck and test every MCP server
 	done
 
 .PHONY: check
-check: lint typecheck test check-mcp ## Everything CI runs
+check: lint typecheck test check-mcp check-sample ## Everything CI runs
 
 .PHONY: test-integration
 test-integration: venv-fix ## Integration tests against the local stack (needs make infra-up)
@@ -115,6 +121,30 @@ record-knowledge-fixtures: venv-fix ## Re-record Knowledge agent fixtures (needs
 .PHONY: ingest-knowledge
 ingest-knowledge: venv-fix ## Index knowledge-base/ runbooks into Postgres full-text search (idempotent)
 	cd $(BACKEND) && uv run --no-sync aiops knowledge ingest --path ../knowledge-base
+
+# --- Local Kubernetes (PR-015) ---------------------------------------------------------
+KUBECTL := kubectl --context aiops
+
+.PHONY: k8s-up
+k8s-up: ## Start the lean Minikube cluster (2.2 GB) and deploy the sample services
+	./scripts/minikube-up.sh
+
+.PHONY: k8s-status
+k8s-status: ## Show sample-service pods and the cluster's memory use
+	$(KUBECTL) -n prod get pods -o wide
+	@docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' aiops
+
+.PHONY: k8s-logs
+k8s-logs: ## Tail a sample service's logs: make k8s-logs SVC=payment-service
+	$(KUBECTL) -n prod logs -f deploy/$(or $(SVC),payment-service) --tail=50
+
+.PHONY: k8s-down
+k8s-down: ## Stop the cluster (keeps it; frees its memory)
+	minikube stop -p aiops
+
+.PHONY: k8s-delete
+k8s-delete: ## DELETE the cluster entirely
+	minikube delete -p aiops
 
 .PHONY: seed-logs
 seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1

@@ -35,3 +35,6 @@ node_modules/
 /logs/
 *.log
 evals/reports/*.tmp
+
+# Claude Code local state (sub-agent worktrees, settings)
+/.claude/

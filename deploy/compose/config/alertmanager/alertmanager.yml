@@ -1,0 +1,35 @@
+# Alertmanager config for the local stack (PR-023).
+#
+# Locally nobody gets paged: every route ends in the "null" receiver. The agents read
+# alerts through alertmanager-mcp (PR-024), not through notifications.
+# Until Prometheus exists (PR-020), alerts are seeded through the API:
+#   make seed-alerts S=S1
+
+global:
+  # Only used for alerts posted WITHOUT endsAt. Prometheus always sets endsAt, and so
+  # does `aiops seed alerts` (see docs/setup/alerts.md), so this is just a safety net.
+  resolve_timeout: 5m
+
+route:
+  receiver: "null"
+  # One notification group per service + alert name, as an on-call engineer reads them.
+  group_by: [service, alertname]
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 4h
+  routes:
+    - receiver: "null"
+      matchers: ['severity="critical"']
+      group_wait: 10s
+
+# A critical alert mutes the warning-level version of the same alert on the same service.
+inhibit_rules:
+  - source_matchers: ['severity="critical"']
+    target_matchers: ['severity="warning"']
+    equal: [service, alertname]
+
+receivers:
+  # Discards notifications. To try webhooks locally, add e.g.:
+  #   - name: webhook
+  #     webhook_configs: [{ url: "http://host.docker.internal:5001/alerts", send_resolved: true }]
+  - name: "null"

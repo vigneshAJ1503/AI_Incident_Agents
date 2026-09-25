@@ -18,7 +18,7 @@ services:
       - "127.0.0.1:${ES_PORT:-9200}:9200"
     volumes:
       - es-data:/usr/share/elasticsearch/data
-    mem_limit: ${ES_MEM_LIMIT:-1g}
+    mem_limit: ${ES_MEM_LIMIT:-1280m}
     healthcheck:
       test: ["CMD-SHELL", "curl -fs 'http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=5s' || exit 1"]
       interval: 10s

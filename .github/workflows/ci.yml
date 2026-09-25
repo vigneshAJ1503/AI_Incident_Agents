@@ -80,6 +80,32 @@ jobs:
       - name: Validate + unit-test alert rules, validate alertmanager.yml
         run: make check-rules
 
+  sample-services:
+    name: sample-services (lint · typecheck · test · image)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sample-services
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: sample-services/uv.lock
+      - name: Install
+        run: uv sync --locked
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Typecheck
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest
+      - name: Docker build
+        run: docker build -t aiops/sample-service:ci .
+      - name: Kubernetes manifests render
+        working-directory: .
+        run: kubectl kustomize deploy/k8s/base > /dev/null
+
   secrets:
     name: secret scan
     runs-on: ubuntu-latest

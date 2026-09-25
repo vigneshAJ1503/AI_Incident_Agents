@@ -1,0 +1,759 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM order-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*) BY window, level = level",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "window",
+            "level"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              14315,
+              "baseline",
+              "INFO"
+            ],
+            [
+              92,
+              "baseline",
+              "WARN"
+            ],
+            [
+              227,
+              "current",
+              "INFO"
+            ],
+            [
+              4,
+              "current",
+              "WARN"
+            ],
+            [
+              53,
+              "current",
+              "ERROR"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"window\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      14315,\n      \"baseline\",\n      \"INFO\"\n    ],\n    [\n      92,\n      \"baseline\",\n      \"WARN\"\n    ],\n    [\n      227,\n      \"current\",\n      \"INFO\"\n    ],\n    [\n      4,\n      \"current\",\n      \"WARN\"\n    ],\n    [\n      53,\n      \"current\",\n      \"ERROR\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM order-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\", \"WARN\") | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY window, level = level, msg = message.keyword | SORT count DESC | LIMIT 1000",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "first_seen",
+            "last_seen",
+            "window",
+            "level",
+            "msg"
+          ],
+          "row_count": 55,
+          "rows": [
+            [
+              92,
+              "2026-09-24T10:25:43.847Z",
+              "2026-09-25T08:47:45.512Z",
+              "baseline",
+              "WARN",
+              "Validation failed: quantity must be positive"
+            ],
+            [
+              4,
+              "2026-09-25T10:02:54.303Z",
+              "2026-09-25T10:29:32.769Z",
+              "current",
+              "WARN",
+              "Validation failed: quantity must be positive"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:53.458Z",
+              "2026-09-25T10:11:53.458Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5388 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:31.935Z",
+              "2026-09-25T10:11:31.935Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6153 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:32.829Z",
+              "2026-09-25T10:14:32.829Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3261 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:12:21.842Z",
+              "2026-09-25T10:12:21.842Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/7705 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:13:30.719Z",
+              "2026-09-25T10:13:30.719Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2519 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:39.199Z",
+              "2026-09-25T10:15:39.199Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9348 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:13:34.902Z",
+              "2026-09-25T10:13:34.902Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/1225 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:13:50.829Z",
+              "2026-09-25T10:13:50.829Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5613 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:06.225Z",
+              "2026-09-25T10:18:06.225Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5525 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:36.173Z",
+              "2026-09-25T10:14:36.173Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2567 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:21.794Z",
+              "2026-09-25T10:15:21.794Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2571 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:25.965Z",
+              "2026-09-25T10:15:25.965Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8924 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:04.239Z",
+              "2026-09-25T10:21:04.239Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5158 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:31.027Z",
+              "2026-09-25T10:20:31.027Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5464 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:03.251Z",
+              "2026-09-25T10:16:03.251Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6023 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:14.172Z",
+              "2026-09-25T10:16:14.172Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2709 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:23.534Z",
+              "2026-09-25T10:16:23.534Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/1789 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:11.045Z",
+              "2026-09-25T10:17:11.045Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8877 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:41.513Z",
+              "2026-09-25T10:17:41.513Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9699 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:51.586Z",
+              "2026-09-25T10:17:51.586Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8923 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:24.571Z",
+              "2026-09-25T10:26:24.571Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/4324 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:38.151Z",
+              "2026-09-25T10:18:38.151Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2124 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:44.446Z",
+              "2026-09-25T10:18:44.446Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8655 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:28.180Z",
+              "2026-09-25T10:19:28.180Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6235 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:33.259Z",
+              "2026-09-25T10:19:33.259Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9525 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:36.989Z",
+              "2026-09-25T10:19:36.989Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/4168 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:45.762Z",
+              "2026-09-25T10:19:45.762Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8826 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:24.576Z",
+              "2026-09-25T10:20:24.576Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9542 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:15:36.887Z",
+              "2026-09-25T10:15:36.887Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6416 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:12:31.473Z",
+              "2026-09-25T10:12:31.473Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9519 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:36.895Z",
+              "2026-09-25T10:21:36.895Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9501 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:21:46.747Z",
+              "2026-09-25T10:21:46.747Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5868 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:02.839Z",
+              "2026-09-25T10:22:02.839Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/2513 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:09.083Z",
+              "2026-09-25T10:22:09.083Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/1696 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:41.538Z",
+              "2026-09-25T10:22:41.538Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3612 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:43.211Z",
+              "2026-09-25T10:22:43.211Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/4636 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:22:50.176Z",
+              "2026-09-25T10:22:50.176Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/7515 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:08.338Z",
+              "2026-09-25T10:23:08.338Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/1086 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:36.837Z",
+              "2026-09-25T10:23:36.837Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/7029 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:39.596Z",
+              "2026-09-25T10:24:39.596Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6867 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:42.876Z",
+              "2026-09-25T10:24:42.876Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9969 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:45.028Z",
+              "2026-09-25T10:24:45.028Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/9924 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:56.104Z",
+              "2026-09-25T10:24:56.104Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3015 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:25:25.173Z",
+              "2026-09-25T10:25:25.173Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8879 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:15.498Z",
+              "2026-09-25T10:11:15.498Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3893 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:27.504Z",
+              "2026-09-25T10:26:27.504Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3399 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:05.101Z",
+              "2026-09-25T10:27:05.101Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/3629 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:11.204Z",
+              "2026-09-25T10:27:11.204Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/6194 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:47.588Z",
+              "2026-09-25T10:27:47.588Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5035 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:16.784Z",
+              "2026-09-25T10:28:16.784Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/8479 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:28:57.847Z",
+              "2026-09-25T10:28:57.847Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/4353 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:54.162Z",
+              "2026-09-25T10:29:54.162Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5912 after 3000ms"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:27.355Z",
+              "2026-09-25T10:10:27.355Z",
+              "current",
+              "ERROR",
+              "Timeout calling inventory-service GET /api/v1/stock/5628 after 3000ms"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"window\",\n    \"level\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      92,\n      \"2026-09-24T10:25:43.847Z\",\n      \"2026-09-25T08:47:45.512Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Validation failed: quantity must be positive\"\n    ],\n    [\n      4,\n      \"2026-09-25T10:02:54.303Z\",\n      \"2026-09-25T10:29:32.769Z\",\n      \"current\",\n      \"WARN\",\n      \"Validation failed: quantity must be positive\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:53.458Z\",\n      \"2026-09-25T10:11:53.458Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5388 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:31.935Z\",\n      \"2026-09-25T10:11:31.935Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6153 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:32.829Z\",\n      \"2026-09-25T10:14:32.829Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3261 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:12:21.842Z\",\n      \"2026-09-25T10:12:21.842Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/7705 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:13:30.719Z\",\n      \"2026-09-25T10:13:30.719Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2519 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:39.199Z\",\n      \"2026-09-25T10:15:39.199Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9348 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:13:34.902Z\",\n      \"2026-09-25T10:13:34.902Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/1225 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:13:50.829Z\",\n      \"2026-09-25T10:13:50.829Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5613 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:06.225Z\",\n      \"2026-09-25T10:18:06.225Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5525 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:36.173Z\",\n      \"2026-09-25T10:14:36.173Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2567 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:21.794Z\",\n      \"2026-09-25T10:15:21.794Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2571 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:25.965Z\",\n      \"2026-09-25T10:15:25.965Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8924 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:04.239Z\",\n      \"2026-09-25T10:21:04.239Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5158 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:31.027Z\",\n      \"2026-09-25T10:20:31.027Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5464 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:03.251Z\",\n      \"2026-09-25T10:16:03.251Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6023 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:14.172Z\",\n      \"2026-09-25T10:16:14.172Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2709 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:23.534Z\",\n      \"2026-09-25T10:16:23.534Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/1789 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:11.045Z\",\n      \"2026-09-25T10:17:11.045Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8877 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:41.513Z\",\n      \"2026-09-25T10:17:41.513Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9699 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:51.586Z\",\n      \"2026-09-25T10:17:51.586Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8923 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:24.571Z\",\n      \"2026-09-25T10:26:24.571Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/4324 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:38.151Z\",\n      \"2026-09-25T10:18:38.151Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2124 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:44.446Z\",\n      \"2026-09-25T10:18:44.446Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8655 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:28.180Z\",\n      \"2026-09-25T10:19:28.180Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6235 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:33.259Z\",\n      \"2026-09-25T10:19:33.259Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9525 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:36.989Z\",\n      \"2026-09-25T10:19:36.989Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/4168 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:45.762Z\",\n      \"2026-09-25T10:19:45.762Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8826 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:24.576Z\",\n      \"2026-09-25T10:20:24.576Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9542 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:15:36.887Z\",\n      \"2026-09-25T10:15:36.887Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6416 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:12:31.473Z\",\n      \"2026-09-25T10:12:31.473Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9519 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:36.895Z\",\n      \"2026-09-25T10:21:36.895Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9501 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:21:46.747Z\",\n      \"2026-09-25T10:21:46.747Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5868 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:02.839Z\",\n      \"2026-09-25T10:22:02.839Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/2513 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:09.083Z\",\n      \"2026-09-25T10:22:09.083Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/1696 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:41.538Z\",\n      \"2026-09-25T10:22:41.538Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3612 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:43.211Z\",\n      \"2026-09-25T10:22:43.211Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/4636 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:22:50.176Z\",\n      \"2026-09-25T10:22:50.176Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/7515 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:08.338Z\",\n      \"2026-09-25T10:23:08.338Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/1086 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:36.837Z\",\n      \"2026-09-25T10:23:36.837Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/7029 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:39.596Z\",\n      \"2026-09-25T10:24:39.596Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6867 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:42.876Z\",\n      \"2026-09-25T10:24:42.876Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9969 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:45.028Z\",\n      \"2026-09-25T10:24:45.028Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/9924 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:56.104Z\",\n      \"2026-09-25T10:24:56.104Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3015 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:25:25.173Z\",\n      \"2026-09-25T10:25:25.173Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8879 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:15.498Z\",\n      \"2026-09-25T10:11:15.498Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3893 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:27.504Z\",\n      \"2026-09-25T10:26:27.504Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3399 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:05.101Z\",\n      \"2026-09-25T10:27:05.101Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/3629 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:11.204Z\",\n      \"2026-09-25T10:27:11.204Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/6194 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:47.588Z\",\n      \"2026-09-25T10:27:47.588Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5035 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:16.784Z\",\n      \"2026-09-25T10:28:16.784Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/8479 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:28:57.847Z\",\n      \"2026-09-25T10:28:57.847Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/4353 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:54.162Z\",\n      \"2026-09-25T10:29:54.162Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5912 after 3000ms\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:27.355Z\",\n      \"2026-09-25T10:10:27.355Z\",\n      \"current\",\n      \"ERROR\",\n      \"Timeout calling inventory-service GET /api/v1/stock/5628 after 3000ms\"\n    ]\n  ],\n  \"row_count\": 55,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM order-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | EVAL is_start = CASE(message LIKE \"Starting*\", 1, 0) | STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN(@timestamp) BY window, version = version",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "starts",
+            "first_seen",
+            "window",
+            "version"
+          ],
+          "row_count": 2,
+          "rows": [
+            [
+              14407,
+              0,
+              "2026-09-24T10:00:03.698Z",
+              "baseline",
+              "v2.3.0"
+            ],
+            [
+              284,
+              0,
+              "2026-09-25T10:00:00.403Z",
+              "current",
+              "v2.3.0"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"starts\",\n    \"first_seen\",\n    \"window\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      14407,\n      0,\n      \"2026-09-24T10:00:03.698Z\",\n      \"baseline\",\n      \"v2.3.0\"\n    ],\n    [\n      284,\n      0,\n      \"2026-09-25T10:00:00.403Z\",\n      \"current\",\n      \"v2.3.0\"\n    ]\n  ],\n  \"row_count\": 2,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM order-prod-* | WHERE @timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\") AND message LIKE \"Timeout calling inventory-service GET /api/v1/stock/*\" | KEEP @timestamp, trace_id, version | SORT @timestamp ASC | LIMIT 5",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "@timestamp",
+            "trace_id",
+            "version"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              "2026-09-25T10:10:27.355Z",
+              "3256acecd8d70b7b",
+              "v2.3.0"
+            ],
+            [
+              "2026-09-25T10:11:15.498Z",
+              "92c11f010458cb5c",
+              "v2.3.0"
+            ],
+            [
+              "2026-09-25T10:11:31.935Z",
+              "b4c5e0d5a689a96d",
+              "v2.3.0"
+            ],
+            [
+              "2026-09-25T10:11:53.458Z",
+              "b2afb142a4b41908",
+              "v2.3.0"
+            ],
+            [
+              "2026-09-25T10:12:21.842Z",
+              "6d8bb67f26697d2c",
+              "v2.3.0"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"@timestamp\",\n    \"trace_id\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      \"2026-09-25T10:10:27.355Z\",\n      \"3256acecd8d70b7b\",\n      \"v2.3.0\"\n    ],\n    [\n      \"2026-09-25T10:11:15.498Z\",\n      \"92c11f010458cb5c\",\n      \"v2.3.0\"\n    ],\n    [\n      \"2026-09-25T10:11:31.935Z\",\n      \"b4c5e0d5a689a96d\",\n      \"v2.3.0\"\n    ],\n    [\n      \"2026-09-25T10:11:53.458Z\",\n      \"b2afb142a4b41908\",\n      \"v2.3.0\"\n    ],\n    [\n      \"2026-09-25T10:12:21.842Z\",\n      \"6d8bb67f26697d2c\",\n      \"v2.3.0\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List the log indices you are allowed to query, with document counts and sizes.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_indicesArguments",
+        "type": "object"
+      },
+      "name": "list_indices"
+    },
+    {
+      "description": "Field names and types for an index pattern, e.g. 'payment-prod-*'.",
+      "input_schema": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "get_mappingArguments",
+        "type": "object"
+      },
+      "name": "get_mapping"
+    },
+    {
+      "description": "Return sample log documents.\n\n        Args:\n            index: allowed index pattern, e.g. 'payment-prod-*'.\n            start: window start, ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z').\n            end: window end, ISO-8601 UTC.\n            query: optional Lucene query, e.g. 'message:\"connection timeout\" AND status_code:500'.\n            levels: optional log levels, e.g. ['ERROR', 'WARN'].\n            size: max documents to return (capped by the server).\n            sort: 'desc' = newest first, 'asc' = oldest first (use asc to find first occurrence).\n            fields: optional list of fields to return.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "index": {
+            "title": "Index",
+            "type": "string"
+          },
+          "levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Levels"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "size": {
+            "default": 20,
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end"
+        ],
+        "title": "search_logsArguments",
+        "type": "object"
+      },
+      "name": "search_logs"
+    },
+    {
+      "description": "Run a read-only ES|QL query, automatically limited to [start, end].\n\n        The query must start with 'FROM <allowed index pattern>'. Example:\n          FROM payment-prod-* | WHERE level == \"ERROR\"\n          | STATS count = COUNT(*), first_seen = MIN(@timestamp) BY error_type | SORT count DESC\n        Args:\n            query: ES|QL query.\n            start: window start, ISO-8601 UTC.\n            end: window end, ISO-8601 UTC.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "execute_esqlArguments",
+        "type": "object"
+      },
+      "name": "execute_esql"
+    }
+  ]
+}

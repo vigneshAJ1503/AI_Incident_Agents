@@ -1,0 +1,1802 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM user-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*) BY window, level = level",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "window",
+            "level"
+          ],
+          "row_count": 4,
+          "rows": [
+            [
+              14220,
+              "baseline",
+              "INFO"
+            ],
+            [
+              150,
+              "baseline",
+              "WARN"
+            ],
+            [
+              286,
+              "current",
+              "INFO"
+            ],
+            [
+              46,
+              "current",
+              "WARN"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"window\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      14220,\n      \"baseline\",\n      \"INFO\"\n    ],\n    [\n      150,\n      \"baseline\",\n      \"WARN\"\n    ],\n    [\n      286,\n      \"current\",\n      \"INFO\"\n    ],\n    [\n      46,\n      \"current\",\n      \"WARN\"\n    ]\n  ],\n  \"row_count\": 4,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM user-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\", \"WARN\") | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY window, level = level, msg = message.keyword | SORT count DESC | LIMIT 1000",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "first_seen",
+            "last_seen",
+            "window",
+            "level",
+            "msg"
+          ],
+          "row_count": 186,
+          "rows": [
+            [
+              3,
+              "2026-09-25T10:10:56.886Z",
+              "2026-09-25T10:20:34.766Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 125 pending (ready replicas 1/3)"
+            ],
+            [
+              3,
+              "2026-09-25T10:13:59.969Z",
+              "2026-09-25T10:21:28.489Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 65 pending (ready replicas 1/3)"
+            ],
+            [
+              2,
+              "2026-09-25T10:16:11.626Z",
+              "2026-09-25T10:22:32.818Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 124 pending (ready replicas 1/3)"
+            ],
+            [
+              2,
+              "2026-09-25T10:10:31.339Z",
+              "2026-09-25T10:19:08.241Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 132 pending (ready replicas 1/3)"
+            ],
+            [
+              2,
+              "2026-09-25T10:15:46.924Z",
+              "2026-09-25T10:20:55.316Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 74 pending (ready replicas 1/3)"
+            ],
+            [
+              2,
+              "2026-09-24T11:59:57.568Z",
+              "2026-09-24T16:11:55.696Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 80399"
+            ],
+            [
+              2,
+              "2026-09-25T10:11:30.662Z",
+              "2026-09-25T10:19:31.433Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 96 pending (ready replicas 1/3)"
+            ],
+            [
+              2,
+              "2026-09-25T10:14:00.592Z",
+              "2026-09-25T10:19:54.932Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 111 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-24T11:40:36.576Z",
+              "2026-09-24T11:40:36.576Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 96861"
+            ],
+            [
+              1,
+              "2026-09-24T13:46:21.342Z",
+              "2026-09-24T13:46:21.342Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 60869"
+            ],
+            [
+              1,
+              "2026-09-24T11:26:32.956Z",
+              "2026-09-24T11:26:32.956Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 20416"
+            ],
+            [
+              1,
+              "2026-09-24T12:01:31.191Z",
+              "2026-09-24T12:01:31.191Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 79866"
+            ],
+            [
+              1,
+              "2026-09-24T12:02:13.916Z",
+              "2026-09-24T12:02:13.916Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 49129"
+            ],
+            [
+              1,
+              "2026-09-24T12:12:34.060Z",
+              "2026-09-24T12:12:34.060Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 18805"
+            ],
+            [
+              1,
+              "2026-09-24T10:27:48.987Z",
+              "2026-09-24T10:27:48.987Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 13753"
+            ],
+            [
+              1,
+              "2026-09-24T11:58:15.490Z",
+              "2026-09-24T11:58:15.490Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 40086"
+            ],
+            [
+              1,
+              "2026-09-24T13:00:49.351Z",
+              "2026-09-24T13:00:49.351Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 28183"
+            ],
+            [
+              1,
+              "2026-09-24T11:54:55.125Z",
+              "2026-09-24T11:54:55.125Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 51017"
+            ],
+            [
+              1,
+              "2026-09-24T10:58:05.464Z",
+              "2026-09-24T10:58:05.464Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 16412"
+            ],
+            [
+              1,
+              "2026-09-24T13:10:42.805Z",
+              "2026-09-24T13:10:42.805Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 14898"
+            ],
+            [
+              1,
+              "2026-09-24T13:11:02.275Z",
+              "2026-09-24T13:11:02.275Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 39214"
+            ],
+            [
+              1,
+              "2026-09-24T13:18:07.028Z",
+              "2026-09-24T13:18:07.028Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 56684"
+            ],
+            [
+              1,
+              "2026-09-24T17:10:55.834Z",
+              "2026-09-24T17:10:55.834Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 30792"
+            ],
+            [
+              1,
+              "2026-09-24T14:03:53.475Z",
+              "2026-09-24T14:03:53.475Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 71644"
+            ],
+            [
+              1,
+              "2026-09-24T14:07:20.880Z",
+              "2026-09-24T14:07:20.880Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 26985"
+            ],
+            [
+              1,
+              "2026-09-24T14:20:53.216Z",
+              "2026-09-24T14:20:53.216Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 48725"
+            ],
+            [
+              1,
+              "2026-09-24T14:29:14.873Z",
+              "2026-09-24T14:29:14.873Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 29254"
+            ],
+            [
+              1,
+              "2026-09-24T14:32:52.990Z",
+              "2026-09-24T14:32:52.990Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 30600"
+            ],
+            [
+              1,
+              "2026-09-24T14:47:39.685Z",
+              "2026-09-24T14:47:39.685Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 33134"
+            ],
+            [
+              1,
+              "2026-09-24T15:09:25.413Z",
+              "2026-09-24T15:09:25.413Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 95206"
+            ],
+            [
+              1,
+              "2026-09-24T12:52:21.368Z",
+              "2026-09-24T12:52:21.368Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 72662"
+            ],
+            [
+              1,
+              "2026-09-24T15:33:56.892Z",
+              "2026-09-24T15:33:56.892Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 59189"
+            ],
+            [
+              1,
+              "2026-09-24T12:46:51.306Z",
+              "2026-09-24T12:46:51.306Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 67340"
+            ],
+            [
+              1,
+              "2026-09-24T11:50:41.334Z",
+              "2026-09-24T11:50:41.334Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 52637"
+            ],
+            [
+              1,
+              "2026-09-24T15:30:41.287Z",
+              "2026-09-24T15:30:41.287Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 17257"
+            ],
+            [
+              1,
+              "2026-09-24T15:40:12.615Z",
+              "2026-09-24T15:40:12.615Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 38308"
+            ],
+            [
+              1,
+              "2026-09-24T15:40:46.595Z",
+              "2026-09-24T15:40:46.595Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 72052"
+            ],
+            [
+              1,
+              "2026-09-24T15:56:27.875Z",
+              "2026-09-24T15:56:27.875Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 66661"
+            ],
+            [
+              1,
+              "2026-09-24T16:08:44.427Z",
+              "2026-09-24T16:08:44.427Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 13732"
+            ],
+            [
+              1,
+              "2026-09-24T16:10:55.632Z",
+              "2026-09-24T16:10:55.632Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 80424"
+            ],
+            [
+              1,
+              "2026-09-24T16:16:27.374Z",
+              "2026-09-24T16:16:27.374Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 48777"
+            ],
+            [
+              1,
+              "2026-09-24T16:17:57.698Z",
+              "2026-09-24T16:17:57.698Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 99803"
+            ],
+            [
+              1,
+              "2026-09-24T16:27:40.458Z",
+              "2026-09-24T16:27:40.458Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 75715"
+            ],
+            [
+              1,
+              "2026-09-24T16:27:52.228Z",
+              "2026-09-24T16:27:52.228Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 36994"
+            ],
+            [
+              1,
+              "2026-09-24T16:37:37.186Z",
+              "2026-09-24T16:37:37.186Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 42185"
+            ],
+            [
+              1,
+              "2026-09-24T17:05:42.630Z",
+              "2026-09-24T17:05:42.630Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 13832"
+            ],
+            [
+              1,
+              "2026-09-25T01:59:04.265Z",
+              "2026-09-25T01:59:04.265Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 16729"
+            ],
+            [
+              1,
+              "2026-09-24T17:16:16.421Z",
+              "2026-09-24T17:16:16.421Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 25834"
+            ],
+            [
+              1,
+              "2026-09-24T17:21:17.746Z",
+              "2026-09-24T17:21:17.746Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 83272"
+            ],
+            [
+              1,
+              "2026-09-24T17:34:11.619Z",
+              "2026-09-24T17:34:11.619Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 73333"
+            ],
+            [
+              1,
+              "2026-09-24T17:49:50.115Z",
+              "2026-09-24T17:49:50.115Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 18618"
+            ],
+            [
+              1,
+              "2026-09-24T18:03:09.064Z",
+              "2026-09-24T18:03:09.064Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 29594"
+            ],
+            [
+              1,
+              "2026-09-24T18:09:44.402Z",
+              "2026-09-24T18:09:44.402Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 60745"
+            ],
+            [
+              1,
+              "2026-09-24T18:19:56.101Z",
+              "2026-09-24T18:19:56.101Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 32888"
+            ],
+            [
+              1,
+              "2026-09-24T18:36:45.091Z",
+              "2026-09-24T18:36:45.091Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 51019"
+            ],
+            [
+              1,
+              "2026-09-24T18:38:58.187Z",
+              "2026-09-24T18:38:58.187Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 57019"
+            ],
+            [
+              1,
+              "2026-09-24T19:04:33.090Z",
+              "2026-09-24T19:04:33.090Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 27979"
+            ],
+            [
+              1,
+              "2026-09-24T19:21:49.234Z",
+              "2026-09-24T19:21:49.234Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 79107"
+            ],
+            [
+              1,
+              "2026-09-24T19:22:05.001Z",
+              "2026-09-24T19:22:05.001Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 43281"
+            ],
+            [
+              1,
+              "2026-09-24T19:32:50.022Z",
+              "2026-09-24T19:32:50.022Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 47155"
+            ],
+            [
+              1,
+              "2026-09-24T19:50:22.420Z",
+              "2026-09-24T19:50:22.420Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 43078"
+            ],
+            [
+              1,
+              "2026-09-24T19:52:55.640Z",
+              "2026-09-24T19:52:55.640Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 45370"
+            ],
+            [
+              1,
+              "2026-09-24T20:59:24.639Z",
+              "2026-09-24T20:59:24.639Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 99050"
+            ],
+            [
+              1,
+              "2026-09-24T15:29:30.721Z",
+              "2026-09-24T15:29:30.721Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 42932"
+            ],
+            [
+              1,
+              "2026-09-24T12:46:10.611Z",
+              "2026-09-24T12:46:10.611Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 24297"
+            ],
+            [
+              1,
+              "2026-09-24T20:59:08.160Z",
+              "2026-09-24T20:59:08.160Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 17002"
+            ],
+            [
+              1,
+              "2026-09-24T20:42:53.108Z",
+              "2026-09-24T20:42:53.108Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 91810"
+            ],
+            [
+              1,
+              "2026-09-24T21:03:02.808Z",
+              "2026-09-24T21:03:02.808Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 59339"
+            ],
+            [
+              1,
+              "2026-09-24T21:09:19.351Z",
+              "2026-09-24T21:09:19.351Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 93122"
+            ],
+            [
+              1,
+              "2026-09-24T21:28:03.053Z",
+              "2026-09-24T21:28:03.053Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 80753"
+            ],
+            [
+              1,
+              "2026-09-24T21:49:09.833Z",
+              "2026-09-24T21:49:09.833Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 92164"
+            ],
+            [
+              1,
+              "2026-09-24T21:58:19.553Z",
+              "2026-09-24T21:58:19.553Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 68071"
+            ],
+            [
+              1,
+              "2026-09-24T22:02:40.190Z",
+              "2026-09-24T22:02:40.190Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 88810"
+            ],
+            [
+              1,
+              "2026-09-24T22:37:59.073Z",
+              "2026-09-24T22:37:59.073Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 23981"
+            ],
+            [
+              1,
+              "2026-09-24T22:41:39.716Z",
+              "2026-09-24T22:41:39.716Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 48269"
+            ],
+            [
+              1,
+              "2026-09-24T22:43:17.175Z",
+              "2026-09-24T22:43:17.175Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 19432"
+            ],
+            [
+              1,
+              "2026-09-24T22:59:49.942Z",
+              "2026-09-24T22:59:49.942Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 30663"
+            ],
+            [
+              1,
+              "2026-09-24T23:01:27.355Z",
+              "2026-09-24T23:01:27.355Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 76129"
+            ],
+            [
+              1,
+              "2026-09-24T23:20:44.149Z",
+              "2026-09-24T23:20:44.149Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 16317"
+            ],
+            [
+              1,
+              "2026-09-24T23:20:54.552Z",
+              "2026-09-24T23:20:54.552Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 81267"
+            ],
+            [
+              1,
+              "2026-09-24T23:22:31.871Z",
+              "2026-09-24T23:22:31.871Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 31803"
+            ],
+            [
+              1,
+              "2026-09-24T23:49:38.755Z",
+              "2026-09-24T23:49:38.755Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 92674"
+            ],
+            [
+              1,
+              "2026-09-24T23:50:29.725Z",
+              "2026-09-24T23:50:29.725Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 76078"
+            ],
+            [
+              1,
+              "2026-09-24T23:55:31.504Z",
+              "2026-09-24T23:55:31.504Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 76965"
+            ],
+            [
+              1,
+              "2026-09-25T00:42:15.393Z",
+              "2026-09-25T00:42:15.393Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 70675"
+            ],
+            [
+              1,
+              "2026-09-25T00:49:12.522Z",
+              "2026-09-25T00:49:12.522Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 85847"
+            ],
+            [
+              1,
+              "2026-09-25T00:50:53.839Z",
+              "2026-09-25T00:50:53.839Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 39048"
+            ],
+            [
+              1,
+              "2026-09-25T00:56:58.267Z",
+              "2026-09-25T00:56:58.267Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 89195"
+            ],
+            [
+              1,
+              "2026-09-25T01:01:28.663Z",
+              "2026-09-25T01:01:28.663Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 30003"
+            ],
+            [
+              1,
+              "2026-09-25T01:12:46.633Z",
+              "2026-09-25T01:12:46.633Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 27651"
+            ],
+            [
+              1,
+              "2026-09-25T01:14:37.173Z",
+              "2026-09-25T01:14:37.173Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 38812"
+            ],
+            [
+              1,
+              "2026-09-25T01:37:26.579Z",
+              "2026-09-25T01:37:26.579Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 19307"
+            ],
+            [
+              1,
+              "2026-09-25T01:37:33.488Z",
+              "2026-09-25T01:37:33.488Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 99854"
+            ],
+            [
+              1,
+              "2026-09-25T01:49:05.081Z",
+              "2026-09-25T01:49:05.081Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 56275"
+            ],
+            [
+              1,
+              "2026-09-24T15:19:21.824Z",
+              "2026-09-24T15:19:21.824Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 17091"
+            ],
+            [
+              1,
+              "2026-09-25T02:03:04.109Z",
+              "2026-09-25T02:03:04.109Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 34052"
+            ],
+            [
+              1,
+              "2026-09-25T02:16:23.510Z",
+              "2026-09-25T02:16:23.510Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 24224"
+            ],
+            [
+              1,
+              "2026-09-25T02:26:14.350Z",
+              "2026-09-25T02:26:14.350Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 90172"
+            ],
+            [
+              1,
+              "2026-09-25T02:33:59.999Z",
+              "2026-09-25T02:33:59.999Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 10302"
+            ],
+            [
+              1,
+              "2026-09-25T02:35:07.706Z",
+              "2026-09-25T02:35:07.706Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 90954"
+            ],
+            [
+              1,
+              "2026-09-25T02:49:34.149Z",
+              "2026-09-25T02:49:34.149Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 14771"
+            ],
+            [
+              1,
+              "2026-09-25T02:50:34.303Z",
+              "2026-09-25T02:50:34.303Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 87522"
+            ],
+            [
+              1,
+              "2026-09-25T02:58:59.048Z",
+              "2026-09-25T02:58:59.048Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 61242"
+            ],
+            [
+              1,
+              "2026-09-25T03:20:09.442Z",
+              "2026-09-25T03:20:09.442Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 69597"
+            ],
+            [
+              1,
+              "2026-09-25T03:23:38.753Z",
+              "2026-09-25T03:23:38.753Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 61612"
+            ],
+            [
+              1,
+              "2026-09-25T03:33:21.448Z",
+              "2026-09-25T03:33:21.448Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 26171"
+            ],
+            [
+              1,
+              "2026-09-25T03:36:31.405Z",
+              "2026-09-25T03:36:31.405Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 64240"
+            ],
+            [
+              1,
+              "2026-09-25T03:39:00.714Z",
+              "2026-09-25T03:39:00.714Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 14982"
+            ],
+            [
+              1,
+              "2026-09-25T03:45:54.560Z",
+              "2026-09-25T03:45:54.560Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 47743"
+            ],
+            [
+              1,
+              "2026-09-25T03:53:18.034Z",
+              "2026-09-25T03:53:18.034Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 24513"
+            ],
+            [
+              1,
+              "2026-09-25T03:54:49.228Z",
+              "2026-09-25T03:54:49.228Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 46279"
+            ],
+            [
+              1,
+              "2026-09-25T04:00:45.134Z",
+              "2026-09-25T04:00:45.134Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 76591"
+            ],
+            [
+              1,
+              "2026-09-25T04:28:33.204Z",
+              "2026-09-25T04:28:33.204Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 46990"
+            ],
+            [
+              1,
+              "2026-09-25T04:42:43.988Z",
+              "2026-09-25T04:42:43.988Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 26185"
+            ],
+            [
+              1,
+              "2026-09-25T04:53:44.929Z",
+              "2026-09-25T04:53:44.929Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 98586"
+            ],
+            [
+              1,
+              "2026-09-25T05:03:57.420Z",
+              "2026-09-25T05:03:57.420Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 52592"
+            ],
+            [
+              1,
+              "2026-09-25T05:04:32.876Z",
+              "2026-09-25T05:04:32.876Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 70337"
+            ],
+            [
+              1,
+              "2026-09-25T05:16:02.508Z",
+              "2026-09-25T05:16:02.508Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 94204"
+            ],
+            [
+              1,
+              "2026-09-25T05:17:20.484Z",
+              "2026-09-25T05:17:20.484Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 25712"
+            ],
+            [
+              1,
+              "2026-09-25T05:22:06.350Z",
+              "2026-09-25T05:22:06.350Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 23088"
+            ],
+            [
+              1,
+              "2026-09-25T05:28:04.424Z",
+              "2026-09-25T05:28:04.424Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 81551"
+            ],
+            [
+              1,
+              "2026-09-25T05:36:01.225Z",
+              "2026-09-25T05:36:01.225Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 20957"
+            ],
+            [
+              1,
+              "2026-09-25T05:47:26.307Z",
+              "2026-09-25T05:47:26.307Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 40917"
+            ],
+            [
+              1,
+              "2026-09-25T05:55:59.271Z",
+              "2026-09-25T05:55:59.271Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 21044"
+            ],
+            [
+              1,
+              "2026-09-25T06:02:48.609Z",
+              "2026-09-25T06:02:48.609Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 15494"
+            ],
+            [
+              1,
+              "2026-09-25T06:06:01.390Z",
+              "2026-09-25T06:06:01.390Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 20992"
+            ],
+            [
+              1,
+              "2026-09-25T07:15:38.969Z",
+              "2026-09-25T07:15:38.969Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 94810"
+            ],
+            [
+              1,
+              "2026-09-25T06:31:33.296Z",
+              "2026-09-25T06:31:33.296Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 83857"
+            ],
+            [
+              1,
+              "2026-09-24T20:24:21.377Z",
+              "2026-09-24T20:24:21.377Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 23227"
+            ],
+            [
+              1,
+              "2026-09-25T06:21:20.015Z",
+              "2026-09-25T06:21:20.015Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 67292"
+            ],
+            [
+              1,
+              "2026-09-25T07:39:25.691Z",
+              "2026-09-25T07:39:25.691Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 28077"
+            ],
+            [
+              1,
+              "2026-09-25T07:57:24.841Z",
+              "2026-09-25T07:57:24.841Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 64889"
+            ],
+            [
+              1,
+              "2026-09-25T07:58:08.822Z",
+              "2026-09-25T07:58:08.822Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 97734"
+            ],
+            [
+              1,
+              "2026-09-25T07:58:25.248Z",
+              "2026-09-25T07:58:25.248Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 87938"
+            ],
+            [
+              1,
+              "2026-09-25T08:04:29.119Z",
+              "2026-09-25T08:04:29.119Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 43894"
+            ],
+            [
+              1,
+              "2026-09-25T08:13:32.214Z",
+              "2026-09-25T08:13:32.214Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 96054"
+            ],
+            [
+              1,
+              "2026-09-25T08:15:03.475Z",
+              "2026-09-25T08:15:03.475Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 33579"
+            ],
+            [
+              1,
+              "2026-09-25T08:20:35.545Z",
+              "2026-09-25T08:20:35.545Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 51839"
+            ],
+            [
+              1,
+              "2026-09-25T08:21:12.233Z",
+              "2026-09-25T08:21:12.233Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 24695"
+            ],
+            [
+              1,
+              "2026-09-25T08:28:18.121Z",
+              "2026-09-25T08:28:18.121Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 20893"
+            ],
+            [
+              1,
+              "2026-09-25T08:42:37.190Z",
+              "2026-09-25T08:42:37.190Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 84702"
+            ],
+            [
+              1,
+              "2026-09-25T08:56:36.790Z",
+              "2026-09-25T08:56:36.790Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 60757"
+            ],
+            [
+              1,
+              "2026-09-25T09:03:24.724Z",
+              "2026-09-25T09:03:24.724Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 86339"
+            ],
+            [
+              1,
+              "2026-09-25T09:12:35.847Z",
+              "2026-09-25T09:12:35.847Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 85683"
+            ],
+            [
+              1,
+              "2026-09-25T09:19:47.953Z",
+              "2026-09-25T09:19:47.953Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 62448"
+            ],
+            [
+              1,
+              "2026-09-25T09:25:44.316Z",
+              "2026-09-25T09:25:44.316Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 42788"
+            ],
+            [
+              1,
+              "2026-09-25T09:40:08.514Z",
+              "2026-09-25T09:40:08.514Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 35219"
+            ],
+            [
+              1,
+              "2026-09-25T09:40:18.826Z",
+              "2026-09-25T09:40:18.826Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 71320"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:11.331Z",
+              "2026-09-25T10:10:11.331Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 97 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:16.017Z",
+              "2026-09-25T10:10:16.017Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 137 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T06:13:58.952Z",
+              "2026-09-25T06:13:58.952Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 60446"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:37.223Z",
+              "2026-09-25T10:10:37.223Z",
+              "current",
+              "WARN",
+              "Invalid credentials for user 14235"
+            ],
+            [
+              1,
+              "2026-09-25T10:10:42.252Z",
+              "2026-09-25T10:10:42.252Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 122 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-24T20:07:51.621Z",
+              "2026-09-24T20:07:51.621Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 55233"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:01.432Z",
+              "2026-09-25T10:11:01.432Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 105 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-24T15:12:30.387Z",
+              "2026-09-24T15:12:30.387Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 29774"
+            ],
+            [
+              1,
+              "2026-09-25T10:11:48.199Z",
+              "2026-09-25T10:11:48.199Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 88 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:12:11.602Z",
+              "2026-09-25T10:12:11.602Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 126 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-24T12:36:03.323Z",
+              "2026-09-24T12:36:03.323Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 37157"
+            ],
+            [
+              1,
+              "2026-09-24T11:41:22.649Z",
+              "2026-09-24T11:41:22.649Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 80885"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:05.469Z",
+              "2026-09-25T10:14:05.469Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 108 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:19.336Z",
+              "2026-09-25T10:14:19.336Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 77 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:14:42.969Z",
+              "2026-09-25T10:14:42.969Z",
+              "current",
+              "WARN",
+              "Invalid credentials for user 46361"
+            ],
+            [
+              1,
+              "2026-09-24T10:51:02.265Z",
+              "2026-09-24T10:51:02.265Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 52880"
+            ],
+            [
+              1,
+              "2026-09-24T10:14:04.302Z",
+              "2026-09-24T10:14:04.302Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 61650"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:25.189Z",
+              "2026-09-25T10:16:25.189Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 62 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:34.455Z",
+              "2026-09-25T10:16:34.455Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 84 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:16:40.282Z",
+              "2026-09-25T10:16:40.282Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 81 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:07.933Z",
+              "2026-09-25T10:17:07.933Z",
+              "current",
+              "WARN",
+              "Invalid credentials for user 19619"
+            ],
+            [
+              1,
+              "2026-09-25T10:17:35.428Z",
+              "2026-09-25T10:17:35.428Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 127 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:18:05.966Z",
+              "2026-09-25T10:18:05.966Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 114 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:19.722Z",
+              "2026-09-25T10:19:19.722Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 121 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:44.088Z",
+              "2026-09-25T10:19:44.088Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 78 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:19:54.403Z",
+              "2026-09-25T10:19:54.403Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 103 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:07.734Z",
+              "2026-09-25T10:20:07.734Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 95 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:20:23.737Z",
+              "2026-09-25T10:20:23.737Z",
+              "current",
+              "WARN",
+              "Invalid credentials for user 13675"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:29.009Z",
+              "2026-09-25T10:23:29.009Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 98 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:23:49.381Z",
+              "2026-09-25T10:23:49.381Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 87 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:24:16.099Z",
+              "2026-09-25T10:24:16.099Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 93 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:25:01.811Z",
+              "2026-09-25T10:25:01.811Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 130 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:25:19.514Z",
+              "2026-09-25T10:25:19.514Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 119 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:26:06.923Z",
+              "2026-09-25T10:26:06.923Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 79 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:07.720Z",
+              "2026-09-25T10:27:07.720Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 100 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:27:36.263Z",
+              "2026-09-25T10:27:36.263Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 109 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-25T10:29:00.622Z",
+              "2026-09-25T10:29:00.622Z",
+              "current",
+              "WARN",
+              "Request queue depth high: 66 pending (ready replicas 1/3)"
+            ],
+            [
+              1,
+              "2026-09-24T10:02:40.532Z",
+              "2026-09-24T10:02:40.532Z",
+              "baseline",
+              "WARN",
+              "Invalid credentials for user 99396"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"window\",\n    \"level\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      3,\n      \"2026-09-25T10:10:56.886Z\",\n      \"2026-09-25T10:20:34.766Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 125 pending (ready replicas 1/3)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:13:59.969Z\",\n      \"2026-09-25T10:21:28.489Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 65 pending (ready replicas 1/3)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:16:11.626Z\",\n      \"2026-09-25T10:22:32.818Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 124 pending (ready replicas 1/3)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:10:31.339Z\",\n      \"2026-09-25T10:19:08.241Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 132 pending (ready replicas 1/3)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:15:46.924Z\",\n      \"2026-09-25T10:20:55.316Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 74 pending (ready replicas 1/3)\"\n    ],\n    [\n      2,\n      \"2026-09-24T11:59:57.568Z\",\n      \"2026-09-24T16:11:55.696Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 80399\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:11:30.662Z\",\n      \"2026-09-25T10:19:31.433Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 96 pending (ready replicas 1/3)\"\n    ],\n    [\n      2,\n      \"2026-09-25T10:14:00.592Z\",\n      \"2026-09-25T10:19:54.932Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 111 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:40:36.576Z\",\n      \"2026-09-24T11:40:36.576Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 96861\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:46:21.342Z\",\n      \"2026-09-24T13:46:21.342Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 60869\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:26:32.956Z\",\n      \"2026-09-24T11:26:32.956Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 20416\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:01:31.191Z\",\n      \"2026-09-24T12:01:31.191Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 79866\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:02:13.916Z\",\n      \"2026-09-24T12:02:13.916Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 49129\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:12:34.060Z\",\n      \"2026-09-24T12:12:34.060Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 18805\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:27:48.987Z\",\n      \"2026-09-24T10:27:48.987Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 13753\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:58:15.490Z\",\n      \"2026-09-24T11:58:15.490Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 40086\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:00:49.351Z\",\n      \"2026-09-24T13:00:49.351Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 28183\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:54:55.125Z\",\n      \"2026-09-24T11:54:55.125Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 51017\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:58:05.464Z\",\n      \"2026-09-24T10:58:05.464Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 16412\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:10:42.805Z\",\n      \"2026-09-24T13:10:42.805Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 14898\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:11:02.275Z\",\n      \"2026-09-24T13:11:02.275Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 39214\"\n    ],\n    [\n      1,\n      \"2026-09-24T13:18:07.028Z\",\n      \"2026-09-24T13:18:07.028Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 56684\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:10:55.834Z\",\n      \"2026-09-24T17:10:55.834Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 30792\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:03:53.475Z\",\n      \"2026-09-24T14:03:53.475Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 71644\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:07:20.880Z\",\n      \"2026-09-24T14:07:20.880Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 26985\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:20:53.216Z\",\n      \"2026-09-24T14:20:53.216Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 48725\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:29:14.873Z\",\n      \"2026-09-24T14:29:14.873Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 29254\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:32:52.990Z\",\n      \"2026-09-24T14:32:52.990Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 30600\"\n    ],\n    [\n      1,\n      \"2026-09-24T14:47:39.685Z\",\n      \"2026-09-24T14:47:39.685Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 33134\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:09:25.413Z\",\n      \"2026-09-24T15:09:25.413Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 95206\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:52:21.368Z\",\n      \"2026-09-24T12:52:21.368Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 72662\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:33:56.892Z\",\n      \"2026-09-24T15:33:56.892Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 59189\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:46:51.306Z\",\n      \"2026-09-24T12:46:51.306Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 67340\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:50:41.334Z\",\n      \"2026-09-24T11:50:41.334Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 52637\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:30:41.287Z\",\n      \"2026-09-24T15:30:41.287Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 17257\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:40:12.615Z\",\n      \"2026-09-24T15:40:12.615Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 38308\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:40:46.595Z\",\n      \"2026-09-24T15:40:46.595Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 72052\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:56:27.875Z\",\n      \"2026-09-24T15:56:27.875Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 66661\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:08:44.427Z\",\n      \"2026-09-24T16:08:44.427Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 13732\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:10:55.632Z\",\n      \"2026-09-24T16:10:55.632Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 80424\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:16:27.374Z\",\n      \"2026-09-24T16:16:27.374Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 48777\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:17:57.698Z\",\n      \"2026-09-24T16:17:57.698Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 99803\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:27:40.458Z\",\n      \"2026-09-24T16:27:40.458Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 75715\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:27:52.228Z\",\n      \"2026-09-24T16:27:52.228Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 36994\"\n    ],\n    [\n      1,\n      \"2026-09-24T16:37:37.186Z\",\n      \"2026-09-24T16:37:37.186Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 42185\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:05:42.630Z\",\n      \"2026-09-24T17:05:42.630Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 13832\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:59:04.265Z\",\n      \"2026-09-25T01:59:04.265Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 16729\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:16:16.421Z\",\n      \"2026-09-24T17:16:16.421Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 25834\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:21:17.746Z\",\n      \"2026-09-24T17:21:17.746Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 83272\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:34:11.619Z\",\n      \"2026-09-24T17:34:11.619Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 73333\"\n    ],\n    [\n      1,\n      \"2026-09-24T17:49:50.115Z\",\n      \"2026-09-24T17:49:50.115Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 18618\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:03:09.064Z\",\n      \"2026-09-24T18:03:09.064Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 29594\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:09:44.402Z\",\n      \"2026-09-24T18:09:44.402Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 60745\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:19:56.101Z\",\n      \"2026-09-24T18:19:56.101Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 32888\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:36:45.091Z\",\n      \"2026-09-24T18:36:45.091Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 51019\"\n    ],\n    [\n      1,\n      \"2026-09-24T18:38:58.187Z\",\n      \"2026-09-24T18:38:58.187Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 57019\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:04:33.090Z\",\n      \"2026-09-24T19:04:33.090Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 27979\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:21:49.234Z\",\n      \"2026-09-24T19:21:49.234Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 79107\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:22:05.001Z\",\n      \"2026-09-24T19:22:05.001Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 43281\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:32:50.022Z\",\n      \"2026-09-24T19:32:50.022Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 47155\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:50:22.420Z\",\n      \"2026-09-24T19:50:22.420Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 43078\"\n    ],\n    [\n      1,\n      \"2026-09-24T19:52:55.640Z\",\n      \"2026-09-24T19:52:55.640Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 45370\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:59:24.639Z\",\n      \"2026-09-24T20:59:24.639Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 99050\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:29:30.721Z\",\n      \"2026-09-24T15:29:30.721Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 42932\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:46:10.611Z\",\n      \"2026-09-24T12:46:10.611Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 24297\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:59:08.160Z\",\n      \"2026-09-24T20:59:08.160Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 17002\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:42:53.108Z\",\n      \"2026-09-24T20:42:53.108Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 91810\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:03:02.808Z\",\n      \"2026-09-24T21:03:02.808Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 59339\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:09:19.351Z\",\n      \"2026-09-24T21:09:19.351Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 93122\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:28:03.053Z\",\n      \"2026-09-24T21:28:03.053Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 80753\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:49:09.833Z\",\n      \"2026-09-24T21:49:09.833Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 92164\"\n    ],\n    [\n      1,\n      \"2026-09-24T21:58:19.553Z\",\n      \"2026-09-24T21:58:19.553Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 68071\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:02:40.190Z\",\n      \"2026-09-24T22:02:40.190Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 88810\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:37:59.073Z\",\n      \"2026-09-24T22:37:59.073Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 23981\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:41:39.716Z\",\n      \"2026-09-24T22:41:39.716Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 48269\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:43:17.175Z\",\n      \"2026-09-24T22:43:17.175Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 19432\"\n    ],\n    [\n      1,\n      \"2026-09-24T22:59:49.942Z\",\n      \"2026-09-24T22:59:49.942Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 30663\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:01:27.355Z\",\n      \"2026-09-24T23:01:27.355Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 76129\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:20:44.149Z\",\n      \"2026-09-24T23:20:44.149Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 16317\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:20:54.552Z\",\n      \"2026-09-24T23:20:54.552Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 81267\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:22:31.871Z\",\n      \"2026-09-24T23:22:31.871Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 31803\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:49:38.755Z\",\n      \"2026-09-24T23:49:38.755Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 92674\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:50:29.725Z\",\n      \"2026-09-24T23:50:29.725Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 76078\"\n    ],\n    [\n      1,\n      \"2026-09-24T23:55:31.504Z\",\n      \"2026-09-24T23:55:31.504Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 76965\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:42:15.393Z\",\n      \"2026-09-25T00:42:15.393Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 70675\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:49:12.522Z\",\n      \"2026-09-25T00:49:12.522Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 85847\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:50:53.839Z\",\n      \"2026-09-25T00:50:53.839Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 39048\"\n    ],\n    [\n      1,\n      \"2026-09-25T00:56:58.267Z\",\n      \"2026-09-25T00:56:58.267Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 89195\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:01:28.663Z\",\n      \"2026-09-25T01:01:28.663Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 30003\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:12:46.633Z\",\n      \"2026-09-25T01:12:46.633Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 27651\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:14:37.173Z\",\n      \"2026-09-25T01:14:37.173Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 38812\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:37:26.579Z\",\n      \"2026-09-25T01:37:26.579Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 19307\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:37:33.488Z\",\n      \"2026-09-25T01:37:33.488Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 99854\"\n    ],\n    [\n      1,\n      \"2026-09-25T01:49:05.081Z\",\n      \"2026-09-25T01:49:05.081Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 56275\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:19:21.824Z\",\n      \"2026-09-24T15:19:21.824Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 17091\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:03:04.109Z\",\n      \"2026-09-25T02:03:04.109Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 34052\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:16:23.510Z\",\n      \"2026-09-25T02:16:23.510Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 24224\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:26:14.350Z\",\n      \"2026-09-25T02:26:14.350Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 90172\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:33:59.999Z\",\n      \"2026-09-25T02:33:59.999Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 10302\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:35:07.706Z\",\n      \"2026-09-25T02:35:07.706Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 90954\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:49:34.149Z\",\n      \"2026-09-25T02:49:34.149Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 14771\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:50:34.303Z\",\n      \"2026-09-25T02:50:34.303Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 87522\"\n    ],\n    [\n      1,\n      \"2026-09-25T02:58:59.048Z\",\n      \"2026-09-25T02:58:59.048Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 61242\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:20:09.442Z\",\n      \"2026-09-25T03:20:09.442Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 69597\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:23:38.753Z\",\n      \"2026-09-25T03:23:38.753Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 61612\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:33:21.448Z\",\n      \"2026-09-25T03:33:21.448Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 26171\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:36:31.405Z\",\n      \"2026-09-25T03:36:31.405Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 64240\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:39:00.714Z\",\n      \"2026-09-25T03:39:00.714Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 14982\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:45:54.560Z\",\n      \"2026-09-25T03:45:54.560Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 47743\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:53:18.034Z\",\n      \"2026-09-25T03:53:18.034Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 24513\"\n    ],\n    [\n      1,\n      \"2026-09-25T03:54:49.228Z\",\n      \"2026-09-25T03:54:49.228Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 46279\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:00:45.134Z\",\n      \"2026-09-25T04:00:45.134Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 76591\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:28:33.204Z\",\n      \"2026-09-25T04:28:33.204Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 46990\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:42:43.988Z\",\n      \"2026-09-25T04:42:43.988Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 26185\"\n    ],\n    [\n      1,\n      \"2026-09-25T04:53:44.929Z\",\n      \"2026-09-25T04:53:44.929Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 98586\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:03:57.420Z\",\n      \"2026-09-25T05:03:57.420Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 52592\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:04:32.876Z\",\n      \"2026-09-25T05:04:32.876Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 70337\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:16:02.508Z\",\n      \"2026-09-25T05:16:02.508Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 94204\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:17:20.484Z\",\n      \"2026-09-25T05:17:20.484Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 25712\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:22:06.350Z\",\n      \"2026-09-25T05:22:06.350Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 23088\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:28:04.424Z\",\n      \"2026-09-25T05:28:04.424Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 81551\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:36:01.225Z\",\n      \"2026-09-25T05:36:01.225Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 20957\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:47:26.307Z\",\n      \"2026-09-25T05:47:26.307Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 40917\"\n    ],\n    [\n      1,\n      \"2026-09-25T05:55:59.271Z\",\n      \"2026-09-25T05:55:59.271Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 21044\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:02:48.609Z\",\n      \"2026-09-25T06:02:48.609Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 15494\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:06:01.390Z\",\n      \"2026-09-25T06:06:01.390Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 20992\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:15:38.969Z\",\n      \"2026-09-25T07:15:38.969Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 94810\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:31:33.296Z\",\n      \"2026-09-25T06:31:33.296Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 83857\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:24:21.377Z\",\n      \"2026-09-24T20:24:21.377Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 23227\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:21:20.015Z\",\n      \"2026-09-25T06:21:20.015Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 67292\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:39:25.691Z\",\n      \"2026-09-25T07:39:25.691Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 28077\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:57:24.841Z\",\n      \"2026-09-25T07:57:24.841Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 64889\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:58:08.822Z\",\n      \"2026-09-25T07:58:08.822Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 97734\"\n    ],\n    [\n      1,\n      \"2026-09-25T07:58:25.248Z\",\n      \"2026-09-25T07:58:25.248Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 87938\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:04:29.119Z\",\n      \"2026-09-25T08:04:29.119Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 43894\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:13:32.214Z\",\n      \"2026-09-25T08:13:32.214Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 96054\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:15:03.475Z\",\n      \"2026-09-25T08:15:03.475Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 33579\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:20:35.545Z\",\n      \"2026-09-25T08:20:35.545Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 51839\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:21:12.233Z\",\n      \"2026-09-25T08:21:12.233Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 24695\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:28:18.121Z\",\n      \"2026-09-25T08:28:18.121Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 20893\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:42:37.190Z\",\n      \"2026-09-25T08:42:37.190Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 84702\"\n    ],\n    [\n      1,\n      \"2026-09-25T08:56:36.790Z\",\n      \"2026-09-25T08:56:36.790Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 60757\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:03:24.724Z\",\n      \"2026-09-25T09:03:24.724Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 86339\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:12:35.847Z\",\n      \"2026-09-25T09:12:35.847Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 85683\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:19:47.953Z\",\n      \"2026-09-25T09:19:47.953Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 62448\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:25:44.316Z\",\n      \"2026-09-25T09:25:44.316Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 42788\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:40:08.514Z\",\n      \"2026-09-25T09:40:08.514Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 35219\"\n    ],\n    [\n      1,\n      \"2026-09-25T09:40:18.826Z\",\n      \"2026-09-25T09:40:18.826Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 71320\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:11.331Z\",\n      \"2026-09-25T10:10:11.331Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 97 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:16.017Z\",\n      \"2026-09-25T10:10:16.017Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 137 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T06:13:58.952Z\",\n      \"2026-09-25T06:13:58.952Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 60446\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:37.223Z\",\n      \"2026-09-25T10:10:37.223Z\",\n      \"current\",\n      \"WARN\",\n      \"Invalid credentials for user 14235\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:10:42.252Z\",\n      \"2026-09-25T10:10:42.252Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 122 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-24T20:07:51.621Z\",\n      \"2026-09-24T20:07:51.621Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 55233\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:01.432Z\",\n      \"2026-09-25T10:11:01.432Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 105 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-24T15:12:30.387Z\",\n      \"2026-09-24T15:12:30.387Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 29774\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:11:48.199Z\",\n      \"2026-09-25T10:11:48.199Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 88 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:12:11.602Z\",\n      \"2026-09-25T10:12:11.602Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 126 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-24T12:36:03.323Z\",\n      \"2026-09-24T12:36:03.323Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 37157\"\n    ],\n    [\n      1,\n      \"2026-09-24T11:41:22.649Z\",\n      \"2026-09-24T11:41:22.649Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 80885\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:05.469Z\",\n      \"2026-09-25T10:14:05.469Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 108 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:19.336Z\",\n      \"2026-09-25T10:14:19.336Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 77 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:14:42.969Z\",\n      \"2026-09-25T10:14:42.969Z\",\n      \"current\",\n      \"WARN\",\n      \"Invalid credentials for user 46361\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:51:02.265Z\",\n      \"2026-09-24T10:51:02.265Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 52880\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:14:04.302Z\",\n      \"2026-09-24T10:14:04.302Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 61650\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:25.189Z\",\n      \"2026-09-25T10:16:25.189Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 62 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:34.455Z\",\n      \"2026-09-25T10:16:34.455Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 84 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:16:40.282Z\",\n      \"2026-09-25T10:16:40.282Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 81 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:07.933Z\",\n      \"2026-09-25T10:17:07.933Z\",\n      \"current\",\n      \"WARN\",\n      \"Invalid credentials for user 19619\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:17:35.428Z\",\n      \"2026-09-25T10:17:35.428Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 127 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:18:05.966Z\",\n      \"2026-09-25T10:18:05.966Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 114 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:19.722Z\",\n      \"2026-09-25T10:19:19.722Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 121 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:44.088Z\",\n      \"2026-09-25T10:19:44.088Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 78 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:19:54.403Z\",\n      \"2026-09-25T10:19:54.403Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 103 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:07.734Z\",\n      \"2026-09-25T10:20:07.734Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 95 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:20:23.737Z\",\n      \"2026-09-25T10:20:23.737Z\",\n      \"current\",\n      \"WARN\",\n      \"Invalid credentials for user 13675\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:29.009Z\",\n      \"2026-09-25T10:23:29.009Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 98 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:23:49.381Z\",\n      \"2026-09-25T10:23:49.381Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 87 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:24:16.099Z\",\n      \"2026-09-25T10:24:16.099Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 93 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:25:01.811Z\",\n      \"2026-09-25T10:25:01.811Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 130 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:25:19.514Z\",\n      \"2026-09-25T10:25:19.514Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 119 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:26:06.923Z\",\n      \"2026-09-25T10:26:06.923Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 79 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:07.720Z\",\n      \"2026-09-25T10:27:07.720Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 100 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:27:36.263Z\",\n      \"2026-09-25T10:27:36.263Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 109 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-25T10:29:00.622Z\",\n      \"2026-09-25T10:29:00.622Z\",\n      \"current\",\n      \"WARN\",\n      \"Request queue depth high: 66 pending (ready replicas 1/3)\"\n    ],\n    [\n      1,\n      \"2026-09-24T10:02:40.532Z\",\n      \"2026-09-24T10:02:40.532Z\",\n      \"baseline\",\n      \"WARN\",\n      \"Invalid credentials for user 99396\"\n    ]\n  ],\n  \"row_count\": 186,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM user-prod-* | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\"), \"current\", \"baseline\") | EVAL is_start = CASE(message LIKE \"Starting*\", 1, 0) | STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN(@timestamp) BY window, version = version",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "starts",
+            "first_seen",
+            "window",
+            "version"
+          ],
+          "row_count": 2,
+          "rows": [
+            [
+              14370,
+              0,
+              "2026-09-24T10:00:16.649Z",
+              "baseline",
+              "v3.1.4"
+            ],
+            [
+              332,
+              0,
+              "2026-09-25T10:00:01.576Z",
+              "current",
+              "v3.1.4"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"starts\",\n    \"first_seen\",\n    \"window\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      14370,\n      0,\n      \"2026-09-24T10:00:16.649Z\",\n      \"baseline\",\n      \"v3.1.4\"\n    ],\n    [\n      332,\n      0,\n      \"2026-09-25T10:00:01.576Z\",\n      \"current\",\n      \"v3.1.4\"\n    ]\n  ],\n  \"row_count\": 2,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM user-prod-* | WHERE @timestamp >= TO_DATETIME(\"2026-09-25T10:00:00Z\") AND message LIKE \"Request queue depth high:*\" | KEEP @timestamp, trace_id, version | SORT @timestamp ASC | LIMIT 5",
+        "start": "2026-09-24T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "@timestamp",
+            "trace_id",
+            "version"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              "2026-09-25T10:10:11.331Z",
+              "aae3137c72aefe1d",
+              "v3.1.4"
+            ],
+            [
+              "2026-09-25T10:10:16.017Z",
+              "2d866d97bbe3fc2a",
+              "v3.1.4"
+            ],
+            [
+              "2026-09-25T10:10:31.339Z",
+              "8815acb9fd076058",
+              "v3.1.4"
+            ],
+            [
+              "2026-09-25T10:10:42.252Z",
+              "9bb83ba73644e07c",
+              "v3.1.4"
+            ],
+            [
+              "2026-09-25T10:10:56.886Z",
+              "3f46da98092f506e",
+              "v3.1.4"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-24T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"@timestamp\",\n    \"trace_id\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      \"2026-09-25T10:10:11.331Z\",\n      \"aae3137c72aefe1d\",\n      \"v3.1.4\"\n    ],\n    [\n      \"2026-09-25T10:10:16.017Z\",\n      \"2d866d97bbe3fc2a\",\n      \"v3.1.4\"\n    ],\n    [\n      \"2026-09-25T10:10:31.339Z\",\n      \"8815acb9fd076058\",\n      \"v3.1.4\"\n    ],\n    [\n      \"2026-09-25T10:10:42.252Z\",\n      \"9bb83ba73644e07c\",\n      \"v3.1.4\"\n    ],\n    [\n      \"2026-09-25T10:10:56.886Z\",\n      \"3f46da98092f506e\",\n      \"v3.1.4\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-24T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List the log indices you are allowed to query, with document counts and sizes.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_indicesArguments",
+        "type": "object"
+      },
+      "name": "list_indices"
+    },
+    {
+      "description": "Field names and types for an index pattern, e.g. 'payment-prod-*'.",
+      "input_schema": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "get_mappingArguments",
+        "type": "object"
+      },
+      "name": "get_mapping"
+    },
+    {
+      "description": "Return sample log documents.\n\n        Args:\n            index: allowed index pattern, e.g. 'payment-prod-*'.\n            start: window start, ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z').\n            end: window end, ISO-8601 UTC.\n            query: optional Lucene query, e.g. 'message:\"connection timeout\" AND status_code:500'.\n            levels: optional log levels, e.g. ['ERROR', 'WARN'].\n            size: max documents to return (capped by the server).\n            sort: 'desc' = newest first, 'asc' = oldest first (use asc to find first occurrence).\n            fields: optional list of fields to return.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "index": {
+            "title": "Index",
+            "type": "string"
+          },
+          "levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Levels"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "size": {
+            "default": 20,
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end"
+        ],
+        "title": "search_logsArguments",
+        "type": "object"
+      },
+      "name": "search_logs"
+    },
+    {
+      "description": "Run a read-only ES|QL query, automatically limited to [start, end].\n\n        The query must start with 'FROM <allowed index pattern>'. Example:\n          FROM payment-prod-* | WHERE level == \"ERROR\"\n          | STATS count = COUNT(*), first_seen = MIN(@timestamp) BY error_type | SORT count DESC\n        Args:\n            query: ES|QL query.\n            start: window start, ISO-8601 UTC.\n            end: window end, ISO-8601 UTC.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "execute_esqlArguments",
+        "type": "object"
+      },
+      "name": "execute_esql"
+    }
+  ]
+}

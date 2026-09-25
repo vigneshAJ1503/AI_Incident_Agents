@@ -1,20 +1,29 @@
-"""Log (ELK) Agent: deterministic ES|QL overview first, then a bounded LLM investigation.
+"""Log (ELK) Agent.
 
-Vendor-neutral: index pattern comes from the service catalog, field names and the
-UI link template come from the ``logs`` capability settings (config only).
+Investigation loop:
+  1. deterministic ES|QL (4 calls): volume, message patterns and versions/startups
+     for the incident window AND the previous 24h baseline, plus trace ids and
+     first occurrence for the top anomalous pattern;
+  2. deterministic analysis: templating, baseline diff, signals (no LLM math);
+  3. bounded LLM follow-ups + an evidence-cited report;
+  4. deterministic signals are merged into the report (they can't be dropped).
+
+Vendor-neutral: index from the service catalog; field names, levels and the UI
+link template from the ``logs`` capability settings.
 """
 
 from __future__ import annotations
 
-import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Any
 from urllib.parse import quote
 
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
+from aiops.agents.log_agent.analysis import DATA_SIGNALS, SIGNALS, LogAnalysis, analyze
+from aiops.agents.log_agent.patterns import like_prefix
 from aiops.agents.registry import AGENTS
-from aiops.core.models import AgentResult, Evidence, EvidenceKind
+from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind
 from aiops.llm.base import ToolSpec
 
 DEFAULT_FIELDS = {
@@ -26,11 +35,25 @@ DEFAULT_FIELDS = {
     "trace_id": "trace_id",
 }
 DEFAULT_ERROR_LEVELS = ["ERROR", "FATAL", "CRITICAL"]
-TOP_ERRORS = 10
+DEFAULT_PATTERN_LEVELS = ["ERROR", "FATAL", "CRITICAL", "WARN"]
+DEFAULT_BASELINE_HOURS = 24.0
+DEFAULT_STARTUP_PATTERN = "Starting*"
+PATTERN_GROUP_LIMIT = 1000
+TRACE_SAMPLE = 5
 
 
 def iso(ts: datetime) -> str:
     return ts.isoformat().replace("+00:00", "Z")
+
+
+def esql_string(value: str) -> str:
+    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+
+
+def esql_like(prefix: str) -> str:
+    """LIKE pattern matching ``prefix`` literally, followed by anything."""
+    pattern = prefix.replace("\\", "\\\\").replace("*", "\\*").replace("?", "\\?") + "*"
+    return esql_string(pattern)
 
 
 @dataclass(frozen=True)
@@ -38,15 +61,17 @@ class LogScope:
     index: str
     fields: dict[str, str]
     error_levels: list[str]
+    pattern_levels: list[str]
+    baseline: timedelta
+    startup_pattern: str
     link_template: str | None
-    service_value: str | None
 
 
 class LogAgent(BaseAgent):
     spec = AgentSpec(
         name="logs",
-        version="1",
-        description="Investigates application logs (error patterns, counts, samples) via the logs capability.",
+        version="2",
+        description="Investigates application logs: error patterns vs a 24h baseline, deployments, restarts, trace ids.",
         capabilities=["logs"],
         evidence_kind=EvidenceKind.LOG,
         prompt="logs",
@@ -72,8 +97,10 @@ class LogAgent(BaseAgent):
             index=str(index),
             fields=fields,
             error_levels=list(settings.get("error_levels", DEFAULT_ERROR_LEVELS)),
+            pattern_levels=list(settings.get("pattern_levels", DEFAULT_PATTERN_LEVELS)),
+            baseline=timedelta(hours=float(settings.get("baseline_hours", DEFAULT_BASELINE_HOURS))),
+            startup_pattern=str(settings.get("startup_pattern", DEFAULT_STARTUP_PATTERN)),
             link_template=settings.get("ui_link_template"),
-            service_value=identifiers.get("service_value"),
         )
 
     def ui_link(self, scope: LogScope, run: AgentRun, kql: str) -> str | None:
@@ -84,101 +111,196 @@ class LogAgent(BaseAgent):
             start=iso(window.start), end=iso(window.end), kql=quote(kql, safe="")
         )
 
-    # -- deterministic overview -----------------------------------------------------------
+    # -- deterministic phase ---------------------------------------------------------------
 
-    def _levels(self, scope: LogScope) -> str:
-        return ", ".join(json.dumps(level) for level in scope.error_levels)
+    def _window_eval(self, scope: LogScope, run: AgentRun) -> str:
+        start = iso(run.task.context.time_range.start)
+        ts = scope.fields["timestamp"]
+        return f'EVAL window = CASE({ts} >= TO_DATETIME("{start}"), "current", "baseline")'
 
-    async def overview(self, run: AgentRun, scope: LogScope) -> list[str]:
-        """Level counts + top error messages. Returns lines for the LLM prompt."""
-        f = scope.fields
+    async def _esql(
+        self, run: AgentRun, query: str, summary: str
+    ) -> tuple[Any, Evidence | None, str | None]:
         window = run.task.context.time_range
-        bounds = {"start": iso(window.start), "end": iso(window.end)}
-        lines: list[str] = []
-
-        level_query = (
-            f"FROM {scope.index} | STATS count = COUNT(*) BY {f['level']} | SORT count DESC"
-        )
+        scope_start = window.start - self.scope(run).baseline
         outcome, evidence = await run.call_tool(
             "execute_esql",
-            {"query": level_query, **bounds},
-            summary=f"Log volume by level in {scope.index}",
+            {"query": query, "start": iso(scope_start), "end": iso(window.end)},
+            summary=summary,
         )
-        if evidence is not None:
-            rows = outcome.data.get("rows", []) if isinstance(outcome.data, dict) else []
-            counts = {str(r[1]): int(r[0]) for r in rows if len(r) >= 2}
-            total = sum(counts.values())
-            errors = sum(counts.get(level, 0) for level in scope.error_levels)
-            evidence.summary = (
-                f"{total} log lines, {errors} at error level ({counts}) in {scope.index}"
-            )
-            evidence.link = self.ui_link(scope, run, "")
-            lines.append(
-                f"[{evidence.id}] Volume by level: {json.dumps(counts)} (total {total}, errors {errors})"
-            )
-        else:
-            lines.append(f"Volume query failed: {outcome.tool_call.error}")
+        return outcome.data, evidence, outcome.tool_call.error
 
-        top_query = (
-            f"FROM {scope.index} | WHERE {f['level']} IN ({self._levels(scope)}) "
+    async def deterministic(
+        self, run: AgentRun, scope: LogScope
+    ) -> tuple[LogAnalysis | None, list[str]]:
+        f = scope.fields
+        levels = ", ".join(esql_string(level) for level in scope.pattern_levels)
+        window_eval = self._window_eval(scope, run)
+        notes: list[str] = []
+
+        volume, volume_ev, err = await self._esql(
+            run,
+            f"FROM {scope.index} | {window_eval} | STATS count = COUNT(*) BY window, level = {f['level']}",
+            f"Log volume by level: incident window vs {scope.baseline} baseline",
+        )
+        if volume_ev is None:
+            return None, [f"Volume query failed: {err}"]
+
+        patterns, patterns_ev, err = await self._esql(
+            run,
+            f"FROM {scope.index} | WHERE {f['level']} IN ({levels}) | {window_eval} "
             f"| STATS count = COUNT(*), first_seen = MIN({f['timestamp']}), last_seen = MAX({f['timestamp']}) "
-            f"BY msg = {f['message_keyword']} | SORT count DESC | LIMIT {TOP_ERRORS}"
+            f"BY window, level = {f['level']}, msg = {f['message_keyword']} "
+            f"| SORT count DESC | LIMIT {PATTERN_GROUP_LIMIT}",
+            "Error/warning message patterns: incident window vs baseline",
         )
-        outcome, evidence = await run.call_tool(
-            "execute_esql",
-            {"query": top_query, **bounds},
-            summary=f"Top error messages in {scope.index}",
+        if patterns_ev is None:
+            notes.append(f"Pattern query failed: {err}")
+
+        lifecycle: Any = None
+        lifecycle_ev: Evidence | None = None
+        if "version" in f:
+            lifecycle, lifecycle_ev, err = await self._esql(
+                run,
+                f"FROM {scope.index} | {window_eval} "
+                f"| EVAL is_start = CASE({f['message']} LIKE {esql_string(scope.startup_pattern)}, 1, 0) "
+                f"| STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN({f['timestamp']}) "
+                f"BY window, version = {f['version']}",
+                "Versions and startups: incident window vs baseline",
+            )
+            if lifecycle_ev is None:
+                notes.append(f"Version query failed: {err}")
+
+        window = run.task.context.time_range
+        analysis = analyze(
+            volume,
+            patterns,
+            lifecycle,
+            error_levels=scope.error_levels,
+            current=window.duration,
+            baseline=scope.baseline,
         )
-        if evidence is not None:
-            rows = outcome.data.get("rows", []) if isinstance(outcome.data, dict) else []
-            kql = f"{f['level']}:({' or '.join(scope.error_levels)})"
-            evidence.link = self.ui_link(scope, run, kql)
-            if rows:
-                evidence.summary = f"Top {len(rows)} error messages in {scope.index}"
-                lines.append(
-                    f"[{evidence.id}] Top error messages (count | first_seen | last_seen | message):"
-                )
-                lines.extend(f"  - {r[0]} | {r[1]} | {r[2]} | {r[3]}" for r in rows)
-            else:
-                evidence.summary = f"No error-level logs in {scope.index} for the window"
-                lines.append(f"[{evidence.id}] No error-level log lines in the window.")
-        else:
-            lines.append(f"Top-errors query failed: {outcome.tool_call.error}")
-        return lines
+
+        # Evidence summaries + links now that numbers are known.
+        volume_ev.summary = (
+            f"{analysis.current_errors} errors in {analysis.current_total} lines during the incident window "
+            f"vs {analysis.baseline_errors} in {analysis.baseline_total} over the previous {scope.baseline}"
+        )
+        volume_ev.link = self.ui_link(scope, run, "")
+        notes.append(f"[{volume_ev.id}] volume")
+        if patterns_ev is not None:
+            new = [d for d in analysis.anomalous if d.is_new]
+            patterns_ev.summary = (
+                f"{len(analysis.deltas)} error/warn patterns in window; {len(analysis.anomalous)} anomalous "
+                f"({len(new)} new vs baseline)"
+            )
+            patterns_ev.link = self.ui_link(
+                scope, run, f"{f['level']}:({' or '.join(scope.pattern_levels)})"
+            )
+            notes.append(f"[{patterns_ev.id}] patterns")
+        if lifecycle_ev is not None:
+            deploys = (
+                ", ".join(f"{d['version']} at {d['first_seen']}" for d in analysis.deployments)
+                or "none"
+            )
+            lifecycle_ev.summary = (
+                f"New versions in window: {deploys}; restarts: {analysis.restarts}"
+            )
+            lifecycle_ev.link = self.ui_link(scope, run, "")
+            notes.append(f"[{lifecycle_ev.id}] versions")
+
+        await self._trace_sample(run, scope, analysis, notes)
+        return analysis, notes
+
+    async def _trace_sample(
+        self, run: AgentRun, scope: LogScope, analysis: LogAnalysis, notes: list[str]
+    ) -> None:
+        """Trace ids + first occurrence of the top anomalous pattern."""
+        if not analysis.anomalous:
+            return
+        top = analysis.anomalous[0]
+        prefix = like_prefix(top.pattern.template)
+        if prefix is None:
+            return
+        f = scope.fields
+        start = iso(run.task.context.time_range.start)
+        keep = ", ".join(
+            dict.fromkeys(f[k] for k in ("timestamp", "trace_id", "version") if k in f)
+        )
+        data, evidence, _ = await self._esql(
+            run,
+            f'FROM {scope.index} | WHERE {f["timestamp"]} >= TO_DATETIME("{start}") '
+            f"AND {f['message']} LIKE {esql_like(prefix)} "
+            f"| KEEP {keep} | SORT {f['timestamp']} ASC | LIMIT {TRACE_SAMPLE}",
+            f"First occurrences + trace ids of '{prefix}...'",
+        )
+        if evidence is None or not isinstance(data, dict):
+            return
+        columns, rows = data.get("columns", []), data.get("rows", [])
+        trace_ids = [r[columns.index(f["trace_id"])] for r in rows if f["trace_id"] in columns]
+        first = (
+            rows[0][columns.index(f["timestamp"])] if rows and f["timestamp"] in columns else None
+        )
+        evidence.summary = f"First occurrence of '{prefix}...' at {first}; trace ids {trace_ids}"
+        evidence.link = self.ui_link(scope, run, f'{f["message"]}:"{prefix}"')
+        notes.append(
+            f"[{evidence.id}] first occurrence {first}, trace ids: {', '.join(map(str, trace_ids))}"
+        )
 
     # -- investigation -------------------------------------------------------------------
 
     def fields_table(self, scope: LogScope) -> str:
         return "\n".join(f"- {role}: `{name}`" for role, name in scope.fields.items())
 
+    def prompt_variables(self, run: AgentRun) -> dict[str, object]:
+        variables = super().prompt_variables(run)
+        scope = self.scope(run)
+        window = run.task.context.time_range
+        variables.update(
+            index=scope.index,
+            fields_table=self.fields_table(scope),
+            start=iso(window.start),
+            end=iso(window.end),
+            baseline_start=iso(window.start - scope.baseline),
+            signals=", ".join(f"`{s}`" for s in SIGNALS),
+        )
+        return variables
+
     async def investigate(self, run: AgentRun, tool_specs: list[ToolSpec]) -> AgentResult:
         try:
             scope = self.scope(run)
         except LookupError as exc:
             return run.failed(str(exc))
-        overview = await self.overview(run, scope)
-        if not run.evidence:
-            return run.failed("Could not query logs: " + " ".join(overview))
+        analysis, notes = await self.deterministic(run, scope)
+        if analysis is None:
+            return run.failed("Could not query logs: " + " ".join(notes))
 
         system, user = self.build_prompt(run)
-        user = f"{user}\n\n## Overview (computed for you)\n" + "\n".join(overview)
+        overview = "\n".join([*analysis.lines(), "Evidence ids: " + "; ".join(notes)])
+        user = f"{user}\n\n## Overview (computed for you, deterministic)\n{overview}"
         result = await self.llm_loop(run, tool_specs, system, user)
-        return self._attach_links(result, scope, run)
+        return self.finalize(result, analysis, scope, run)
 
-    def prompt_variables(self, run: AgentRun) -> dict[str, object]:
-        variables = super().prompt_variables(run)
-        scope = self.scope(run)
-        variables.update(index=scope.index, fields_table=self.fields_table(scope))
-        return variables
-
-    def _attach_links(self, result: AgentResult, scope: LogScope, run: AgentRun) -> AgentResult:
-        """Give LLM-driven evidence (samples, follow-up queries) a UI link too."""
-        evidence: list[Evidence] = []
-        for item in result.evidence:
-            if item.link is None:
-                item = item.model_copy(update={"link": self.ui_link(scope, run, "")})
-            evidence.append(item)
-        return result.model_copy(update={"evidence": evidence})
+    def finalize(
+        self, result: AgentResult, analysis: LogAnalysis, scope: LogScope, run: AgentRun
+    ) -> AgentResult:
+        """Merge deterministic signals; anomalies can't be reported as 'no_signal'."""
+        # Data signals are authoritative; the LLM may only add semantic ones, and only
+        # when the data shows something anomalous.
+        llm_extra = {s for s in result.signals if s in SIGNALS and s not in DATA_SIGNALS}
+        if not analysis.anomalous:
+            llm_extra = set()
+        signals = [s for s in SIGNALS if s in {*analysis.signals, *llm_extra}]
+        status = result.status
+        if status is AgentStatus.NO_SIGNAL and analysis.anomalous:
+            status = AgentStatus.SUCCESS
+        evidence = [
+            e if e.link else e.model_copy(update={"link": self.ui_link(scope, run, "")})
+            for e in result.evidence
+        ]
+        return result.model_copy(
+            update={"signals": signals, "status": status, "evidence": evidence}
+        )
 
 
 AGENTS.register(LogAgent)

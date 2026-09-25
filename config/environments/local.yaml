@@ -56,8 +56,17 @@ capabilities:
         version: version
         error_type: error_type
       error_levels: [ERROR, FATAL, CRITICAL]
+      pattern_levels: [ERROR, FATAL, CRITICAL, WARN]   # levels considered for pattern analysis
+      baseline_hours: 24                               # "is this normal?" comparison window
+      startup_pattern: "Starting*"                     # app startup lines -> deployments/restarts
       ui_link_template: "${KIBANA_URL:-http://localhost:5601}/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))"
 
 agents:
   logs:
     model_role: agent
+    # 4 deterministic queries + up to 6 LLM-driven follow-ups (MASTER_PLAN PR-010 limits)
+    limits:
+      max_steps: 6
+      max_tool_calls: 10
+      max_execution_s: 60
+      max_tokens: 40000

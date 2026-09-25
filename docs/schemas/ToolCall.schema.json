@@ -1,0 +1,71 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "agent": {
+      "title": "Agent",
+      "type": "string"
+    },
+    "arguments": {
+      "additionalProperties": true,
+      "title": "Arguments",
+      "type": "object"
+    },
+    "capability": {
+      "title": "Capability",
+      "type": "string"
+    },
+    "duration_ms": {
+      "default": 0.0,
+      "title": "Duration Ms",
+      "type": "number"
+    },
+    "error": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Error"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "result_chars": {
+      "default": 0,
+      "title": "Result Chars",
+      "type": "integer"
+    },
+    "started_at": {
+      "format": "date-time",
+      "title": "Started At",
+      "type": "string"
+    },
+    "status": {
+      "default": "ok",
+      "enum": [
+        "ok",
+        "error",
+        "blocked",
+        "timeout"
+      ],
+      "title": "Status",
+      "type": "string"
+    },
+    "tool": {
+      "title": "Tool",
+      "type": "string"
+    }
+  },
+  "required": [
+    "agent",
+    "capability",
+    "tool"
+  ],
+  "title": "ToolCall",
+  "type": "object"
+}

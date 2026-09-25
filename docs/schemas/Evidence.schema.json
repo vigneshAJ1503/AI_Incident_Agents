@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "EvidenceKind": {
+      "enum": [
+        "log",
+        "metric",
+        "alert",
+        "k8s_event",
+        "commit",
+        "ticket",
+        "doc"
+      ],
+      "title": "EvidenceKind",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "data": {
+      "additionalProperties": true,
+      "title": "Data",
+      "type": "object"
+    },
+    "id": {
+      "title": "Id",
+      "type": "string"
+    },
+    "kind": {
+      "$ref": "#/$defs/EvidenceKind"
+    },
+    "link": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Link"
+    },
+    "query": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Query"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "summary": {
+      "title": "Summary",
+      "type": "string"
+    },
+    "timestamp": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Timestamp"
+    }
+  },
+  "required": [
+    "kind",
+    "source",
+    "summary"
+  ],
+  "title": "Evidence",
+  "type": "object"
+}

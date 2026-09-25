@@ -1,0 +1,37 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "description": {
+      "title": "Description",
+      "type": "string"
+    },
+    "evidence_id": {
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evidence Id"
+    },
+    "source": {
+      "title": "Source",
+      "type": "string"
+    },
+    "timestamp": {
+      "format": "date-time",
+      "title": "Timestamp",
+      "type": "string"
+    }
+  },
+  "required": [
+    "timestamp",
+    "description",
+    "source"
+  ],
+  "title": "TimelineEvent",
+  "type": "object"
+}

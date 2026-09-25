@@ -60,3 +60,6 @@ markers = [
     "eval: scenario evaluations (slow, uses the LLM)",
 ]
 addopts = "-m 'not integration and not eval'"
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["typer.Option", "typer.Argument"]

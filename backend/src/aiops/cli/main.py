@@ -3,7 +3,7 @@
 import typer
 
 from aiops import __version__
-from aiops.cli import catalog_cmd, config_cmd
+from aiops.cli import catalog_cmd, config_cmd, schemas_cmd
 from aiops.cli.common import console
 
 app = typer.Typer(
@@ -13,6 +13,7 @@ app = typer.Typer(
 )
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(catalog_cmd.app, name="catalog")
+app.add_typer(schemas_cmd.app, name="schemas")
 
 
 @app.callback()

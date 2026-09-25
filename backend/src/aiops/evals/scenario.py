@@ -35,9 +35,19 @@ class Scenario(BaseModel):
 
 
 def load_scenario(path: Path) -> Scenario:
+    """Load ``expected.yaml`` plus per-agent files ``agents/<agent>.yaml`` (one file per agent)."""
     file = path / "expected.yaml" if path.is_dir() else path
+    data = load_yaml(file)
+    agents = dict(data.get("agents") or {})
+    for agent_file in sorted((file.parent / "agents").glob("*.yaml")):
+        if agent_file.stem in agents:
+            raise ConfigError(
+                f"Agent '{agent_file.stem}' is defined twice for scenario in {file.parent}"
+            )
+        agents[agent_file.stem] = load_yaml(agent_file)
+    data["agents"] = agents
     try:
-        return Scenario.model_validate(load_yaml(file))
+        return Scenario.model_validate(data)
     except ValidationError as err:
         raise ConfigError(format_validation_error(err, file)) from err
 

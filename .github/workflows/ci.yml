@@ -34,12 +34,24 @@ jobs:
       - name: Unit tests
         run: uv run pytest --cov=aiops --cov-report=term-missing
 
+  discover-mcp-servers:
+    name: discover MCP servers
+    runs-on: ubuntu-latest
+    outputs:
+      servers: ${{ steps.list.outputs.servers }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: echo "servers=$(ls -d mcp-servers/*/ | xargs -n1 basename | jq -R . | jq -cs .)" >> "$GITHUB_OUTPUT"
+
   mcp-servers:
     name: mcp-servers (lint · typecheck · test)
+    needs: discover-mcp-servers
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        server: [elasticsearch-mcp]
+        server: ${{ fromJSON(needs.discover-mcp-servers.outputs.servers) }}
     defaults:
       run:
         working-directory: mcp-servers/${{ matrix.server }}

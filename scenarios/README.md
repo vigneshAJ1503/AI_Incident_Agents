@@ -4,8 +4,9 @@ Each scenario is a reproducible incident with **ground truth**, used for agent t
 
 ```
 scenarios/<id>/
-├── README.md       # what happens, what the investigation should conclude
-└── expected.yaml   # machine-readable expectations per agent
+├── README.md            # what happens, what the investigation should conclude
+├── expected.yaml        # question, service, window, ground-truth root cause
+└── agents/<agent>.yaml  # expectations for one agent (status, signals, ...)
 ```
 
 - **Synthetic data:** PR-007 seeds log data for each scenario.
@@ -18,8 +19,8 @@ scenarios/<id>/
 | `question` | What the engineer asks |
 | `service`, `environment`, `window` | The context the planner should extract |
 | `root_cause` | Ground-truth root cause (`null` = healthy; agents must not invent one) |
-| `agents.<name>.status` | Acceptable agent statuses |
-| `agents.<name>.signals` | Signals that must be reported |
-| `agents.<name>.forbidden_signals` | Signals that must NOT be reported |
-| `agents.<name>.must_mention` | Phrases the summary or findings must contain (case-insensitive) |
-| `agents.<name>.min_evidence` | Minimum number of evidence items |
+| `agents/<name>.yaml` → `status` | Acceptable agent statuses |
+| `signals` | Signals that must be reported |
+| `forbidden_signals` | Signals that must NOT be reported |
+| `must_mention` | Phrases the summary or findings must contain (case-insensitive) |
+| `min_evidence` | Minimum number of evidence items |

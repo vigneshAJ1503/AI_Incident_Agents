@@ -1,0 +1,4 @@
+status: [success]
+signals: [capacity_degraded]
+must_mention: [replicas]
+min_evidence: 1

@@ -1,0 +1,4 @@
+status: [success]
+signals: [db_timeout_errors_up]
+must_mention: [connection]
+min_evidence: 1

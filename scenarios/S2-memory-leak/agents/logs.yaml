@@ -1,0 +1,4 @@
+status: [success]
+signals: [oom_errors]
+must_mention: [memory]
+min_evidence: 1

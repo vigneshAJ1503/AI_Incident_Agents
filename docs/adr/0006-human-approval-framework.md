@@ -1,4 +1,4 @@
-# ADR-0005: Human approval for write actions; mock tickets MCP with mcp-atlassian's contract
+# ADR-0006: Human approval for write actions; mock tickets MCP with mcp-atlassian's contract
 
 - **Status:** Accepted
 - **Date:** 2026-09-25

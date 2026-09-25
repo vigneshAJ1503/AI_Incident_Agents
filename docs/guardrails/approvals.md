@@ -3,7 +3,7 @@
 Nothing in AI Incident Agents writes to an external system without an explicit human approval.
 Agents are read-only. They only get `capabilities.<cap>.tool_allowlist`. Write tools live in a
 separate `write_allowlist`, which only the approval executor uses. The design is in
-[ADR-0005](../adr/0005-human-approval-framework.md).
+[ADR-0006](../adr/0006-human-approval-framework.md).
 
 ```
 aiops tickets draft ...            ActionProposal ──policy──▶ PENDING ──approve──▶ APPROVED ──▶ EXECUTED

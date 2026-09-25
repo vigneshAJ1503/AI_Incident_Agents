@@ -1,0 +1,383 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "limit": 100,
+        "repo": "sample-repo"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "releases": [
+            {
+              "date": "2026-09-18T08:30:00Z",
+              "message": "inventory-service v1.4.2",
+              "sha": "3c6b3f4c6ec3e7480408b3aacf2544dd9ba5f4ce",
+              "tag": "inventory-service/v1.4.2"
+            },
+            {
+              "date": "2026-09-17T07:30:00Z",
+              "message": "user-service v3.1.4",
+              "sha": "aff864b3f64ffbc401176223c8612b23bae306e4",
+              "tag": "user-service/v3.1.4"
+            },
+            {
+              "date": "2026-09-16T09:30:00Z",
+              "message": "payment-service v1.8.1",
+              "sha": "4f6bfa95ff73d3aba26044e2c413fb99a93deed8",
+              "tag": "payment-service/v1.8.1"
+            },
+            {
+              "date": "2026-09-14T13:30:00Z",
+              "message": "order-service v2.3.0",
+              "sha": "26a9fb4ed3de2c2115f0d92202ea66cac08e0eb2",
+              "tag": "order-service/v2.3.0"
+            },
+            {
+              "date": "2026-09-11T09:30:00Z",
+              "message": "inventory-service v1.4.1",
+              "sha": "7ba3bdfed29930d8691c8c078e975eef1b7da0d7",
+              "tag": "inventory-service/v1.4.1"
+            },
+            {
+              "date": "2026-09-11T09:30:00Z",
+              "message": "order-service v2.2.1",
+              "sha": "7ba3bdfed29930d8691c8c078e975eef1b7da0d7",
+              "tag": "order-service/v2.2.1"
+            },
+            {
+              "date": "2026-09-11T09:30:00Z",
+              "message": "payment-service v1.8.0",
+              "sha": "7ba3bdfed29930d8691c8c078e975eef1b7da0d7",
+              "tag": "payment-service/v1.8.0"
+            },
+            {
+              "date": "2026-09-11T09:30:00Z",
+              "message": "user-service v3.1.3",
+              "sha": "7ba3bdfed29930d8691c8c078e975eef1b7da0d7",
+              "tag": "user-service/v3.1.3"
+            }
+          ],
+          "repo": "sample-repo",
+          "truncated": false
+        },
+        "text": "{\n  \"repo\": \"sample-repo\",\n  \"releases\": [\n    {\n      \"tag\": \"inventory-service/v1.4.2\",\n      \"sha\": \"3c6b3f4c6ec3e7480408b3aacf2544dd9ba5f4ce\",\n      \"date\": \"2026-09-18T08:30:00Z\",\n      \"message\": \"inventory-service v1.4.2\"\n    },\n    {\n      \"tag\": \"user-service/v3.1.4\",\n      \"sha\": \"aff864b3f64ffbc401176223c8612b23bae306e4\",\n      \"date\": \"2026-09-17T07:30:00Z\",\n      \"message\": \"user-service v3.1.4\"\n    },\n    {\n      \"tag\": \"payment-service/v1.8.1\",\n      \"sha\": \"4f6bfa95ff73d3aba26044e2c413fb99a93deed8\",\n      \"date\": \"2026-09-16T09:30:00Z\",\n      \"message\": \"payment-service v1.8.1\"\n    },\n    {\n      \"tag\": \"order-service/v2.3.0\",\n      \"sha\": \"26a9fb4ed3de2c2115f0d92202ea66cac08e0eb2\",\n      \"date\": \"2026-09-14T13:30:00Z\",\n      \"message\": \"order-service v2.3.0\"\n    },\n    {\n      \"tag\": \"inventory-service/v1.4.1\",\n      \"sha\": \"7ba3bdfed29930d8691c8c078e975eef1b7da0d7\",\n      \"date\": \"2026-09-11T09:30:00Z\",\n      \"message\": \"inventory-service v1.4.1\"\n    },\n    {\n      \"tag\": \"order-service/v2.2.1\",\n      \"sha\": \"7ba3bdfed29930d8691c8c078e975eef1b7da0d7\",\n      \"date\": \"2026-09-11T09:30:00Z\",\n      \"message\": \"order-service v2.2.1\"\n    },\n    {\n      \"tag\": \"payment-service/v1.8.0\",\n      \"sha\": \"7ba3bdfed29930d8691c8c078e975eef1b7da0d7\",\n      \"date\": \"2026-09-11T09:30:00Z\",\n      \"message\": \"payment-service v1.8.0\"\n    },\n    {\n      \"tag\": \"user-service/v3.1.3\",\n      \"sha\": \"7ba3bdfed29930d8691c8c078e975eef1b7da0d7\",\n      \"date\": \"2026-09-11T09:30:00Z\",\n      \"message\": \"user-service v3.1.3\"\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "list_releases"
+    },
+    {
+      "arguments": {
+        "limit": 100,
+        "paths": [
+          "services/payment-service",
+          "services/user-service"
+        ],
+        "repo": "sample-repo",
+        "since": "2026-09-24T10:00:00Z",
+        "until": "2026-09-25T10:30:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "commits": [
+            {
+              "author": "Priya Raman",
+              "date": "2026-09-25T04:30:00Z",
+              "email": "priya.raman@example.com",
+              "files": [
+                {
+                  "path": "services/payment-service/README.md",
+                  "status": "modified"
+                }
+              ],
+              "parents": [
+                "5f8f7737ee13927bb93b9a5cfd83717bc9bd6af2"
+              ],
+              "sha": "b74775edcae80b252d7ef37cef7c054aaa9587e8",
+              "short_sha": "b74775edca",
+              "subject": "docs(payment-service): link the connection pool runbook",
+              "tags": []
+            },
+            {
+              "author": "Priya Raman",
+              "date": "2026-09-24T20:30:00Z",
+              "email": "priya.raman@example.com",
+              "files": [
+                {
+                  "path": "services/payment-service/app/receipts.py",
+                  "status": "added"
+                }
+              ],
+              "parents": [
+                "db3368f527bf7610cdc9f840d84673146b5115df"
+              ],
+              "sha": "4bccd960fbbe5d24a6312471a3dcb87183efefda",
+              "short_sha": "4bccd960fb",
+              "subject": "payment-service: extract receipt formatting helper",
+              "tags": []
+            },
+            {
+              "author": "Aiko Tanaka",
+              "date": "2026-09-24T14:30:00Z",
+              "email": "aiko.tanaka@example.com",
+              "files": [
+                {
+                  "path": "services/user-service/README.md",
+                  "status": "modified"
+                }
+              ],
+              "parents": [
+                "764574263be95342bf7c0cbac522db35e1886909"
+              ],
+              "sha": "db3368f527bf7610cdc9f840d84673146b5115df",
+              "short_sha": "db3368f527",
+              "subject": "docs(user-service): clarify the login flow",
+              "tags": []
+            }
+          ],
+          "paths": [
+            "services/payment-service",
+            "services/user-service"
+          ],
+          "repo": "sample-repo",
+          "since": "2026-09-24T10:00:00+00:00",
+          "truncated": false,
+          "until": "2026-09-25T10:30:00+00:00"
+        },
+        "text": "{\n  \"repo\": \"sample-repo\",\n  \"since\": \"2026-09-24T10:00:00+00:00\",\n  \"until\": \"2026-09-25T10:30:00+00:00\",\n  \"paths\": [\n    \"services/payment-service\",\n    \"services/user-service\"\n  ],\n  \"commits\": [\n    {\n      \"sha\": \"b74775edcae80b252d7ef37cef7c054aaa9587e8\",\n      \"short_sha\": \"b74775edca\",\n      \"parents\": [\n        \"5f8f7737ee13927bb93b9a5cfd83717bc9bd6af2\"\n      ],\n      \"author\": \"Priya Raman\",\n      \"email\": \"priya.raman@example.com\",\n      \"date\": \"2026-09-25T04:30:00Z\",\n      \"subject\": \"docs(payment-service): link the connection pool runbook\",\n      \"tags\": [],\n      \"files\": [\n        {\n          \"status\": \"modified\",\n          \"path\": \"services/payment-service/README.md\"\n        }\n      ]\n    },\n    {\n      \"sha\": \"4bccd960fbbe5d24a6312471a3dcb87183efefda\",\n      \"short_sha\": \"4bccd960fb\",\n      \"parents\": [\n        \"db3368f527bf7610cdc9f840d84673146b5115df\"\n      ],\n      \"author\": \"Priya Raman\",\n      \"email\": \"priya.raman@example.com\",\n      \"date\": \"2026-09-24T20:30:00Z\",\n      \"subject\": \"payment-service: extract receipt formatting helper\",\n      \"tags\": [],\n      \"files\": [\n        {\n          \"status\": \"added\",\n          \"path\": \"services/payment-service/app/receipts.py\"\n        }\n      ]\n    },\n    {\n      \"sha\": \"db3368f527bf7610cdc9f840d84673146b5115df\",\n      \"short_sha\": \"db3368f527\",\n      \"parents\": [\n        \"764574263be95342bf7c0cbac522db35e1886909\"\n      ],\n      \"author\": \"Aiko Tanaka\",\n      \"email\": \"aiko.tanaka@example.com\",\n      \"date\": \"2026-09-24T14:30:00Z\",\n      \"subject\": \"docs(user-service): clarify the login flow\",\n      \"tags\": [],\n      \"files\": [\n        {\n          \"status\": \"modified\",\n          \"path\": \"services/user-service/README.md\"\n        }\n      ]\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "search_commits"
+    },
+    {
+      "arguments": {
+        "paths": [
+          "services/payment-service"
+        ],
+        "repo": "sample-repo",
+        "sha": "4bccd960fbbe5d24a6312471a3dcb87183efefda"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "files": [
+            {
+              "binary": false,
+              "hunks": [
+                "@@ -0,0 +1,5 @@\n+\"\"\"Receipt formatting.\"\"\"\n+\n+\n+def format_amount(amount_cents: int, currency: str) -> str:\n+    return f\"{amount_cents / 100:.2f} {currency}\""
+              ],
+              "path": "services/payment-service/app/receipts.py",
+              "status": "added"
+            }
+          ],
+          "paths": [
+            "services/payment-service"
+          ],
+          "repo": "sample-repo",
+          "sha": "4bccd960fbbe5d24a6312471a3dcb87183efefda",
+          "truncated": false
+        },
+        "text": "{\n  \"repo\": \"sample-repo\",\n  \"sha\": \"4bccd960fbbe5d24a6312471a3dcb87183efefda\",\n  \"paths\": [\n    \"services/payment-service\"\n  ],\n  \"files\": [\n    {\n      \"path\": \"services/payment-service/app/receipts.py\",\n      \"status\": \"added\",\n      \"hunks\": [\n        \"@@ -0,0 +1,5 @@\\n+\\\"\\\"\\\"Receipt formatting.\\\"\\\"\\\"\\n+\\n+\\n+def format_amount(amount_cents: int, currency: str) -> str:\\n+    return f\\\"{amount_cents / 100:.2f} {currency}\\\"\"\n      ],\n      \"binary\": false\n    }\n  ],\n  \"truncated\": false\n}"
+      },
+      "tool": "get_diff"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Names of the repositories this server may read.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_repositoriesArguments",
+        "type": "object"
+      },
+      "name": "list_repositories"
+    },
+    {
+      "description": "Release tags, newest first, with the commit they point to and their date.\n\n        Args:\n            repo: repository name (see list_repositories), e.g. 'sample-repo'.\n            prefix: optional tag prefix, e.g. 'payment-service/' (tags are '<service>/<version>').\n            limit: max tags to return (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Prefix"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo"
+        ],
+        "title": "list_releasesArguments",
+        "type": "object"
+      },
+      "name": "list_releases"
+    },
+    {
+      "description": "Commits in [since, until] (committer date), newest first, with changed files and tags.\n\n        Args:\n            repo: repository name, e.g. 'sample-repo'.\n            since: window start, ISO-8601 UTC (e.g. '2026-09-24T10:00:00Z').\n            until: window end, ISO-8601 UTC.\n            paths: optional repo-relative paths; only commits touching them are returned,\n                e.g. ['services/payment-service'].\n            grep: optional case-insensitive text to match in commit messages (literal, not regex).\n            limit: max commits to return (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "grep": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Grep"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "paths": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Paths"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "since": {
+            "title": "Since",
+            "type": "string"
+          },
+          "until": {
+            "title": "Until",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo",
+          "since",
+          "until"
+        ],
+        "title": "search_commitsArguments",
+        "type": "object"
+      },
+      "name": "search_commits"
+    },
+    {
+      "description": "Commit metadata, full message, tags and per-file line stats (no diff).\n\n        Args:\n            repo: repository name.\n            sha: commit SHA (full or abbreviated) or tag name.\n        ",
+      "input_schema": {
+        "properties": {
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "sha": {
+            "title": "Sha",
+            "type": "string"
+          }
+        },
+        "required": [
+          "repo",
+          "sha"
+        ],
+        "title": "get_commitArguments",
+        "type": "object"
+      },
+      "name": "get_commit"
+    },
+    {
+      "description": "Unified diff split into files and hunks.\n\n        Either `sha` (the changes introduced by one commit) or `base` + `head` (e.g. two\n        release tags 'payment-service/v1.8.1' and 'payment-service/v1.8.2').\n\n        Args:\n            repo: repository name.\n            sha: commit SHA or tag.\n            base: range start (commit or tag), used with head.\n            head: range end (commit or tag), used with base.\n            paths: optional repo-relative paths to limit the diff to.\n            context_lines: unchanged lines around each change (0-10).\n        ",
+      "input_schema": {
+        "properties": {
+          "base": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Base"
+          },
+          "context_lines": {
+            "default": 3,
+            "title": "Context Lines",
+            "type": "integer"
+          },
+          "head": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Head"
+          },
+          "paths": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Paths"
+          },
+          "repo": {
+            "title": "Repo",
+            "type": "string"
+          },
+          "sha": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Sha"
+          }
+        },
+        "required": [
+          "repo"
+        ],
+        "title": "get_diffArguments",
+        "type": "object"
+      },
+      "name": "get_diff"
+    }
+  ]
+}

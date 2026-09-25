@@ -1,0 +1,5 @@
+# No incident change in the repo: only docs/refactor/test commits in the last 24h.
+status: [no_signal]
+signals: [no_recent_changes]
+forbidden_signals: [risky_config_change, recent_deployment_change, image_tag_change, unreleased_image_tag, dependency_change, schema_migration, dependency_service_change]
+min_evidence: 2

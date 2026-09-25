@@ -1,0 +1,6 @@
+# Manifest bumped to image v3.2.0, which was never released (ImagePullBackOff).
+status: [success]
+signals: [image_tag_change, unreleased_image_tag, recent_deployment_change]
+forbidden_signals: [no_recent_changes, risky_config_change]
+must_mention: [v3.2.0]
+min_evidence: 3

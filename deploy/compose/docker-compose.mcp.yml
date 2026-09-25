@@ -98,6 +98,25 @@ services:
     ports:
       - "127.0.0.1:${ALERTS_MCP_PORT:-8105}:8105"
     mem_limit: 128m
+  git-mcp:
+    build:
+      context: ../../mcp-servers/git-mcp
+    image: aiops/git-mcp:0.1.0
+    container_name: aiops-git-mcp
+    environment:
+      - GIT_REPOS=sample-repo=/repos/sample-repo
+      - MAX_COMMITS=${CODE_MAX_COMMITS:-200}
+      - MAX_DIFF_CHARS=${CODE_MAX_DIFF_CHARS:-40000}
+      - MAX_RANGE_DAYS=${CODE_MAX_RANGE_DAYS:-90}
+    volumes:
+      # Build it first: make seed-repo S=S1. Rebuilds are visible without a restart.
+      - ${CODE_SAMPLE_REPO_DIR:-../../.data/sample-repo}:/repos/sample-repo:ro
+    ports:
+      - "127.0.0.1:${CODE_MCP_PORT:-8107}:8107"
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 256m
     restart: unless-stopped
 
 networks:

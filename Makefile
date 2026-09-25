@@ -165,3 +165,12 @@ record-tickets-fixtures: venv-fix ## Re-record Tickets agent fixtures from mock-
 .PHONY: seed-repo
 seed-repo: venv-fix ## Build the sample Git repo (.data/sample-repo) for a scenario: make seed-repo S=S1
 	cd $(BACKEND) && uv run --no-sync aiops seed repo --scenario $(S) $(if $(NOW),--now $(NOW),)
+
+.PHONY: git-mcp-up
+git-mcp-up: ## Build and start only git-mcp on 127.0.0.1:8107 (mounts .data/sample-repo read-only)
+	$(MCP_COMPOSE) up -d --build --wait git-mcp
+
+.PHONY: record-code
+record-code: venv-fix ## Re-record Code agent fixtures from the live git-mcp (needs git-mcp-up)
+	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_code
+	@$(MAKE) --no-print-directory seed-repo S=S1

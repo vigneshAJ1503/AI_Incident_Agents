@@ -1,0 +1,6 @@
+# Symptom in order-service, change in its dependency inventory-service (index dropped).
+status: [success]
+signals: [dependency_service_change]
+forbidden_signals: [no_recent_changes, risky_config_change, image_tag_change]
+must_mention: [inventory-service, idx_stock_levels_sku]
+min_evidence: 3

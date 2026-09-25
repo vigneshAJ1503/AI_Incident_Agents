@@ -32,6 +32,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from aiops.core.config import ConfigError, find_config_dir
 from aiops.seed.logs import SCENARIOS
 
 TAG_TEMPLATE = "{service}/{version}"
@@ -1121,3 +1122,11 @@ class RepoBuilder:
 
 def build_sample_repo(path: Path, scenario: str, now: datetime) -> RepoSummary:
     return RepoBuilder(path).build(scenario, now)
+
+
+def default_repo_path() -> Path:
+    """``<project root>/.data/sample-repo`` (git-ignored; git-mcp mounts it read-only)."""
+    try:
+        return find_config_dir().parent / ".data" / "sample-repo"
+    except ConfigError:
+        return Path(".data") / "sample-repo"

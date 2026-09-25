@@ -1050,8 +1050,8 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-027 · Git MCP + Code Agent
 - **Branch:** `feat/027-code-agent`
 - **Scope:**
-  - Git MCP (read-only, scoped to the repo)
-  - tools `search_commits, get_commit, get_diff, list_releases`
+  - Git MCP (read-only, scoped to the repo): our own `mcp-servers/git-mcp` (ADR-0007), because the reference `mcp-server-git` has write tools, no path filter and no tag listing
+  - tools `search_commits, get_commit, get_diff, list_releases` (+ `list_repositories`)
   - the agent correlates symptoms with changes in `[start−24h, start]` and flags risky config, DB and dependency diffs
 - 🎯 UC-08
 - ✅ S1 finds commit `abc123` and quotes the diff hunk.

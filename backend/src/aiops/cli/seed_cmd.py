@@ -10,11 +10,10 @@ import typer
 from rich.table import Table
 
 from aiops.cli.common import console, err_console
-from aiops.core.config import ConfigError, find_config_dir
 from aiops.seed.alertmanager import AlertmanagerSeeder
 from aiops.seed.alerts import DEFAULT_TTL, NAMESPACE, scenario_alerts
 from aiops.seed.elasticsearch import ElasticsearchSeeder, SeedError
-from aiops.seed.git_repo import RepoSeedError, build_sample_repo
+from aiops.seed.git_repo import RepoSeedError, build_sample_repo, default_repo_path
 from aiops.seed.logs import ENV_SHORT, SCENARIOS, LogGenerator, SeedWindow, index_name
 
 app = typer.Typer(help="Seed local infrastructure with scenario data.", no_args_is_help=True)
@@ -167,14 +166,6 @@ def seed_tickets(
         f"anchor {anchor:%Y-%m-%d %H:%M} UTC · "
         + ", ".join(f"{k}: {v}" for k, v in sorted(counts.items()))
     )
-
-
-def default_repo_path() -> Path:
-    """``<project root>/.data/sample-repo`` (git-ignored), independent of the cwd."""
-    try:
-        return find_config_dir().parent / ".data" / "sample-repo"
-    except ConfigError:
-        return Path(".data") / "sample-repo"
 
 
 @app.command("repo")

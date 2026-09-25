@@ -149,3 +149,7 @@ jira-mcp-up: ## Start mcp-atlassian for a real Jira Cloud site (needs JIRA_* in 
 .PHONY: seed-tickets
 seed-tickets: venv-fix ## Seed the mock tickets backlog (OPS project) into Postgres
 	cd $(BACKEND) && uv run --no-sync aiops seed tickets
+
+.PHONY: record-tickets-fixtures
+record-tickets-fixtures: venv-fix ## Re-record Tickets agent fixtures from mock-tickets-mcp (reseeds at FIXED_NOW)
+	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_tickets

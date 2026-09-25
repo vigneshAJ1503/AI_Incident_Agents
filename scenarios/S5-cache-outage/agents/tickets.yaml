@@ -1,0 +1,7 @@
+# "Payments are slow": the resolved Redis failover incident OPS-5 is a similar past incident;
+# OPS-12 (DB timeouts, no slowness) must not be claimed as a known issue.
+status: [success]
+signals: [similar_past_incident]
+forbidden_signals: [known_issue_open]
+must_mention: [redis]
+min_evidence: 2

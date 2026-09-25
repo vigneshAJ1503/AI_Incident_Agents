@@ -1,0 +1,5 @@
+# The seeded known issue OPS-12 "payment-service DB connection timeouts" (HTTP 500s) is found.
+status: [success]
+signals: [known_issue_open]
+must_mention: [OPS-12]
+min_evidence: 2

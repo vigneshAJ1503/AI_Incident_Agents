@@ -1,0 +1,563 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "fields": "summary,description,status,issuetype,priority,labels,components,created,updated,resolution,resolutiondate",
+        "jql": "project = \"OPS\" AND (component in (\"payments\", \"identity\") OR labels in (\"payment-service\", \"user-service\")) AND (statusCategory != Done OR resolved >= \"2026-06-27\") ORDER BY updated DESC",
+        "limit": 20
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "issues": [
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-12",
+              "components": [
+                "payments"
+              ],
+              "created": "2026-09-22 10:30:00 UTC",
+              "description": "Intermittent 'Database connection timeout: could not acquire a connection from the pool' errors on /api/v1/pay. Affected requests fail with HTTP 500. Suspected connection pool sizing; see OPS-2 for a similar incident. Workaround: scale out payment-service.",
+              "id": "10012",
+              "issue_type": {
+                "name": "Bug"
+              },
+              "key": "OPS-12",
+              "labels": [
+                "payment-service",
+                "database",
+                "known-issue"
+              ],
+              "priority": {
+                "name": "High"
+              },
+              "status": {
+                "category": "To Do",
+                "color": "blue-gray",
+                "name": "Open"
+              },
+              "summary": "payment-service DB connection timeouts",
+              "updated": "2026-09-23 10:30:00 UTC"
+            },
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-13",
+              "components": [
+                "payments"
+              ],
+              "created": "2026-09-13 10:30:00 UTC",
+              "description": "Sequence diagram and failure modes for refunds.",
+              "id": "10013",
+              "issue_type": {
+                "name": "Task"
+              },
+              "key": "OPS-13",
+              "labels": [
+                "payment-service",
+                "docs"
+              ],
+              "priority": {
+                "name": "Low"
+              },
+              "status": {
+                "category": "To Do",
+                "color": "blue-gray",
+                "name": "Open"
+              },
+              "summary": "Document the payment-service refund flow",
+              "updated": "2026-09-13 10:30:00 UTC"
+            },
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-8",
+              "components": [
+                "identity"
+              ],
+              "created": "2026-09-11 10:30:00 UTC",
+              "description": "Protect against credential stuffing; 10 attempts per minute per IP.",
+              "id": "10008",
+              "issue_type": {
+                "name": "Story"
+              },
+              "key": "OPS-8",
+              "labels": [
+                "user-service",
+                "security"
+              ],
+              "priority": {
+                "name": "Medium"
+              },
+              "status": {
+                "category": "To Do",
+                "color": "blue-gray",
+                "name": "Open"
+              },
+              "summary": "user-service: add rate limiting to the login endpoint",
+              "updated": "2026-09-11 10:30:00 UTC"
+            },
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-11",
+              "components": [
+                "identity"
+              ],
+              "created": "2026-08-31 10:30:00 UTC",
+              "description": "Upload returns HTTP 413; raise the body size limit on the ingress.",
+              "id": "10011",
+              "issue_type": {
+                "name": "Bug"
+              },
+              "key": "OPS-11",
+              "labels": [
+                "user-service"
+              ],
+              "priority": {
+                "name": "Medium"
+              },
+              "resolution": {
+                "name": "Fixed"
+              },
+              "resolutiondate": "2026-09-04T10:30:00.000+0000",
+              "status": {
+                "category": "Done",
+                "color": "green",
+                "name": "Done"
+              },
+              "summary": "user-service avatar upload fails for PNG files over 5 MB",
+              "updated": "2026-09-04 10:30:00 UTC"
+            },
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-5",
+              "components": [
+                "payments"
+              ],
+              "created": "2026-07-27 10:30:00 UTC",
+              "description": "Redis primary failover left the cache cold; all reads went to Postgres and payment-service became slow (p95 4 s) for 15 minutes. Action: cache warm-up job and a circuit breaker on the Redis client.",
+              "id": "10005",
+              "issue_type": {
+                "name": "Incident"
+              },
+              "key": "OPS-5",
+              "labels": [
+                "payment-service",
+                "redis",
+                "cache",
+                "incident"
+              ],
+              "priority": {
+                "name": "High"
+              },
+              "resolution": {
+                "name": "Fixed"
+              },
+              "resolutiondate": "2026-07-27T22:30:00.000+0000",
+              "status": {
+                "category": "Done",
+                "color": "green",
+                "name": "Done"
+              },
+              "summary": "payment-service slow responses during Redis failover",
+              "updated": "2026-07-27 22:30:00 UTC"
+            }
+          ],
+          "max_results": 20,
+          "start_at": 0,
+          "total": 5
+        },
+        "text": "{\n  \"total\": 5,\n  \"start_at\": 0,\n  \"max_results\": 20,\n  \"issues\": [\n    {\n      \"id\": \"10012\",\n      \"key\": \"OPS-12\",\n      \"summary\": \"payment-service DB connection timeouts\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-12\",\n      \"description\": \"Intermittent 'Database connection timeout: could not acquire a connection from the pool' errors on /api/v1/pay. Affected requests fail with HTTP 500. Suspected connection pool sizing; see OPS-2 for a similar incident. Workaround: scale out payment-service.\",\n      \"status\": {\n        \"name\": \"Open\",\n        \"category\": \"To Do\",\n        \"color\": \"blue-gray\"\n      },\n      \"issue_type\": {\n        \"name\": \"Bug\"\n      },\n      \"priority\": {\n        \"name\": \"High\"\n      },\n      \"labels\": [\n        \"payment-service\",\n        \"database\",\n        \"known-issue\"\n      ],\n      \"components\": [\n        \"payments\"\n      ],\n      \"created\": \"2026-09-22 10:30:00 UTC\",\n      \"updated\": \"2026-09-23 10:30:00 UTC\"\n    },\n    {\n      \"id\": \"10013\",\n      \"key\": \"OPS-13\",\n      \"summary\": \"Document the payment-service refund flow\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-13\",\n      \"description\": \"Sequence diagram and failure modes for refunds.\",\n      \"status\": {\n        \"name\": \"Open\",\n        \"category\": \"To Do\",\n        \"color\": \"blue-gray\"\n      },\n      \"issue_type\": {\n        \"name\": \"Task\"\n      },\n      \"priority\": {\n        \"name\": \"Low\"\n      },\n      \"labels\": [\n        \"payment-service\",\n        \"docs\"\n      ],\n      \"components\": [\n        \"payments\"\n      ],\n      \"created\": \"2026-09-13 10:30:00 UTC\",\n      \"updated\": \"2026-09-13 10:30:00 UTC\"\n    },\n    {\n      \"id\": \"10008\",\n      \"key\": \"OPS-8\",\n      \"summary\": \"user-service: add rate limiting to the login endpoint\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-8\",\n      \"description\": \"Protect against credential stuffing; 10 attempts per minute per IP.\",\n      \"status\": {\n        \"name\": \"Open\",\n        \"category\": \"To Do\",\n        \"color\": \"blue-gray\"\n      },\n      \"issue_type\": {\n        \"name\": \"Story\"\n      },\n      \"priority\": {\n        \"name\": \"Medium\"\n      },\n      \"labels\": [\n        \"user-service\",\n        \"security\"\n      ],\n      \"components\": [\n        \"identity\"\n      ],\n      \"created\": \"2026-09-11 10:30:00 UTC\",\n      \"updated\": \"2026-09-11 10:30:00 UTC\"\n    },\n    {\n      \"id\": \"10011\",\n      \"key\": \"OPS-11\",\n      \"summary\": \"user-service avatar upload fails for PNG files over 5 MB\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-11\",\n      \"description\": \"Upload returns HTTP 413; raise the body size limit on the ingress.\",\n      \"status\": {\n        \"name\": \"Done\",\n        \"category\": \"Done\",\n        \"color\": \"green\"\n      },\n      \"issue_type\": {\n        \"name\": \"Bug\"\n      },\n      \"priority\": {\n        \"name\": \"Medium\"\n      },\n      \"resolution\": {\n        \"name\": \"Fixed\"\n      },\n      \"resolutiondate\": \"2026-09-04T10:30:00.000+0000\",\n      \"labels\": [\n        \"user-service\"\n      ],\n      \"components\": [\n        \"identity\"\n      ],\n      \"created\": \"2026-08-31 10:30:00 UTC\",\n      \"updated\": \"2026-09-04 10:30:00 UTC\"\n    },\n    {\n      \"id\": \"10005\",\n      \"key\": \"OPS-5\",\n      \"summary\": \"payment-service slow responses during Redis failover\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-5\",\n      \"description\": \"Redis primary failover left the cache cold; all reads went to Postgres and payment-service became slow (p95 4 s) for 15 minutes. Action: cache warm-up job and a circuit breaker on the Redis client.\",\n      \"status\": {\n        \"name\": \"Done\",\n        \"category\": \"Done\",\n        \"color\": \"green\"\n      },\n      \"issue_type\": {\n        \"name\": \"Incident\"\n      },\n      \"priority\": {\n        \"name\": \"High\"\n      },\n      \"resolution\": {\n        \"name\": \"Fixed\"\n      },\n      \"resolutiondate\": \"2026-07-27T22:30:00.000+0000\",\n      \"labels\": [\n        \"payment-service\",\n        \"redis\",\n        \"cache\",\n        \"incident\"\n      ],\n      \"components\": [\n        \"payments\"\n      ],\n      \"created\": \"2026-07-27 10:30:00 UTC\",\n      \"updated\": \"2026-07-27 22:30:00 UTC\"\n    }\n  ]\n}"
+      },
+      "tool": "jira_search"
+    },
+    {
+      "arguments": {
+        "fields": "summary,description,status,issuetype,priority,labels,components,created,updated,resolution,resolutiondate",
+        "jql": "project = \"OPS\" AND (text ~ \"500\") AND (statusCategory != Done OR resolved >= \"2026-06-27\") ORDER BY updated DESC",
+        "limit": 20
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "issues": [
+            {
+              "browse_url": "http://localhost:8109/browse/OPS-12",
+              "components": [
+                "payments"
+              ],
+              "created": "2026-09-22 10:30:00 UTC",
+              "description": "Intermittent 'Database connection timeout: could not acquire a connection from the pool' errors on /api/v1/pay. Affected requests fail with HTTP 500. Suspected connection pool sizing; see OPS-2 for a similar incident. Workaround: scale out payment-service.",
+              "id": "10012",
+              "issue_type": {
+                "name": "Bug"
+              },
+              "key": "OPS-12",
+              "labels": [
+                "payment-service",
+                "database",
+                "known-issue"
+              ],
+              "priority": {
+                "name": "High"
+              },
+              "status": {
+                "category": "To Do",
+                "color": "blue-gray",
+                "name": "Open"
+              },
+              "summary": "payment-service DB connection timeouts",
+              "updated": "2026-09-23 10:30:00 UTC"
+            }
+          ],
+          "max_results": 20,
+          "start_at": 0,
+          "total": 1
+        },
+        "text": "{\n  \"total\": 1,\n  \"start_at\": 0,\n  \"max_results\": 20,\n  \"issues\": [\n    {\n      \"id\": \"10012\",\n      \"key\": \"OPS-12\",\n      \"summary\": \"payment-service DB connection timeouts\",\n      \"browse_url\": \"http://localhost:8109/browse/OPS-12\",\n      \"description\": \"Intermittent 'Database connection timeout: could not acquire a connection from the pool' errors on /api/v1/pay. Affected requests fail with HTTP 500. Suspected connection pool sizing; see OPS-2 for a similar incident. Workaround: scale out payment-service.\",\n      \"status\": {\n        \"name\": \"Open\",\n        \"category\": \"To Do\",\n        \"color\": \"blue-gray\"\n      },\n      \"issue_type\": {\n        \"name\": \"Bug\"\n      },\n      \"priority\": {\n        \"name\": \"High\"\n      },\n      \"labels\": [\n        \"payment-service\",\n        \"database\",\n        \"known-issue\"\n      ],\n      \"components\": [\n        \"payments\"\n      ],\n      \"created\": \"2026-09-22 10:30:00 UTC\",\n      \"updated\": \"2026-09-23 10:30:00 UTC\"\n    }\n  ]\n}"
+      },
+      "tool": "jira_search"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Search Jira issues using JQL (Jira Query Language).\n\n        Supported subset: project, key, status, statusCategory, issuetype, priority, resolution,\n        labels, component, text/summary/description ~ \"words\", created/updated/resolved with\n        > >= < <= and 'YYYY-MM-DD' or '-7d', AND/OR/NOT, parentheses, ORDER BY.\n        Example: project = OPS AND labels = payment-service AND statusCategory != Done\n                 ORDER BY updated DESC\n\n        Args:\n            jql: JQL query string.\n            fields: Comma-separated fields to return, or '*all'.\n            limit: Maximum number of results (1-50).\n            start_at: Starting index for pagination (0-based).\n            projects_filter: Comma-separated project keys to restrict the search to.\n            expand: Accepted for compatibility; ignored by the mock.\n            page_token: Accepted for compatibility; ignored by the mock.\n            use_display_names: Accepted for compatibility; ignored by the mock.\n        ",
+      "input_schema": {
+        "properties": {
+          "expand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expand"
+          },
+          "fields": {
+            "default": "summary,description,status,assignee,reporter,labels,versions,priority,created,updated,issuetype",
+            "title": "Fields",
+            "type": "string"
+          },
+          "jql": {
+            "title": "Jql",
+            "type": "string"
+          },
+          "limit": {
+            "default": 10,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "page_token": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Page Token"
+          },
+          "projects_filter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Projects Filter"
+          },
+          "start_at": {
+            "default": 0,
+            "title": "Start At",
+            "type": "integer"
+          },
+          "use_display_names": {
+            "default": false,
+            "title": "Use Display Names",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "jql"
+        ],
+        "title": "jira_searchArguments",
+        "type": "object"
+      },
+      "name": "jira_search"
+    },
+    {
+      "description": "Get details of a specific Jira issue.\n\n        Args:\n            issue_key: Jira issue key (e.g. 'OPS-12').\n            fields: Comma-separated fields to return (e.g. 'summary,status,labels'), or '*all'.\n            expand: Accepted for compatibility; ignored by the mock.\n            comment_limit: Maximum number of comments to include (0 for none).\n            properties: Accepted for compatibility; ignored by the mock.\n            update_history: Accepted for compatibility; ignored by the mock.\n            include: Comma-separated sections to inline; 'comments' adds comments.\n            use_display_names: Accepted for compatibility; ignored by the mock.\n        ",
+      "input_schema": {
+        "properties": {
+          "comment_limit": {
+            "default": 10,
+            "title": "Comment Limit",
+            "type": "integer"
+          },
+          "expand": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expand"
+          },
+          "fields": {
+            "default": "summary,description,status,assignee,reporter,labels,versions,priority,created,updated,issuetype",
+            "title": "Fields",
+            "type": "string"
+          },
+          "include": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Include"
+          },
+          "issue_key": {
+            "title": "Issue Key",
+            "type": "string"
+          },
+          "properties": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Properties"
+          },
+          "update_history": {
+            "default": true,
+            "title": "Update History",
+            "type": "boolean"
+          },
+          "use_display_names": {
+            "default": false,
+            "title": "Use Display Names",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "issue_key"
+        ],
+        "title": "jira_get_issueArguments",
+        "type": "object"
+      },
+      "name": "jira_get_issue"
+    },
+    {
+      "description": "Create a new Jira issue.\n\n            Args:\n                project_key: The Jira project key (e.g. 'OPS').\n                summary: Summary/title of the issue.\n                issue_type: Issue type (e.g. 'Task', 'Bug', 'Story', 'Incident').\n                assignee: Optional assignee identifier.\n                description: Issue description in Markdown.\n                components: Comma-separated component names (e.g. 'payments').\n                additional_fields: JSON string, e.g. '{\"labels\": [\"aiops\"], \"priority\": {\"name\": \"High\"}}'.\n            ",
+      "input_schema": {
+        "properties": {
+          "additional_fields": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Additional Fields"
+          },
+          "assignee": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Assignee"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Components"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Description"
+          },
+          "issue_type": {
+            "title": "Issue Type",
+            "type": "string"
+          },
+          "project_key": {
+            "title": "Project Key",
+            "type": "string"
+          },
+          "summary": {
+            "title": "Summary",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_key",
+          "summary",
+          "issue_type"
+        ],
+        "title": "jira_create_issueArguments",
+        "type": "object"
+      },
+      "name": "jira_create_issue"
+    },
+    {
+      "description": "Update an existing Jira issue.\n\n            Args:\n                issue_key: Jira issue key (e.g. 'OPS-12').\n                fields: JSON string of fields to update, e.g. '{\"summary\": \"New\", \"labels\": [\"a\"]}'.\n                additional_fields: Optional JSON string of more fields (same keys as fields).\n                components: Optional comma-separated component names.\n                attachments: Not supported by the mock.\n                return_fields: Fields of the updated issue to return, or '*all'.\n            ",
+      "input_schema": {
+        "properties": {
+          "additional_fields": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Additional Fields"
+          },
+          "attachments": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Attachments"
+          },
+          "components": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Components"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "additionalProperties": true,
+                "type": "object"
+              }
+            ],
+            "title": "Fields"
+          },
+          "issue_key": {
+            "title": "Issue Key",
+            "type": "string"
+          },
+          "return_fields": {
+            "default": "*all",
+            "title": "Return Fields",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issue_key",
+          "fields"
+        ],
+        "title": "jira_update_issueArguments",
+        "type": "object"
+      },
+      "name": "jira_update_issue"
+    },
+    {
+      "description": "Add a comment to a Jira issue.\n\n            Args:\n                issue_key: Jira issue key (e.g. 'OPS-12').\n                body: Comment text in Markdown.\n                visibility: Accepted for compatibility; ignored by the mock.\n                public: Accepted for compatibility; ignored by the mock.\n            ",
+      "input_schema": {
+        "properties": {
+          "body": {
+            "title": "Body",
+            "type": "string"
+          },
+          "issue_key": {
+            "title": "Issue Key",
+            "type": "string"
+          },
+          "public": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Public"
+          },
+          "visibility": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Visibility"
+          }
+        },
+        "required": [
+          "issue_key",
+          "body"
+        ],
+        "title": "jira_add_commentArguments",
+        "type": "object"
+      },
+      "name": "jira_add_comment"
+    }
+  ]
+}

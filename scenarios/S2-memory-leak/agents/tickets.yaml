@@ -1,0 +1,6 @@
+# The question ("failing intermittently") names no symptom: context only, no known issue.
+# With the logs agent's symptoms (oom_errors) the resolved OOM incident OPS-3 is found
+# (unit test on the S2-oom-symptoms fixture).
+status: [no_signal]
+forbidden_signals: [known_issue_open, dependency_known_issue_open]
+min_evidence: 1

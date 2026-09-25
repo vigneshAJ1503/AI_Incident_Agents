@@ -1,0 +1,4 @@
+# No symptom in the question and no related incident ticket: context only.
+status: [no_signal]
+forbidden_signals: [known_issue_open, dependency_known_issue_open, similar_past_incident]
+min_evidence: 1

@@ -1,0 +1,6 @@
+# UC-06 acceptance: the firing alerts are listed (pool exhausted first, then 5xx).
+status: [success]
+signals: [alerts_firing, critical_alert_firing]
+forbidden_signals: [no_active_alerts, dependency_alert_firing, alert_precedes_incident]
+must_mention: [HighErrorRate, DatabaseConnectionPoolExhausted]
+min_evidence: 2

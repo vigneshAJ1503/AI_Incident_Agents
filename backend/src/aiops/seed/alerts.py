@@ -131,7 +131,9 @@ SCENARIO_ALERTS: dict[str, tuple[ScenarioAlert, ...]] = {
         ScenarioAlert("PodCrashLooping", "order-service", 12 * M, "3", _pod("order-service")),
     ),
     "S3": (
-        # The dependency slows down first; order-service times out a few minutes later.
+        # inventory-service slows down first, but latency rules wait `for: 5m` while the
+        # error-rate rule waits 2m: order-service's HighErrorRate fires first. The order in
+        # which alerts fire is not the causal order.
         ScenarioAlert("HighLatencyP95", "inventory-service", 5 * M, "4.1s"),
         ScenarioAlert("HighErrorRate", "order-service", 3 * M, "29.7%"),
         ScenarioAlert("HighLatencyP95", "order-service", 6 * M, "3.05s"),

@@ -49,6 +49,8 @@ BENIGN_SIGNALS = frozenset(
         "no_related_tickets",
         # knowledge: no runbook matched (nothing claimed)
         "no_relevant_docs",
+        # alerts: nothing firing (the explicit "all clear")
+        "no_active_alerts",
     }
 )
 
@@ -287,14 +289,23 @@ def seed_live(scenario: Scenario, capabilities: Sequence[str], es_url: str) -> d
     from aiops.seed.logs import SCENARIOS as LOG_SCENARIOS
 
     now = datetime.now(UTC)
+    if scenario.id not in LOG_SCENARIOS and {"logs", "alerts"} & set(capabilities):
+        raise EvalError(f"No synthetic data generator for scenario {scenario.id}.")
     if "logs" in capabilities:
-        if scenario.id not in LOG_SCENARIOS:
-            raise EvalError(f"No log generator for scenario {scenario.id}.")
         try:
             window, _ = seed_scenario_logs(es_url, scenario.id, now)
         except SeedError as exc:
             raise EvalError(f"Seeding {scenario.id} failed: {exc}") from exc
-        return window.now
+        now = window.now
+    if "alerts" in capabilities:
+        from aiops.seed.alertmanager import seed_scenario_alerts
+
+        am_url = os.environ.get("ALERTMANAGER_URL", "http://localhost:9093")
+        try:
+            window, _ = seed_scenario_alerts(am_url, scenario.id, now)
+        except SeedError as exc:
+            raise EvalError(f"Seeding {scenario.id} alerts failed: {exc}") from exc
+        now = window.now
     return now
 
 

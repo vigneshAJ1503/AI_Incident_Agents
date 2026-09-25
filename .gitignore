@@ -1,4 +1,37 @@
+# OS / editors
 .DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Secrets — never commit
 .env
 .env.*
 !.env.example
+*.pem
+*.key
+kubeconfig*
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+.next/
+.pnpm-store/
+
+# Local runtime data
+.data/
+logs/
+*.log
+evals/reports/*.tmp

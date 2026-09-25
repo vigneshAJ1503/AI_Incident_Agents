@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 
 import typer
@@ -69,7 +69,9 @@ def run(
     service: str = typer.Option(..., "--service", "-s", help="Service name or alias."),
     environment: str = typer.Option("production", "--environment", "-E"),
     since: str = typer.Option("30m", "--since", help="Look-back window, e.g. 30m, 2h."),
-    end: datetime | None = typer.Option(None, "--end", help="Window end (UTC ISO). Default: now."),
+    end: datetime | None = typer.Option(
+        None, "--end", help="Window end, UTC (e.g. 2026-09-25T10:30:00). Default: now."
+    ),
     record: Path | None = typer.Option(
         None, "--record", help="Save MCP responses as fixtures here."
     ),
@@ -91,7 +93,7 @@ def run(
     if env_name is None:
         err_console.print(f"[red]Unknown environment[/red] '{environment}'")
         raise typer.Exit(code=1)
-    window_end = end.astimezone() if end else None
+    window_end = (end.replace(tzinfo=UTC) if end.tzinfo is None else end) if end else None
     context = IncidentContext(
         question=question,
         service=resolution.service.name,

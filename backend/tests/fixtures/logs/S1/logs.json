@@ -1,0 +1,371 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | STATS count = COUNT(*) BY level | SORT count DESC",
+        "start": "2026-09-25T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "level"
+          ],
+          "row_count": 3,
+          "rows": [
+            [
+              309,
+              "INFO"
+            ],
+            [
+              62,
+              "ERROR"
+            ],
+            [
+              18,
+              "WARN"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-25T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      309,\n      \"INFO\"\n    ],\n    [\n      62,\n      \"ERROR\"\n    ],\n    [\n      18,\n      \"WARN\"\n    ]\n  ],\n  \"row_count\": 3,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-25T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "query": "FROM payment-prod-* | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY msg = message.keyword | SORT count DESC | LIMIT 10",
+        "start": "2026-09-25T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "first_seen",
+            "last_seen",
+            "msg"
+          ],
+          "row_count": 10,
+          "rows": [
+            [
+              6,
+              "2026-09-25T10:13:50.720Z",
+              "2026-09-25T10:27:51.499Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)"
+            ],
+            [
+              5,
+              "2026-09-25T10:17:34.843Z",
+              "2026-09-25T10:29:41.303Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=27)"
+            ],
+            [
+              4,
+              "2026-09-25T10:10:08.275Z",
+              "2026-09-25T10:27:40.977Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=7)"
+            ],
+            [
+              4,
+              "2026-09-25T10:10:21.213Z",
+              "2026-09-25T10:21:35.591Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)"
+            ],
+            [
+              3,
+              "2026-09-25T10:16:20.868Z",
+              "2026-09-25T10:28:22.856Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=25)"
+            ],
+            [
+              3,
+              "2026-09-25T10:11:14.575Z",
+              "2026-09-25T10:23:56.869Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=24)"
+            ],
+            [
+              3,
+              "2026-09-25T10:10:14.991Z",
+              "2026-09-25T10:26:12.904Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=38)"
+            ],
+            [
+              3,
+              "2026-09-25T10:14:19.474Z",
+              "2026-09-25T10:29:35.930Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=21)"
+            ],
+            [
+              3,
+              "2026-09-25T10:16:29.126Z",
+              "2026-09-25T10:29:43.465Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=39)"
+            ],
+            [
+              3,
+              "2026-09-25T10:11:40.636Z",
+              "2026-09-25T10:14:25.712Z",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-25T10:30:00+00:00",
+            "start": "2026-09-25T10:00:00+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      6,\n      \"2026-09-25T10:13:50.720Z\",\n      \"2026-09-25T10:27:51.499Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)\"\n    ],\n    [\n      5,\n      \"2026-09-25T10:17:34.843Z\",\n      \"2026-09-25T10:29:41.303Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=27)\"\n    ],\n    [\n      4,\n      \"2026-09-25T10:10:08.275Z\",\n      \"2026-09-25T10:27:40.977Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=7)\"\n    ],\n    [\n      4,\n      \"2026-09-25T10:10:21.213Z\",\n      \"2026-09-25T10:21:35.591Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:16:20.868Z\",\n      \"2026-09-25T10:28:22.856Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=25)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:11:14.575Z\",\n      \"2026-09-25T10:23:56.869Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=24)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:10:14.991Z\",\n      \"2026-09-25T10:26:12.904Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=38)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:14:19.474Z\",\n      \"2026-09-25T10:29:35.930Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=21)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:16:29.126Z\",\n      \"2026-09-25T10:29:43.465Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=39)\"\n    ],\n    [\n      3,\n      \"2026-09-25T10:11:40.636Z\",\n      \"2026-09-25T10:14:25.712Z\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)\"\n    ]\n  ],\n  \"row_count\": 10,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-25T10:00:00+00:00\",\n    \"end\": \"2026-09-25T10:30:00+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-25T10:30:00Z",
+        "index": "payment-prod-*",
+        "levels": [
+          "ERROR"
+        ],
+        "size": 5,
+        "start": "2026-09-25T10:00:00Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "hits": [
+            {
+              "@timestamp": "2026-09-25T10:29:58.963695Z",
+              "duration_ms": 5378,
+              "endpoint": "/api/v1/pay",
+              "environment": "production",
+              "error_type": "ConnectionTimeoutException",
+              "host": "payment-service-66cdd-c0x",
+              "http_method": "POST",
+              "level": "ERROR",
+              "logger": "com.acme.payment.db.ConnectionPool",
+              "message": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=6)",
+              "service": "payment-service",
+              "status_code": 500,
+              "trace_id": "b19f76d838b5ed47",
+              "version": "v1.8.2"
+            },
+            {
+              "@timestamp": "2026-09-25T10:29:43.465828Z",
+              "duration_ms": 5345,
+              "endpoint": "/api/v1/pay",
+              "environment": "production",
+              "error_type": "ConnectionTimeoutException",
+              "host": "payment-service-66cdd-c5x",
+              "http_method": "POST",
+              "level": "ERROR",
+              "logger": "com.acme.payment.db.ConnectionPool",
+              "message": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=39)",
+              "service": "payment-service",
+              "status_code": 500,
+              "trace_id": "7c9872163e84451e",
+              "version": "v1.8.2"
+            },
+            {
+              "@timestamp": "2026-09-25T10:29:41.303027Z",
+              "duration_ms": 5339,
+              "endpoint": "/api/v1/pay",
+              "environment": "production",
+              "error_type": "ConnectionTimeoutException",
+              "host": "payment-service-66cdd-b6x",
+              "http_method": "POST",
+              "level": "ERROR",
+              "logger": "com.acme.payment.db.ConnectionPool",
+              "message": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=27)",
+              "service": "payment-service",
+              "status_code": 500,
+              "trace_id": "3a01df5a024d3c7d",
+              "version": "v1.8.2"
+            },
+            {
+              "@timestamp": "2026-09-25T10:29:35.930128Z",
+              "duration_ms": 5377,
+              "endpoint": "/api/v1/pay",
+              "environment": "production",
+              "error_type": "ConnectionTimeoutException",
+              "host": "payment-service-66cdd-b3x",
+              "http_method": "POST",
+              "level": "ERROR",
+              "logger": "com.acme.payment.db.ConnectionPool",
+              "message": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=21)",
+              "service": "payment-service",
+              "status_code": 500,
+              "trace_id": "fd96737f60d2e4fe",
+              "version": "v1.8.2"
+            },
+            {
+              "@timestamp": "2026-09-25T10:28:22.856470Z",
+              "duration_ms": 5353,
+              "endpoint": "/api/v1/pay",
+              "environment": "production",
+              "error_type": "ConnectionTimeoutException",
+              "host": "payment-service-66cdd-b6x",
+              "http_method": "POST",
+              "level": "ERROR",
+              "logger": "com.acme.payment.db.ConnectionPool",
+              "message": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=25)",
+              "service": "payment-service",
+              "status_code": 500,
+              "trace_id": "f22336c2974cb394",
+              "version": "v1.8.2"
+            }
+          ],
+          "returned": 5,
+          "total": 62,
+          "truncated": true
+        },
+        "text": "{\n  \"total\": 62,\n  \"returned\": 5,\n  \"truncated\": true,\n  \"hits\": [\n    {\n      \"@timestamp\": \"2026-09-25T10:29:58.963695Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=6)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.2\",\n      \"host\": \"payment-service-66cdd-c0x\",\n      \"logger\": \"com.acme.payment.db.ConnectionPool\",\n      \"trace_id\": \"b19f76d838b5ed47\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 500,\n      \"duration_ms\": 5378,\n      \"error_type\": \"ConnectionTimeoutException\"\n    },\n    {\n      \"@timestamp\": \"2026-09-25T10:29:43.465828Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=39)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.2\",\n      \"host\": \"payment-service-66cdd-c5x\",\n      \"logger\": \"com.acme.payment.db.ConnectionPool\",\n      \"trace_id\": \"7c9872163e84451e\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 500,\n      \"duration_ms\": 5345,\n      \"error_type\": \"ConnectionTimeoutException\"\n    },\n    {\n      \"@timestamp\": \"2026-09-25T10:29:41.303027Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=27)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.2\",\n      \"host\": \"payment-service-66cdd-b6x\",\n      \"logger\": \"com.acme.payment.db.ConnectionPool\",\n      \"trace_id\": \"3a01df5a024d3c7d\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 500,\n      \"duration_ms\": 5339,\n      \"error_type\": \"ConnectionTimeoutException\"\n    },\n    {\n      \"@timestamp\": \"2026-09-25T10:29:35.930128Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=21)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.2\",\n      \"host\": \"payment-service-66cdd-b3x\",\n      \"logger\": \"com.acme.payment.db.ConnectionPool\",\n      \"trace_id\": \"fd96737f60d2e4fe\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 500,\n      \"duration_ms\": 5377,\n      \"error_type\": \"ConnectionTimeoutException\"\n    },\n    {\n      \"@timestamp\": \"2026-09-25T10:28:22.856470Z\",\n      \"level\": \"ERROR\",\n      \"message\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=25)\",\n      \"service\": \"payment-service\",\n      \"environment\": \"production\",\n      \"version\": \"v1.8.2\",\n      \"host\": \"payment-service-66cdd-b6x\",\n      \"logger\": \"com.acme.payment.db.ConnectionPool\",\n      \"trace_id\": \"f22336c2974cb394\",\n      \"http_method\": \"POST\",\n      \"endpoint\": \"/api/v1/pay\",\n      \"status_code\": 500,\n      \"duration_ms\": 5353,\n      \"error_type\": \"ConnectionTimeoutException\"\n    }\n  ]\n}"
+      },
+      "tool": "search_logs"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List the log indices you are allowed to query, with document counts and sizes.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_indicesArguments",
+        "type": "object"
+      },
+      "name": "list_indices"
+    },
+    {
+      "description": "Field names and types for an index pattern, e.g. 'payment-prod-*'.",
+      "input_schema": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "get_mappingArguments",
+        "type": "object"
+      },
+      "name": "get_mapping"
+    },
+    {
+      "description": "Return sample log documents.\n\n        Args:\n            index: allowed index pattern, e.g. 'payment-prod-*'.\n            start: window start, ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z').\n            end: window end, ISO-8601 UTC.\n            query: optional Lucene query, e.g. 'message:\"connection timeout\" AND status_code:500'.\n            levels: optional log levels, e.g. ['ERROR', 'WARN'].\n            size: max documents to return (capped by the server).\n            sort: 'desc' = newest first, 'asc' = oldest first (use asc to find first occurrence).\n            fields: optional list of fields to return.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "index": {
+            "title": "Index",
+            "type": "string"
+          },
+          "levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Levels"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "size": {
+            "default": 20,
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end"
+        ],
+        "title": "search_logsArguments",
+        "type": "object"
+      },
+      "name": "search_logs"
+    },
+    {
+      "description": "Run a read-only ES|QL query, automatically limited to [start, end].\n\n        The query must start with 'FROM <allowed index pattern>'. Example:\n          FROM payment-prod-* | WHERE level == \"ERROR\"\n          | STATS count = COUNT(*), first_seen = MIN(@timestamp) BY error_type | SORT count DESC\n        Args:\n            query: ES|QL query.\n            start: window start, ISO-8601 UTC.\n            end: window end, ISO-8601 UTC.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "execute_esqlArguments",
+        "type": "object"
+      },
+      "name": "execute_esql"
+    }
+  ]
+}

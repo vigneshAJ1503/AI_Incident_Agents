@@ -43,3 +43,35 @@ test: venv-fix ## Unit tests
 
 .PHONY: check
 check: lint typecheck test ## Everything CI runs
+
+.PHONY: test-integration
+test-integration: venv-fix ## Integration tests against the local stack (needs make infra-up)
+	cd $(BACKEND) && uv run --no-sync pytest -m integration -o addopts=""
+
+# --- Local infrastructure (PR-007) ---------------------------------------------------
+COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f deploy/compose/docker-compose.infra.yml
+S ?= S1
+
+.PHONY: infra-up
+infra-up: ## Start Elasticsearch, Kibana, Postgres, Redis (waits until healthy)
+	$(COMPOSE) --profile ui up -d --wait
+
+.PHONY: infra-up-lite
+infra-up-lite: ## Start the stack without Kibana (saves ~1 GB RAM)
+	$(COMPOSE) up -d --wait
+
+.PHONY: infra-down
+infra-down: ## Stop the stack (keeps data)
+	$(COMPOSE) --profile ui down
+
+.PHONY: infra-reset
+infra-reset: ## Stop the stack and DELETE its data volumes
+	$(COMPOSE) --profile ui down -v
+
+.PHONY: infra-status
+infra-status: ## Show container health
+	$(COMPOSE) --profile ui ps
+
+.PHONY: seed-logs
+seed-logs: venv-fix ## Seed synthetic logs for a scenario: make seed-logs S=S1
+	cd $(BACKEND) && uv run --no-sync aiops seed logs --scenario $(S)

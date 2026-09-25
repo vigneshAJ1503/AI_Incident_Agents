@@ -1,0 +1,16 @@
+id: S4
+title: Bad deployment (user-service image cannot be pulled)
+description: >
+  user-service rollout references a nonexistent image tag; only 1 of 3 replicas is ready.
+  Callers see 503 "no healthy upstream". Root cause is only visible to the K8s agent (PR-019).
+question: Login and checkout requests are failing in production
+service: user-service
+environment: production
+window: 30m
+root_cause: user-service deployment with a nonexistent image tag (ImagePullBackOff) leaves 1/3 replicas ready.
+agents:
+  logs:
+    status: [success]
+    signals: [capacity_degraded]
+    must_mention: [replicas]
+    min_evidence: 1

@@ -1,0 +1,14 @@
+id: S5
+title: Cache outage (Redis down)
+description: Redis is unavailable; all services fall back to the database and latency rises.
+question: Payments are slow in production
+service: payment-service
+environment: production
+window: 30m
+root_cause: Redis outage forces cache fallback to the database, increasing latency across services.
+agents:
+  logs:
+    status: [success]
+    signals: [cache_connection_errors]
+    must_mention: [redis]
+    min_evidence: 1

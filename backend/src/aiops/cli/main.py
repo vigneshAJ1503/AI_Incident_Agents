@@ -3,7 +3,16 @@
 import typer
 
 from aiops import __version__
-from aiops.cli import agent_cmd, catalog_cmd, config_cmd, llm_cmd, mcp_cmd, prompts_cmd, schemas_cmd
+from aiops.cli import (
+    agent_cmd,
+    catalog_cmd,
+    config_cmd,
+    llm_cmd,
+    mcp_cmd,
+    prompts_cmd,
+    schemas_cmd,
+    seed_cmd,
+)
 from aiops.cli.common import console
 
 app = typer.Typer(
@@ -18,6 +27,7 @@ app.add_typer(llm_cmd.app, name="llm")
 app.add_typer(prompts_cmd.app, name="prompts")
 app.add_typer(mcp_cmd.app, name="mcp")
 app.add_typer(agent_cmd.app, name="agent")
+app.add_typer(seed_cmd.app, name="seed")
 
 
 @app.callback()

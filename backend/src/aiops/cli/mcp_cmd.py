@@ -6,6 +6,7 @@ import asyncio
 import json
 
 import typer
+from rich.markup import escape
 from rich.table import Table
 
 from aiops.cli.common import EnvOption, console, err_console, handle_errors
@@ -27,7 +28,7 @@ def tools(capability: str, env: str | None = EnvOption) -> None:
             specs = await toolset.specs()
         table = Table("Tool", "Description")
         for spec in specs:
-            table.add_row(spec.name, spec.description.split("\n")[0])
+            table.add_row(spec.name, escape(spec.description.split("\n")[0]))
         console.print(table)
 
     try:

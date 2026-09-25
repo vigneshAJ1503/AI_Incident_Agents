@@ -1,0 +1,26 @@
+# MCP servers (PR-008+). Joins the network created by docker-compose.infra.yml.
+# Ports bind to 127.0.0.1 only.
+
+name: aiops-mcp
+
+services:
+  elasticsearch-mcp:
+    build:
+      context: ../../mcp-servers/elasticsearch-mcp
+    image: aiops/elasticsearch-mcp:0.1.0
+    container_name: aiops-elasticsearch-mcp
+    environment:
+      - ES_URL=http://elasticsearch:9200
+      - ALLOWED_INDEX_PATTERNS=${LOGS_ALLOWED_INDEX_PATTERNS:-payment-prod-*,order-prod-*,user-prod-*,inventory-prod-*,payment-staging-*,order-staging-*,user-staging-*,inventory-staging-*,logs-k8s-*}
+      - MAX_TIME_RANGE_HOURS=${LOGS_MAX_TIME_RANGE_HOURS:-48}
+      - MAX_RESULTS=${LOGS_MAX_RESULTS:-1000}
+      - QUERY_TIMEOUT_S=${LOGS_QUERY_TIMEOUT_S:-30}
+    ports:
+      - "127.0.0.1:${LOGS_MCP_PORT:-8101}:8101"
+    mem_limit: 256m
+    restart: unless-stopped
+
+networks:
+  default:
+    name: aiops
+    external: true

@@ -136,3 +136,16 @@ check-rules: ## Validate the alert rules (promtool check + unit tests) and alert
 		-w /rules $(PROMETHEUS_IMAGE) test rules alert-rules.test.yml
 	docker run --rm --entrypoint amtool -v "$(CURDIR)/deploy/compose/config/alertmanager:/cfg:ro" \
 		$(ALERTMANAGER_IMAGE) check-config /cfg/alertmanager.yml
+
+# --- Tickets (PR-012) -----------------------------------------------------------------
+.PHONY: mock-tickets-up
+mock-tickets-up: ## Build and start only mock-tickets-mcp (needs make infra-up)
+	$(MCP_COMPOSE) up -d --build --wait mock-tickets-mcp
+
+.PHONY: jira-mcp-up
+jira-mcp-up: ## Start mcp-atlassian for a real Jira Cloud site (needs JIRA_* in .env)
+	$(MCP_COMPOSE) --profile jira up -d jira-mcp
+
+.PHONY: seed-tickets
+seed-tickets: venv-fix ## Seed the mock tickets backlog (OPS project) into Postgres
+	cd $(BACKEND) && uv run --no-sync aiops seed tickets

@@ -28,6 +28,10 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "KIBANA_URL",
         "KNOWLEDGE_MCP_URL",
         "KNOWLEDGE_DATABASE_URL",
+        "TICKETS_PROVIDER",
+        "TICKETS_MCP_URL",
+        "TICKETS_PROJECT_KEY",
+        "TICKETS_UI_URL",
     ]:
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr("aiops.core.config.load_dotenv", lambda *a, **k: False)

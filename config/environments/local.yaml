@@ -75,6 +75,27 @@ capabilities:
       # Where a cited doc opens: {path} is repo-relative, e.g. knowledge-base/runbooks/redis-outage.md
       ui_link_template: "https://github.com/vigneshAJ1503/AI_Incident_Agents/blob/main/{path}"
 
+  tickets:
+    # mock = mock-tickets-mcp (offline, Postgres, default) | jira = mcp-atlassian on a Jira
+    # Cloud site. Both expose the same tool names and shapes. To switch (docs/setup/jira.md):
+    #   TICKETS_PROVIDER=jira TICKETS_MCP_URL=http://localhost:8102/mcp
+    #   TICKETS_UI_URL=https://<your-site>.atlassian.net
+    provider: ${TICKETS_PROVIDER:-mock}
+    mcp:
+      transport: http
+      url: ${TICKETS_MCP_URL:-http://localhost:8109/mcp}
+      timeout_s: 30
+    # Read-only: agents never see write tools (create/comment/update go through approvals).
+    tool_allowlist: [jira_search, jira_get_issue]
+    limits:
+      max_results: 20
+      query_timeout_s: 30
+    settings:
+      project_key: ${TICKETS_PROJECT_KEY:-OPS}
+      write_requires_approval: true
+      # {key} = issue key. Mock: a minimal page served by mock-tickets-mcp.
+      ui_link_template: "${TICKETS_UI_URL:-http://localhost:8109}/browse/{key}"
+
 agents:
   logs:
     model_role: agent

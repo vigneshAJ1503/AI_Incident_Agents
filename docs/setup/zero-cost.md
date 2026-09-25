@@ -17,7 +17,7 @@ Goal: build and run the entire platform **for free** on a 16 GB Apple-silicon Ma
 | MCP servers | Our own FastMCP servers + open-source community servers | Free |
 | Knowledge search | **Postgres full-text search** (`tsvector` + ranking), no model | Optional later: hosted free-tier embeddings (e.g. Gemini) + pgvector, switchable in config |
 | Database / cache | Postgres + pgvector, Redis | Free |
-| Tickets | **Jira Cloud Free** (≤ 10 users) **+** our `mock-tickets-mcp` | CI and offline use run against the mock |
+| Tickets | **Jira Cloud Free** (≤ 10 users) **+** our `mock-tickets-mcp` | CI and offline use run against the mock; see [jira.md](jira.md) |
 | Git hosting / CI | GitHub public repo + GitHub Actions | Unlimited minutes for public repos |
 | Code agent | Local Git repository via Git MCP | Free |
 

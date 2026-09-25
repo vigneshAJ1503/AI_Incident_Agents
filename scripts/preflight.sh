@@ -42,8 +42,9 @@ echo "Docker"
 if docker info >/dev/null 2>&1; then
   mem_bytes=$(docker info --format '{{.MemTotal}}' 2>/dev/null || echo 0)
   mem_gb=$((mem_bytes / 1024 / 1024 / 1024))
-  if (( mem_gb >= 10 )); then ok "docker memory" "${mem_gb} GB"
-  else bad "docker memory" "${mem_gb} GB — give Docker ≥ 10 GB (Settings → Resources)"; fi
+  # Lean budget (docs/setup/zero-cost.md): the full stack incl. Minikube needs ~4 GB.
+  if (( mem_gb >= 5 )); then ok "docker memory" "${mem_gb} GB"
+  else bad "docker memory" "${mem_gb} GB — give Docker ≥ 5 GB (Settings → Resources → Memory)"; fi
 else
   bad "docker daemon" "not running — start Docker Desktop"
 fi

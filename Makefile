@@ -62,11 +62,19 @@ COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f
 S ?= S1
 
 .PHONY: infra-up
-infra-up: ## Start Elasticsearch, Kibana, Postgres, Redis, Alertmanager (waits until healthy)
-	$(COMPOSE) --profile ui up -d --wait
+infra-up: ## Start the lean data stack: Elasticsearch, Postgres, Redis, Alertmanager (no UIs)
+	$(COMPOSE) up -d --wait
+
+.PHONY: ui-up
+ui-up: ## Start the optional UIs (Kibana, ~0.6 GB); agents never need them
+	$(COMPOSE) --profile ui up -d --wait kibana
+
+.PHONY: ui-down
+ui-down: ## Stop the optional UIs to free memory
+	$(COMPOSE) --profile ui stop kibana
 
 .PHONY: infra-up-lite
-infra-up-lite: ## Start the stack without Kibana (saves ~1 GB RAM)
+infra-up-lite: ## Alias of infra-up (kept for compatibility)
 	$(COMPOSE) up -d --wait
 
 .PHONY: infra-down

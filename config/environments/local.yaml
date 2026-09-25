@@ -101,6 +101,27 @@ capabilities:
       # {key} = issue key. Mock: a minimal page served by mock-tickets-mcp.
       ui_link_template: "${TICKETS_UI_URL:-http://localhost:8109}/browse/{key}"
 
+  alerts:
+    provider: alertmanager
+    mcp:
+      transport: http
+      url: ${ALERTS_MCP_URL:-http://localhost:8105/mcp}
+      timeout_s: 20
+    # Read-only by construction (alertmanager-mcp has no write tools).
+    tool_allowlist: [list_alerts, get_alert, list_silences, get_alert_groups, alert_history]
+    limits:
+      max_results: 200
+      max_time_range_hours: 168
+      query_timeout_s: 15
+    settings:
+      # Alert label names = portability. Change them to match another company's rules.
+      labels:
+        service: service
+        severity: severity
+        alertname: alertname
+      critical_severities: [critical, page, P1]
+      ui_link_template: "${ALERTMANAGER_URL:-http://localhost:9093}/#/alerts?silenced=false&inhibited=false&filter={filter}"
+
 agents:
   logs:
     model_role: agent

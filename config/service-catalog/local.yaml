@@ -17,13 +17,16 @@ services:
     capabilities:
       logs: { service_value: payment-service }
       tickets: { components: [payments], labels: [payment-service] }
+      alerts: { labels: { service: payment-service } }
     environments:
       production:
         capabilities:
           logs: { index_pattern: "payment-prod-*" }
+          alerts: { labels: { service: payment-service, namespace: prod } }
       staging:
         capabilities:
           logs: { index_pattern: "payment-staging-*" }
+          alerts: { labels: { service: payment-service, namespace: staging } }
 
   - name: order-service
     description: Creates and tracks customer orders.
@@ -34,10 +37,12 @@ services:
     capabilities:
       logs: { service_value: order-service }
       tickets: { components: [orders], labels: [order-service] }
+      alerts: { labels: { service: order-service } }
     environments:
       production:
         capabilities:
           logs: { index_pattern: "order-prod-*" }
+          alerts: { labels: { service: order-service, namespace: prod } }
 
   - name: user-service
     description: User accounts, authentication and profiles.
@@ -48,10 +53,12 @@ services:
     capabilities:
       logs: { service_value: user-service }
       tickets: { components: [identity], labels: [user-service] }
+      alerts: { labels: { service: user-service } }
     environments:
       production:
         capabilities:
           logs: { index_pattern: "user-prod-*" }
+          alerts: { labels: { service: user-service, namespace: prod } }
 
   - name: inventory-service
     description: Stock levels and reservations.
@@ -62,7 +69,9 @@ services:
     capabilities:
       logs: { service_value: inventory-service }
       tickets: { components: [inventory], labels: [inventory-service] }
+      alerts: { labels: { service: inventory-service } }
     environments:
       production:
         capabilities:
           logs: { index_pattern: "inventory-prod-*" }
+          alerts: { labels: { service: inventory-service, namespace: prod } }

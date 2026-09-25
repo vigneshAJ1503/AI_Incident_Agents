@@ -54,6 +54,25 @@ class MCPRegistry:
         return client
 
     @asynccontextmanager
+    async def write_toolset(
+        self, capability: str, *, actor: str, investigation_id: str | None = None
+    ) -> AsyncIterator[Toolset]:
+        """Toolset over ``write_allowlist`` ONLY (no read tools). Used exclusively by the
+        approval executor for APPROVED proposals; agents never get one."""
+        config = self.settings.capability(capability)
+        async with self.client(capability) as client:
+            yield Toolset(
+                capability,
+                config,
+                client,
+                agent=actor,
+                guardrails=self.settings.guardrails,
+                audit=self.audit,
+                investigation_id=investigation_id,
+                allowlist=config.write_allowlist,
+            )
+
+    @asynccontextmanager
     async def toolset(
         self, capability: str, *, agent: str, investigation_id: str | None = None
     ) -> AsyncIterator[Toolset]:

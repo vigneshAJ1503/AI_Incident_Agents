@@ -61,8 +61,21 @@ class CapabilityConfig(_Strict):
     enabled: bool = True
     mcp: MCPServerConfig
     tool_allowlist: list[str] = Field(min_length=1)
+    #: Write tools. Never given to agents: only the approval executor may call them, and
+    #: only for an APPROVED action proposal (core/guardrails/approvals.py).
+    write_allowlist: list[str] = Field(default_factory=list)
     limits: CapabilityLimits = Field(default_factory=CapabilityLimits)
     settings: dict[str, Any] = Field(default_factory=dict)
+
+    @model_validator(mode="after")
+    def _writes_are_not_readable(self) -> CapabilityConfig:
+        both = sorted(set(self.tool_allowlist) & set(self.write_allowlist))
+        if both:
+            raise ValueError(
+                f"tools {both} are in both tool_allowlist and write_allowlist; write tools "
+                "must never be available to agents"
+            )
+        return self
 
 
 ModelRole = Literal["fast", "agent", "rca"]
@@ -107,6 +120,10 @@ class GuardrailsConfig(_Strict):
     redact: list[str] = Field(default_factory=list)
     max_tool_output_chars: int = Field(default=8_000, gt=0)
     audit_log_path: str = ".data/audit.jsonl"
+    #: Human approvals for write actions (PR-014). JSON file store until Postgres (PR-032).
+    approvals_path: str = ".data/approvals.json"
+    approvals_audit_path: str = ".data/approvals-audit.jsonl"
+    approval_ttl_hours: float = Field(default=24.0, gt=0)
 
 
 class Settings(_Strict):
@@ -136,6 +153,11 @@ class Settings(_Strict):
 
     def agent_limits(self, name: str) -> AgentLimits:
         return self.agent(name).limits or self.limits
+
+    def repo_path(self, path: str) -> Path:
+        """A configured path (e.g. '.data/approvals.json'): relative = relative to the repo."""
+        resolved = Path(path)
+        return resolved if resolved.is_absolute() else self.config_dir.parent / resolved
 
     def safe_dump(self) -> dict[str, Any]:
         """Dump for display: secrets are masked by SecretStr."""

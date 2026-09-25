@@ -28,6 +28,10 @@ guardrails:
   redact: [emails, ip_addresses, jwt, bearer_tokens, api_keys, credit_cards]
   max_tool_output_chars: 8000
   audit_log_path: .data/audit.jsonl
+  # Write actions need a human approval (aiops approvals ...). Agents are always read-only.
+  approvals_path: .data/approvals.json
+  approvals_audit_path: .data/approvals-audit.jsonl
+  approval_ttl_hours: 24
 
 capabilities:
   logs:
@@ -89,6 +93,9 @@ capabilities:
       timeout_s: 30
     # Read-only: agents never see write tools (create/comment/update go through approvals).
     tool_allowlist: [jira_search, jira_get_issue]
+    # Write tools: NEVER given to agents. Only `aiops approvals approve` executes them, for a
+    # proposal a human approved (core/guardrails/approvals.py).
+    write_allowlist: [jira_create_issue, jira_add_comment, jira_update_issue]
     limits:
       max_results: 20
       query_timeout_s: 30

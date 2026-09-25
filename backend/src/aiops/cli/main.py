@@ -5,6 +5,7 @@ import typer
 from aiops import __version__
 from aiops.cli import (
     agent_cmd,
+    approvals_cmd,
     catalog_cmd,
     config_cmd,
     eval_cmd,
@@ -14,6 +15,7 @@ from aiops.cli import (
     prompts_cmd,
     schemas_cmd,
     seed_cmd,
+    tickets_cmd,
 )
 from aiops.cli.common import console
 
@@ -32,6 +34,8 @@ app.add_typer(agent_cmd.app, name="agent")
 app.add_typer(seed_cmd.app, name="seed")
 app.add_typer(eval_cmd.app, name="eval")
 app.add_typer(knowledge_cmd.app, name="knowledge")
+app.add_typer(approvals_cmd.app, name="approvals")
+app.add_typer(tickets_cmd.app, name="tickets")
 
 
 @app.callback()

@@ -1,0 +1,75 @@
+# The sample system's own Postgres and Redis ("production" dependencies under investigation).
+# Ephemeral storage: the services recreate the schema and seed rows on start.
+apiVersion: v1
+kind: Secret
+metadata:
+  name: app-db
+type: Opaque
+stringData:
+  POSTGRES_USER: app
+  POSTGRES_PASSWORD: sample-local-only
+  POSTGRES_DB: app
+  DATABASE_URL: postgres://app:sample-local-only@postgres:5432/app
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postgres
+  labels: { app: postgres, team: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: postgres } }
+  template:
+    metadata: { labels: { app: postgres, team: platform } }
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          args: ["-c", "max_connections=120", "-c", "shared_buffers=16MB"]
+          envFrom: [{ secretRef: { name: app-db } }]
+          ports: [{ containerPort: 5432 }]
+          readinessProbe:
+            exec: { command: ["pg_isready", "-U", "app", "-d", "app"] }
+            periodSeconds: 5
+          resources:
+            requests: { memory: 64Mi, cpu: 50m }
+            limits: { memory: 256Mi }
+          volumeMounts: [{ name: data, mountPath: /var/lib/postgresql/data }]
+      volumes: [{ name: data, emptyDir: {} }]
+---
+apiVersion: v1
+kind: Service
+metadata: { name: postgres, labels: { app: postgres } }
+spec:
+  selector: { app: postgres }
+  ports: [{ port: 5432, targetPort: 5432 }]
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  labels: { app: redis, team: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: redis } }
+  template:
+    metadata: { labels: { app: redis, team: platform } }
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.4-alpine
+          args: ["--save", "", "--appendonly", "no", "--maxmemory", "32mb"]
+          ports: [{ containerPort: 6379 }]
+          readinessProbe:
+            exec: { command: ["redis-cli", "ping"] }
+            periodSeconds: 5
+          resources:
+            requests: { memory: 16Mi, cpu: 20m }
+            limits: { memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata: { name: redis, labels: { app: redis } }
+spec:
+  selector: { app: redis }
+  ports: [{ port: 6379, targetPort: 6379 }]

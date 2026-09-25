@@ -1,0 +1,26 @@
+# Steady synthetic user traffic (TRAFFIC_RPS) so logs/metrics look like production.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: traffic-generator
+  labels: { app: traffic-generator, team: platform }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: traffic-generator } }
+  template:
+    metadata: { labels: { app: traffic-generator, team: platform } }
+    spec:
+      containers:
+        - name: app
+          image: aiops/sample-service:0.1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - { name: SERVICE_NAME, value: traffic-generator }
+            - { name: TRAFFIC_RPS, value: "6" }
+            - { name: APP_VERSION, value: v1.0.0 }
+          resources:
+            requests: { memory: 48Mi, cpu: 25m }
+            limits: { memory: 128Mi }
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false

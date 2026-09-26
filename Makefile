@@ -69,6 +69,7 @@ S ?= S1
 
 .PHONY: infra-up
 infra-up: ## Start the lean data stack: Elasticsearch, Postgres, Redis, Alertmanager (no UIs)
+	@./scripts/ensure-network.sh
 	$(COMPOSE) up -d --wait
 
 .PHONY: ui-up

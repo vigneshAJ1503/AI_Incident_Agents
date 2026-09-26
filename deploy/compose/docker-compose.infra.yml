@@ -109,3 +109,4 @@ volumes:
 networks:
   default:
     name: aiops
+    external: true   # created by scripts/ensure-network.sh (pinned subnet, survives `down`)

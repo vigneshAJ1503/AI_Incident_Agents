@@ -31,7 +31,7 @@ from aiops.agents.deps import build_deps
 from aiops.agents.registry import AGENTS
 from aiops.core.config import Settings, find_config_dir
 from aiops.core.models import AgentResult, AgentStatus, ClaimKind
-from aiops.evals.replay import REPLAY_NOW, echo_responder
+from aiops.evals.replay import REPLAY_NOW, echo_responder, replay_task
 from aiops.evals.scenario import Scenario, load_scenarios
 from aiops.evals.scoring import Check, score_agent
 from aiops.llm.base import LLMProvider
@@ -51,6 +51,8 @@ BENIGN_SIGNALS = frozenset(
         "no_relevant_docs",
         # alerts: nothing firing (the explicit "all clear")
         "no_active_alerts",
+        # k8s: the workload itself looks fine
+        "healthy",
         # code: no risky change in the lookback window
         "no_recent_changes",
     }
@@ -358,14 +360,16 @@ async def run_eval(
                 if on_result:
                     on_result(evaluation)
                 continue
-            now = REPLAY_NOW
+            # Fixtures recorded live (meta.json) replay with their own window.
+            task = replay_task(scenario, agent, replay_dir)
             llm = llm_factory() if llm_factory else FakeLLMProvider(responder=echo_responder())
         else:
             now = await asyncio.to_thread(seed_live, scenario, agent_cls.spec.capabilities, es_url)
+            task = scenario.task(agent, now)
             llm = llm_factory() if llm_factory else None  # None = configured provider
 
         deps = build_deps(settings, llm=llm, replay_dir=replay_dir)
-        result = await agent_cls(deps).run(scenario.task(agent, now))
+        result = await agent_cls(deps).run(task)
         evaluation = evaluate_result(scenario, agent, result)
         results.append(evaluation)
         if on_result:

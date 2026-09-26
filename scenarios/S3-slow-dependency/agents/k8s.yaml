@@ -1,0 +1,7 @@
+# order-service's own workload is healthy: the K8s view must NOT invent a Kubernetes cause.
+# It does report, as a fact, that the dependency inventory-service rolled out v1.4.2.
+status: [success, no_signal]
+signals: [healthy, dependency_rollout]
+forbidden_signals: [oom_killed, pod_restarts, crash_loop, image_pull_error, replicas_unavailable, probe_failures, dependency_unavailable, recent_rollout]
+must_mention: [inventory-service, v1.4.2]
+min_evidence: 4

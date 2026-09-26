@@ -1,0 +1,8 @@
+{
+  "scenario": "S1",
+  "start": "2026-09-26T09:01:37Z",
+  "end": "2026-09-26T09:03:08Z",
+  "incident_start": "2026-09-26T09:01:37Z",
+  "recorded_at": "2026-09-26T09:03:08Z",
+  "note": "live: aiops fault run S1 (injected 2026-09-26T09:01:37Z)"
+}

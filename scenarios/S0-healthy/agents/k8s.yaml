@@ -1,0 +1,6 @@
+# Healthy: all replicas ready, no restarts, no Warning events, no rollout. No false positives.
+status: [no_signal]
+signals: [healthy]
+forbidden_signals: [pod_restarts, oom_killed, crash_loop, image_pull_error, replicas_unavailable, probe_failures, dependency_unavailable, recent_rollout, dependency_rollout]
+must_mention: [nothing abnormal in Kubernetes]
+min_evidence: 4

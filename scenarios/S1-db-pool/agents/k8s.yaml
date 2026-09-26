@@ -1,0 +1,7 @@
+# UC-07 acceptance: the v1.8.2 rollout at the fault time is reported (same image: a config
+# rollout, change-cause "tune db pool"); the pods themselves are healthy.
+status: [success]
+signals: [recent_rollout, healthy]
+forbidden_signals: [oom_killed, crash_loop, image_pull_error, replicas_unavailable, pod_restarts, dependency_unavailable]
+must_mention: [v1.8.2, tune db pool, revision]
+min_evidence: 4

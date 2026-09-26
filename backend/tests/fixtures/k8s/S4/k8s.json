@@ -1,0 +1,1042 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "history": 5,
+        "name": "user-service",
+        "namespace": "prod"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "deployment": {
+            "change_cause": "v3.2.0: bump image",
+            "conditions": [
+              {
+                "last_transition": "2026-09-26T09:10:38Z",
+                "last_update": "2026-09-26T09:10:38Z",
+                "message": "Deployment has minimum availability.",
+                "reason": "MinimumReplicasAvailable",
+                "status": "True",
+                "type": "Available"
+              },
+              {
+                "last_transition": "2026-09-26T08:19:15Z",
+                "last_update": "2026-09-26T09:10:38Z",
+                "message": "ReplicaSet \"user-service-8f6dbc95\" is progressing.",
+                "reason": "ReplicaSetUpdated",
+                "status": "True",
+                "type": "Progressing"
+              }
+            ],
+            "created_at": "2026-09-26T08:19:14Z",
+            "images": [
+              {
+                "container": "app",
+                "image": "aiops/sample-service:v3.2.0"
+              }
+            ],
+            "labels": {
+              "app": "user-service",
+              "team": "identity"
+            },
+            "name": "user-service",
+            "namespace": "prod",
+            "observed_generation_current": true,
+            "paused": false,
+            "replicas": {
+              "available": 3,
+              "desired": 3,
+              "ready": 3,
+              "unavailable": 1,
+              "updated": 1
+            },
+            "resources": {
+              "app": {
+                "limits": {
+                  "memory": "160Mi"
+                },
+                "requests": {
+                  "cpu": "25m",
+                  "memory": "64Mi"
+                }
+              }
+            },
+            "restarted_at": "2026-09-26T14:40:15+05:30",
+            "revision": "20",
+            "selector": {
+              "app": "user-service"
+            },
+            "strategy": "RollingUpdate"
+          },
+          "revisions_total": 12,
+          "rollout_history": [
+            {
+              "change_cause": "v3.2.0: bump image",
+              "created_at": "2026-09-26T09:10:32Z",
+              "current": true,
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:v3.2.0"
+                }
+              ],
+              "name": "user-service-8f6dbc95",
+              "pod_template_hash": "8f6dbc95",
+              "replicas": {
+                "available": 0,
+                "desired": 1,
+                "ready": 0
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": 20
+            },
+            {
+              "change_cause": "revert to baseline",
+              "created_at": "2026-09-26T09:10:15Z",
+              "current": false,
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "name": "user-service-86495f5c4f",
+              "pod_template_hash": "86495f5c4f",
+              "replicas": {
+                "available": 3,
+                "desired": 3,
+                "ready": 3
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": 19
+            },
+            {
+              "change_cause": "revert to baseline",
+              "created_at": "2026-09-26T09:08:27Z",
+              "current": false,
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "name": "user-service-85d8cb6bfb",
+              "pod_template_hash": "85d8cb6bfb",
+              "replicas": {
+                "available": 0,
+                "desired": 0,
+                "ready": 0
+              },
+              "restarted_at": "2026-09-26T14:38:26+05:30",
+              "revision": 18
+            },
+            {
+              "change_cause": "revert to baseline",
+              "created_at": "2026-09-26T09:06:32Z",
+              "current": false,
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "name": "user-service-5584958f7c",
+              "pod_template_hash": "5584958f7c",
+              "replicas": {
+                "available": 0,
+                "desired": 0,
+                "ready": 0
+              },
+              "restarted_at": "2026-09-26T14:36:32+05:30",
+              "revision": 17
+            },
+            {
+              "change_cause": "revert to baseline",
+              "created_at": "2026-09-26T09:03:12Z",
+              "current": false,
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "name": "user-service-5cdc7c69f6",
+              "pod_template_hash": "5cdc7c69f6",
+              "replicas": {
+                "available": 0,
+                "desired": 0,
+                "ready": 0
+              },
+              "restarted_at": "2026-09-26T14:33:12+05:30",
+              "revision": 16
+            }
+          ]
+        },
+        "text": "{\n  \"deployment\": {\n    \"name\": \"user-service\",\n    \"namespace\": \"prod\",\n    \"labels\": {\n      \"app\": \"user-service\",\n      \"team\": \"identity\"\n    },\n    \"replicas\": {\n      \"desired\": 3,\n      \"updated\": 1,\n      \"ready\": 3,\n      \"available\": 3,\n      \"unavailable\": 1\n    },\n    \"revision\": \"20\",\n    \"change_cause\": \"v3.2.0: bump image\",\n    \"images\": [\n      {\n        \"container\": \"app\",\n        \"image\": \"aiops/sample-service:v3.2.0\"\n      }\n    ],\n    \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n    \"paused\": false,\n    \"observed_generation_current\": true,\n    \"created_at\": \"2026-09-26T08:19:14Z\",\n    \"conditions\": [\n      {\n        \"type\": \"Available\",\n        \"status\": \"True\",\n        \"reason\": \"MinimumReplicasAvailable\",\n        \"message\": \"Deployment has minimum availability.\",\n        \"last_update\": \"2026-09-26T09:10:38Z\",\n        \"last_transition\": \"2026-09-26T09:10:38Z\"\n      },\n      {\n        \"type\": \"Progressing\",\n        \"status\": \"True\",\n        \"reason\": \"ReplicaSetUpdated\",\n        \"message\": \"ReplicaSet \\\"user-service-8f6dbc95\\\" is progressing.\",\n        \"last_update\": \"2026-09-26T09:10:38Z\",\n        \"last_transition\": \"2026-09-26T08:19:15Z\"\n      }\n    ],\n    \"selector\": {\n      \"app\": \"user-service\"\n    },\n    \"strategy\": \"RollingUpdate\",\n    \"resources\": {\n      \"app\": {\n        \"requests\": {\n          \"cpu\": \"25m\",\n          \"memory\": \"64Mi\"\n        },\n        \"limits\": {\n          \"memory\": \"160Mi\"\n        }\n      }\n    }\n  },\n  \"rollout_history\": [\n    {\n      \"name\": \"user-service-8f6dbc95\",\n      \"revision\": 20,\n      \"pod_template_hash\": \"8f6dbc95\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:v3.2.0\"\n        }\n      ],\n      \"change_cause\": \"v3.2.0: bump image\",\n      \"created_at\": \"2026-09-26T09:10:32Z\",\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"replicas\": {\n        \"desired\": 1,\n        \"ready\": 0,\n        \"available\": 0\n      },\n      \"current\": true\n    },\n    {\n      \"name\": \"user-service-86495f5c4f\",\n      \"revision\": 19,\n      \"pod_template_hash\": \"86495f5c4f\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"change_cause\": \"revert to baseline\",\n      \"created_at\": \"2026-09-26T09:10:15Z\",\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"replicas\": {\n        \"desired\": 3,\n        \"ready\": 3,\n        \"available\": 3\n      },\n      \"current\": false\n    },\n    {\n      \"name\": \"user-service-85d8cb6bfb\",\n      \"revision\": 18,\n      \"pod_template_hash\": \"85d8cb6bfb\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"change_cause\": \"revert to baseline\",\n      \"created_at\": \"2026-09-26T09:08:27Z\",\n      \"restarted_at\": \"2026-09-26T14:38:26+05:30\",\n      \"replicas\": {\n        \"desired\": 0,\n        \"ready\": 0,\n        \"available\": 0\n      },\n      \"current\": false\n    },\n    {\n      \"name\": \"user-service-5584958f7c\",\n      \"revision\": 17,\n      \"pod_template_hash\": \"5584958f7c\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"change_cause\": \"revert to baseline\",\n      \"created_at\": \"2026-09-26T09:06:32Z\",\n      \"restarted_at\": \"2026-09-26T14:36:32+05:30\",\n      \"replicas\": {\n        \"desired\": 0,\n        \"ready\": 0,\n        \"available\": 0\n      },\n      \"current\": false\n    },\n    {\n      \"name\": \"user-service-5cdc7c69f6\",\n      \"revision\": 16,\n      \"pod_template_hash\": \"5cdc7c69f6\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"change_cause\": \"revert to baseline\",\n      \"created_at\": \"2026-09-26T09:03:12Z\",\n      \"restarted_at\": \"2026-09-26T14:33:12+05:30\",\n      \"replicas\": {\n        \"desired\": 0,\n        \"ready\": 0,\n        \"available\": 0\n      },\n      \"current\": false\n    }\n  ],\n  \"revisions_total\": 12\n}"
+      },
+      "tool": "get_deployment"
+    },
+    {
+      "arguments": {
+        "label_selector": "app=user-service",
+        "limit": 50,
+        "namespace": "prod"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "by_phase": {
+            "Pending": 1,
+            "Running": 3
+          },
+          "label_selector": "app=user-service",
+          "namespace": "prod",
+          "pods": [
+            {
+              "containers": [
+                {
+                  "image": "aiops/sample-service:0.1.0",
+                  "last_state": null,
+                  "name": "app",
+                  "ready": true,
+                  "restart_count": 0,
+                  "state": {
+                    "started_at": "2026-09-26T09:10:32Z",
+                    "state": "running"
+                  }
+                }
+              ],
+              "created_at": "2026-09-26T09:10:32Z",
+              "deleting": false,
+              "labels": {
+                "app": "user-service",
+                "pod-template-hash": "86495f5c4f",
+                "team": "identity"
+              },
+              "name": "user-service-86495f5c4f-44k8q",
+              "namespace": "prod",
+              "node": "aiops",
+              "owner": "ReplicaSet/user-service-86495f5c4f",
+              "phase": "Running",
+              "pod_template_hash": "86495f5c4f",
+              "ready": "1/1",
+              "reason": null,
+              "restarts": 0,
+              "started_at": "2026-09-26T09:10:32Z"
+            },
+            {
+              "containers": [
+                {
+                  "image": "aiops/sample-service:0.1.0",
+                  "last_state": null,
+                  "name": "app",
+                  "ready": true,
+                  "restart_count": 0,
+                  "state": {
+                    "started_at": "2026-09-26T09:10:16Z",
+                    "state": "running"
+                  }
+                }
+              ],
+              "created_at": "2026-09-26T09:10:15Z",
+              "deleting": false,
+              "labels": {
+                "app": "user-service",
+                "pod-template-hash": "86495f5c4f",
+                "team": "identity"
+              },
+              "name": "user-service-86495f5c4f-hkn2j",
+              "namespace": "prod",
+              "node": "aiops",
+              "owner": "ReplicaSet/user-service-86495f5c4f",
+              "phase": "Running",
+              "pod_template_hash": "86495f5c4f",
+              "ready": "1/1",
+              "reason": null,
+              "restarts": 0,
+              "started_at": "2026-09-26T09:10:15Z"
+            },
+            {
+              "containers": [
+                {
+                  "image": "aiops/sample-service:0.1.0",
+                  "last_state": null,
+                  "name": "app",
+                  "ready": true,
+                  "restart_count": 0,
+                  "state": {
+                    "started_at": "2026-09-26T09:10:23Z",
+                    "state": "running"
+                  }
+                }
+              ],
+              "created_at": "2026-09-26T09:10:22Z",
+              "deleting": false,
+              "labels": {
+                "app": "user-service",
+                "pod-template-hash": "86495f5c4f",
+                "team": "identity"
+              },
+              "name": "user-service-86495f5c4f-pksff",
+              "namespace": "prod",
+              "node": "aiops",
+              "owner": "ReplicaSet/user-service-86495f5c4f",
+              "phase": "Running",
+              "pod_template_hash": "86495f5c4f",
+              "ready": "1/1",
+              "reason": null,
+              "restarts": 0,
+              "started_at": "2026-09-26T09:10:23Z"
+            },
+            {
+              "containers": [
+                {
+                  "image": "aiops/sample-service:v3.2.0",
+                  "last_state": null,
+                  "name": "app",
+                  "ready": false,
+                  "restart_count": 0,
+                  "state": {
+                    "message": "Back-off pulling image \"aiops/sample-service:v3.2.0\": ErrImagePull: failed to pull and unpack image \"docker.io/aiops/sample-service:v3.2.0\": failed to resolve reference \"docker.io/aiops/sample-service:v3.2.0\": pull access denied, repository does not exist or may require authorization: server message...",
+                    "reason": "ImagePullBackOff",
+                    "state": "waiting"
+                  }
+                }
+              ],
+              "created_at": "2026-09-26T09:10:32Z",
+              "deleting": false,
+              "labels": {
+                "app": "user-service",
+                "pod-template-hash": "8f6dbc95",
+                "team": "identity"
+              },
+              "name": "user-service-8f6dbc95-87cf2",
+              "namespace": "prod",
+              "node": "aiops",
+              "owner": "ReplicaSet/user-service-8f6dbc95",
+              "phase": "Pending",
+              "pod_template_hash": "8f6dbc95",
+              "ready": "0/1",
+              "reason": null,
+              "restarts": 0,
+              "started_at": "2026-09-26T09:10:32Z"
+            }
+          ],
+          "returned": 4,
+          "truncated": false
+        },
+        "text": "{\n  \"namespace\": \"prod\",\n  \"label_selector\": \"app=user-service\",\n  \"returned\": 4,\n  \"truncated\": false,\n  \"by_phase\": {\n    \"Running\": 3,\n    \"Pending\": 1\n  },\n  \"pods\": [\n    {\n      \"name\": \"user-service-86495f5c4f-44k8q\",\n      \"namespace\": \"prod\",\n      \"phase\": \"Running\",\n      \"reason\": null,\n      \"ready\": \"1/1\",\n      \"restarts\": 0,\n      \"created_at\": \"2026-09-26T09:10:32Z\",\n      \"started_at\": \"2026-09-26T09:10:32Z\",\n      \"deleting\": false,\n      \"node\": \"aiops\",\n      \"owner\": \"ReplicaSet/user-service-86495f5c4f\",\n      \"pod_template_hash\": \"86495f5c4f\",\n      \"labels\": {\n        \"app\": \"user-service\",\n        \"pod-template-hash\": \"86495f5c4f\",\n        \"team\": \"identity\"\n      },\n      \"containers\": [\n        {\n          \"name\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\",\n          \"ready\": true,\n          \"restart_count\": 0,\n          \"state\": {\n            \"state\": \"running\",\n            \"started_at\": \"2026-09-26T09:10:32Z\"\n          },\n          \"last_state\": null\n        }\n      ]\n    },\n    {\n      \"name\": \"user-service-86495f5c4f-hkn2j\",\n      \"namespace\": \"prod\",\n      \"phase\": \"Running\",\n      \"reason\": null,\n      \"ready\": \"1/1\",\n      \"restarts\": 0,\n      \"created_at\": \"2026-09-26T09:10:15Z\",\n      \"started_at\": \"2026-09-26T09:10:15Z\",\n      \"deleting\": false,\n      \"node\": \"aiops\",\n      \"owner\": \"ReplicaSet/user-service-86495f5c4f\",\n      \"pod_template_hash\": \"86495f5c4f\",\n      \"labels\": {\n        \"app\": \"user-service\",\n        \"pod-template-hash\": \"86495f5c4f\",\n        \"team\": \"identity\"\n      },\n      \"containers\": [\n        {\n          \"name\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\",\n          \"ready\": true,\n          \"restart_count\": 0,\n          \"state\": {\n            \"state\": \"running\",\n            \"started_at\": \"2026-09-26T09:10:16Z\"\n          },\n          \"last_state\": null\n        }\n      ]\n    },\n    {\n      \"name\": \"user-service-86495f5c4f-pksff\",\n      \"namespace\": \"prod\",\n      \"phase\": \"Running\",\n      \"reason\": null,\n      \"ready\": \"1/1\",\n      \"restarts\": 0,\n      \"created_at\": \"2026-09-26T09:10:22Z\",\n      \"started_at\": \"2026-09-26T09:10:23Z\",\n      \"deleting\": false,\n      \"node\": \"aiops\",\n      \"owner\": \"ReplicaSet/user-service-86495f5c4f\",\n      \"pod_template_hash\": \"86495f5c4f\",\n      \"labels\": {\n        \"app\": \"user-service\",\n        \"pod-template-hash\": \"86495f5c4f\",\n        \"team\": \"identity\"\n      },\n      \"containers\": [\n        {\n          \"name\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\",\n          \"ready\": true,\n          \"restart_count\": 0,\n          \"state\": {\n            \"state\": \"running\",\n            \"started_at\": \"2026-09-26T09:10:23Z\"\n          },\n          \"last_state\": null\n        }\n      ]\n    },\n    {\n      \"name\": \"user-service-8f6dbc95-87cf2\",\n      \"namespace\": \"prod\",\n      \"phase\": \"Pending\",\n      \"reason\": null,\n      \"ready\": \"0/1\",\n      \"restarts\": 0,\n      \"created_at\": \"2026-09-26T09:10:32Z\",\n      \"started_at\": \"2026-09-26T09:10:32Z\",\n      \"deleting\": false,\n      \"node\": \"aiops\",\n      \"owner\": \"ReplicaSet/user-service-8f6dbc95\",\n      \"pod_template_hash\": \"8f6dbc95\",\n      \"labels\": {\n        \"app\": \"user-service\",\n        \"pod-template-hash\": \"8f6dbc95\",\n        \"team\": \"identity\"\n      },\n      \"containers\": [\n        {\n          \"name\": \"app\",\n          \"image\": \"aiops/sample-service:v3.2.0\",\n          \"ready\": false,\n          \"restart_count\": 0,\n          \"state\": {\n            \"state\": \"waiting\",\n            \"reason\": \"ImagePullBackOff\",\n            \"message\": \"Back-off pulling image \\\"aiops/sample-service:v3.2.0\\\": ErrImagePull: failed to pull and unpack image \\\"docker.io/aiops/sample-service:v3.2.0\\\": failed to resolve reference \\\"docker.io/aiops/sample-service:v3.2.0\\\": pull access denied, repository does not exist or may require authorization: server message...\"\n          },\n          \"last_state\": null\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "list_pods"
+    },
+    {
+      "arguments": {
+        "limit": 100,
+        "namespace": "prod",
+        "object_name_prefix": "user-service",
+        "since": "2026-09-26T09:10:28Z",
+        "type": "Warning"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "by_reason": {
+            "Warning/Failed": 3,
+            "Warning/Unhealthy": 2
+          },
+          "events": [
+            {
+              "count": 3,
+              "first_seen": "2026-09-26T09:08:30Z",
+              "last_seen": "2026-09-26T09:10:30Z",
+              "message": "Readiness probe failed: Get \"http://10.244.0.90:8080/ready\": dial tcp 10.244.0.90:8080: connect: connection refused",
+              "object": "Pod/user-service-85d8cb6bfb-c5h8q",
+              "reason": "Unhealthy",
+              "source": "kubelet",
+              "type": "Warning"
+            },
+            {
+              "count": 2,
+              "first_seen": "2026-09-26T09:10:32Z",
+              "last_seen": "2026-09-26T09:10:33Z",
+              "message": "Readiness probe failed: Get \"http://10.244.0.100:8080/ready\": dial tcp 10.244.0.100:8080: connect: connection refused",
+              "object": "Pod/user-service-86495f5c4f-44k8q",
+              "reason": "Unhealthy",
+              "source": "kubelet",
+              "type": "Warning"
+            },
+            {
+              "count": 3,
+              "first_seen": "2026-09-26T09:10:33Z",
+              "last_seen": "2026-09-26T09:11:17Z",
+              "message": "Failed to pull image \"aiops/sample-service:v3.2.0\": failed to pull and unpack image \"docker.io/aiops/sample-service:v3.2.0\": failed to resolve reference \"docker.io/aiops/sample-service:v3.2.0\": pull access denied, repository does not exist or may require authorization: server message: insufficient_s...",
+              "object": "Pod/user-service-8f6dbc95-87cf2",
+              "reason": "Failed",
+              "source": "kubelet",
+              "type": "Warning"
+            },
+            {
+              "count": 3,
+              "first_seen": "2026-09-26T09:10:33Z",
+              "last_seen": "2026-09-26T09:11:17Z",
+              "message": "Error: ErrImagePull",
+              "object": "Pod/user-service-8f6dbc95-87cf2",
+              "reason": "Failed",
+              "source": "kubelet",
+              "type": "Warning"
+            },
+            {
+              "count": 5,
+              "first_seen": "2026-09-26T09:10:34Z",
+              "last_seen": "2026-09-26T09:11:55Z",
+              "message": "Error: ImagePullBackOff",
+              "object": "Pod/user-service-8f6dbc95-87cf2",
+              "reason": "Failed",
+              "source": "kubelet",
+              "type": "Warning"
+            }
+          ],
+          "namespace": "prod",
+          "returned": 5,
+          "since": "2026-09-26T09:10:28+00:00",
+          "total": 5,
+          "truncated": false
+        },
+        "text": "{\n  \"namespace\": \"prod\",\n  \"since\": \"2026-09-26T09:10:28+00:00\",\n  \"total\": 5,\n  \"returned\": 5,\n  \"truncated\": false,\n  \"by_reason\": {\n    \"Warning/Unhealthy\": 2,\n    \"Warning/Failed\": 3\n  },\n  \"events\": [\n    {\n      \"type\": \"Warning\",\n      \"reason\": \"Unhealthy\",\n      \"object\": \"Pod/user-service-85d8cb6bfb-c5h8q\",\n      \"message\": \"Readiness probe failed: Get \\\"http://10.244.0.90:8080/ready\\\": dial tcp 10.244.0.90:8080: connect: connection refused\",\n      \"count\": 3,\n      \"first_seen\": \"2026-09-26T09:08:30Z\",\n      \"last_seen\": \"2026-09-26T09:10:30Z\",\n      \"source\": \"kubelet\"\n    },\n    {\n      \"type\": \"Warning\",\n      \"reason\": \"Unhealthy\",\n      \"object\": \"Pod/user-service-86495f5c4f-44k8q\",\n      \"message\": \"Readiness probe failed: Get \\\"http://10.244.0.100:8080/ready\\\": dial tcp 10.244.0.100:8080: connect: connection refused\",\n      \"count\": 2,\n      \"first_seen\": \"2026-09-26T09:10:32Z\",\n      \"last_seen\": \"2026-09-26T09:10:33Z\",\n      \"source\": \"kubelet\"\n    },\n    {\n      \"type\": \"Warning\",\n      \"reason\": \"Failed\",\n      \"object\": \"Pod/user-service-8f6dbc95-87cf2\",\n      \"message\": \"Failed to pull image \\\"aiops/sample-service:v3.2.0\\\": failed to pull and unpack image \\\"docker.io/aiops/sample-service:v3.2.0\\\": failed to resolve reference \\\"docker.io/aiops/sample-service:v3.2.0\\\": pull access denied, repository does not exist or may require authorization: server message: insufficient_s...\",\n      \"count\": 3,\n      \"first_seen\": \"2026-09-26T09:10:33Z\",\n      \"last_seen\": \"2026-09-26T09:11:17Z\",\n      \"source\": \"kubelet\"\n    },\n    {\n      \"type\": \"Warning\",\n      \"reason\": \"Failed\",\n      \"object\": \"Pod/user-service-8f6dbc95-87cf2\",\n      \"message\": \"Error: ErrImagePull\",\n      \"count\": 3,\n      \"first_seen\": \"2026-09-26T09:10:33Z\",\n      \"last_seen\": \"2026-09-26T09:11:17Z\",\n      \"source\": \"kubelet\"\n    },\n    {\n      \"type\": \"Warning\",\n      \"reason\": \"Failed\",\n      \"object\": \"Pod/user-service-8f6dbc95-87cf2\",\n      \"message\": \"Error: ImagePullBackOff\",\n      \"count\": 5,\n      \"first_seen\": \"2026-09-26T09:10:34Z\",\n      \"last_seen\": \"2026-09-26T09:11:55Z\",\n      \"source\": \"kubelet\"\n    }\n  ]\n}"
+      },
+      "tool": "list_events"
+    },
+    {
+      "arguments": {
+        "limit": 50,
+        "namespace": "prod"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "deployments": [
+            {
+              "change_cause": "revert to baseline",
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T08:19:51Z",
+                  "last_update": "2026-09-26T08:19:51Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:14Z",
+                  "last_update": "2026-09-26T09:10:24Z",
+                  "message": "ReplicaSet \"inventory-service-96497c69c\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "labels": {
+                "app": "inventory-service",
+                "team": "commerce"
+              },
+              "name": "inventory-service",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": "17"
+            },
+            {
+              "change_cause": "revert to baseline",
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T09:06:44Z",
+                  "last_update": "2026-09-26T09:06:44Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:14Z",
+                  "last_update": "2026-09-26T09:10:24Z",
+                  "message": "ReplicaSet \"order-service-5ff5f4f846\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "labels": {
+                "app": "order-service",
+                "team": "commerce"
+              },
+              "name": "order-service",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": "18"
+            },
+            {
+              "change_cause": "revert to baseline",
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T08:19:47Z",
+                  "last_update": "2026-09-26T08:19:47Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:14Z",
+                  "last_update": "2026-09-26T09:10:27Z",
+                  "message": "ReplicaSet \"payment-service-58b5f7d8c5\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "labels": {
+                "app": "payment-service",
+                "team": "payments"
+              },
+              "name": "payment-service",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": "19"
+            },
+            {
+              "change_cause": null,
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T08:19:46Z",
+                  "last_update": "2026-09-26T08:19:46Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:14Z",
+                  "last_update": "2026-09-26T08:19:46Z",
+                  "message": "ReplicaSet \"postgres-6886cc8878\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "postgres",
+                  "image": "postgres:16-alpine"
+                }
+              ],
+              "labels": {
+                "app": "postgres",
+                "team": "platform"
+              },
+              "name": "postgres",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": null,
+              "revision": "1"
+            },
+            {
+              "change_cause": null,
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T08:19:14Z",
+                  "last_update": "2026-09-26T08:19:27Z",
+                  "message": "ReplicaSet \"redis-6dd999d969\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                },
+                {
+                  "last_transition": "2026-09-26T08:48:00Z",
+                  "last_update": "2026-09-26T08:48:00Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "redis",
+                  "image": "redis:7.4-alpine"
+                }
+              ],
+              "labels": {
+                "app": "redis",
+                "team": "platform"
+              },
+              "name": "redis",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": null,
+              "revision": "1"
+            },
+            {
+              "change_cause": null,
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T08:19:20Z",
+                  "last_update": "2026-09-26T08:19:20Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:15Z",
+                  "last_update": "2026-09-26T08:19:22Z",
+                  "message": "ReplicaSet \"traffic-generator-5f6bd7bf8c\" has successfully progressed.",
+                  "reason": "NewReplicaSetAvailable",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:0.1.0"
+                }
+              ],
+              "labels": {
+                "app": "traffic-generator",
+                "team": "platform"
+              },
+              "name": "traffic-generator",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 1,
+                "desired": 1,
+                "ready": 1,
+                "unavailable": 0,
+                "updated": 1
+              },
+              "restarted_at": "2026-09-26T13:49:15+05:30",
+              "revision": "2"
+            },
+            {
+              "change_cause": "v3.2.0: bump image",
+              "conditions": [
+                {
+                  "last_transition": "2026-09-26T09:10:38Z",
+                  "last_update": "2026-09-26T09:10:38Z",
+                  "message": "Deployment has minimum availability.",
+                  "reason": "MinimumReplicasAvailable",
+                  "status": "True",
+                  "type": "Available"
+                },
+                {
+                  "last_transition": "2026-09-26T08:19:15Z",
+                  "last_update": "2026-09-26T09:10:38Z",
+                  "message": "ReplicaSet \"user-service-8f6dbc95\" is progressing.",
+                  "reason": "ReplicaSetUpdated",
+                  "status": "True",
+                  "type": "Progressing"
+                }
+              ],
+              "created_at": "2026-09-26T08:19:14Z",
+              "images": [
+                {
+                  "container": "app",
+                  "image": "aiops/sample-service:v3.2.0"
+                }
+              ],
+              "labels": {
+                "app": "user-service",
+                "team": "identity"
+              },
+              "name": "user-service",
+              "namespace": "prod",
+              "observed_generation_current": true,
+              "paused": false,
+              "replicas": {
+                "available": 3,
+                "desired": 3,
+                "ready": 3,
+                "unavailable": 1,
+                "updated": 1
+              },
+              "restarted_at": "2026-09-26T14:40:15+05:30",
+              "revision": "20"
+            }
+          ],
+          "namespace": "prod",
+          "returned": 7,
+          "truncated": false
+        },
+        "text": "{\n  \"namespace\": \"prod\",\n  \"returned\": 7,\n  \"truncated\": false,\n  \"deployments\": [\n    {\n      \"name\": \"inventory-service\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"inventory-service\",\n        \"team\": \"commerce\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"17\",\n      \"change_cause\": \"revert to baseline\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T08:19:51Z\",\n          \"last_transition\": \"2026-09-26T08:19:51Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"inventory-service-96497c69c\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T09:10:24Z\",\n          \"last_transition\": \"2026-09-26T08:19:14Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"order-service\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"order-service\",\n        \"team\": \"commerce\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"18\",\n      \"change_cause\": \"revert to baseline\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T09:06:44Z\",\n          \"last_transition\": \"2026-09-26T09:06:44Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"order-service-5ff5f4f846\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T09:10:24Z\",\n          \"last_transition\": \"2026-09-26T08:19:14Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"payment-service\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"payment-service\",\n        \"team\": \"payments\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"19\",\n      \"change_cause\": \"revert to baseline\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T08:19:47Z\",\n          \"last_transition\": \"2026-09-26T08:19:47Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"payment-service-58b5f7d8c5\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T09:10:27Z\",\n          \"last_transition\": \"2026-09-26T08:19:14Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"postgres\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"postgres\",\n        \"team\": \"platform\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"1\",\n      \"change_cause\": null,\n      \"images\": [\n        {\n          \"container\": \"postgres\",\n          \"image\": \"postgres:16-alpine\"\n        }\n      ],\n      \"restarted_at\": null,\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T08:19:46Z\",\n          \"last_transition\": \"2026-09-26T08:19:46Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"postgres-6886cc8878\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T08:19:46Z\",\n          \"last_transition\": \"2026-09-26T08:19:14Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"redis\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"redis\",\n        \"team\": \"platform\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"1\",\n      \"change_cause\": null,\n      \"images\": [\n        {\n          \"container\": \"redis\",\n          \"image\": \"redis:7.4-alpine\"\n        }\n      ],\n      \"restarted_at\": null,\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"redis-6dd999d969\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T08:19:27Z\",\n          \"last_transition\": \"2026-09-26T08:19:14Z\"\n        },\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T08:48:00Z\",\n          \"last_transition\": \"2026-09-26T08:48:00Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"traffic-generator\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"traffic-generator\",\n        \"team\": \"platform\"\n      },\n      \"replicas\": {\n        \"desired\": 1,\n        \"updated\": 1,\n        \"ready\": 1,\n        \"available\": 1,\n        \"unavailable\": 0\n      },\n      \"revision\": \"2\",\n      \"change_cause\": null,\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:0.1.0\"\n        }\n      ],\n      \"restarted_at\": \"2026-09-26T13:49:15+05:30\",\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T08:19:20Z\",\n          \"last_transition\": \"2026-09-26T08:19:20Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"NewReplicaSetAvailable\",\n          \"message\": \"ReplicaSet \\\"traffic-generator-5f6bd7bf8c\\\" has successfully progressed.\",\n          \"last_update\": \"2026-09-26T08:19:22Z\",\n          \"last_transition\": \"2026-09-26T08:19:15Z\"\n        }\n      ]\n    },\n    {\n      \"name\": \"user-service\",\n      \"namespace\": \"prod\",\n      \"labels\": {\n        \"app\": \"user-service\",\n        \"team\": \"identity\"\n      },\n      \"replicas\": {\n        \"desired\": 3,\n        \"updated\": 1,\n        \"ready\": 3,\n        \"available\": 3,\n        \"unavailable\": 1\n      },\n      \"revision\": \"20\",\n      \"change_cause\": \"v3.2.0: bump image\",\n      \"images\": [\n        {\n          \"container\": \"app\",\n          \"image\": \"aiops/sample-service:v3.2.0\"\n        }\n      ],\n      \"restarted_at\": \"2026-09-26T14:40:15+05:30\",\n      \"paused\": false,\n      \"observed_generation_current\": true,\n      \"created_at\": \"2026-09-26T08:19:14Z\",\n      \"conditions\": [\n        {\n          \"type\": \"Available\",\n          \"status\": \"True\",\n          \"reason\": \"MinimumReplicasAvailable\",\n          \"message\": \"Deployment has minimum availability.\",\n          \"last_update\": \"2026-09-26T09:10:38Z\",\n          \"last_transition\": \"2026-09-26T09:10:38Z\"\n        },\n        {\n          \"type\": \"Progressing\",\n          \"status\": \"True\",\n          \"reason\": \"ReplicaSetUpdated\",\n          \"message\": \"ReplicaSet \\\"user-service-8f6dbc95\\\" is progressing.\",\n          \"last_update\": \"2026-09-26T09:10:38Z\",\n          \"last_transition\": \"2026-09-26T08:19:15Z\"\n        }\n      ]\n    }\n  ]\n}"
+      },
+      "tool": "list_deployments"
+    }
+  ],
+  "tools": [
+    {
+      "description": "The namespaces this server may read (the allowlist) and whether each exists.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_namespacesArguments",
+        "type": "object"
+      },
+      "name": "list_namespaces"
+    },
+    {
+      "description": "Pods with phase, readiness, restarts, and each container's state and last\n        termination (e.g. OOMKilled) or waiting reason (e.g. ImagePullBackOff, CrashLoopBackOff).\n\n        Args:\n            namespace: e.g. 'prod' (must be allowed by the server).\n            label_selector: e.g. 'app=payment-service'.\n            limit: max pods (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "label_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label Selector"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace"
+        ],
+        "title": "list_podsArguments",
+        "type": "object"
+      },
+      "name": "list_pods"
+    },
+    {
+      "description": "One pod in detail: containers (image, state, last state, resources, probes) and\n        conditions. Environment variables and volumes are never returned.",
+      "input_schema": {
+        "properties": {
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace",
+          "name"
+        ],
+        "title": "get_podArguments",
+        "type": "object"
+      },
+      "name": "get_pod"
+    },
+    {
+      "description": "Events (oldest first; the most recent `limit` are kept), e.g. BackOff, Unhealthy,\n        Failed (image pull), OOMKilling, ScalingReplicaSet. Kubernetes keeps events ~1 hour.\n\n        Args:\n            namespace: e.g. 'prod'.\n            object_name: exact involved object, e.g. a pod name.\n            object_name_prefix: e.g. 'payment-service' matches the deployment, its\n                ReplicaSets and pods.\n            object_kind: e.g. 'Pod', 'Deployment', 'ReplicaSet'.\n            type: 'Warning', 'Normal' or 'all'.\n            since: only events last seen after this: '30m', '2h' or an ISO-8601 timestamp.\n            limit: max events (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "limit": {
+            "default": 100,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          },
+          "object_kind": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Object Kind"
+          },
+          "object_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Object Name"
+          },
+          "object_name_prefix": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Object Name Prefix"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since"
+          },
+          "type": {
+            "default": "all",
+            "enum": [
+              "Warning",
+              "Normal",
+              "all"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace"
+        ],
+        "title": "list_eventsArguments",
+        "type": "object"
+      },
+      "name": "list_events"
+    },
+    {
+      "description": "Deployments with desired/updated/ready/available replicas, images, revision,\n        change-cause and conditions.\n\n        Args:\n            namespace: e.g. 'prod'.\n            label_selector: e.g. 'app in (redis,postgres)'.\n            limit: max deployments (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "label_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label Selector"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace"
+        ],
+        "title": "list_deploymentsArguments",
+        "type": "object"
+      },
+      "name": "list_deployments"
+    },
+    {
+      "description": "One deployment in detail plus its rollout history: its ReplicaSets by revision\n        (newest first) with images, kubernetes.io/change-cause, creation (rollout) time and\n        replicas; `current` marks the active revision.\n\n        Args:\n            namespace: e.g. 'prod'.\n            name: deployment name, e.g. 'payment-service'.\n            history: how many revisions to return (max 10).\n        ",
+      "input_schema": {
+        "properties": {
+          "history": {
+            "default": 5,
+            "title": "History",
+            "type": "integer"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace",
+          "name"
+        ],
+        "title": "get_deploymentArguments",
+        "type": "object"
+      },
+      "name": "get_deployment"
+    },
+    {
+      "description": "The last lines of a pod container's log (bounded by lines and bytes).\n\n        Args:\n            namespace: e.g. 'prod'.\n            name: pod name (from list_pods).\n            container: container name; needed only for multi-container pods.\n            tail_lines: lines from the end (capped by the server).\n            since: only lines newer than '15m', '1h' or an ISO-8601 timestamp.\n            previous: the previous (crashed / OOMKilled) container instance's log.\n        ",
+      "input_schema": {
+        "properties": {
+          "container": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Container"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          },
+          "previous": {
+            "default": false,
+            "title": "Previous",
+            "type": "boolean"
+          },
+          "since": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Since"
+          },
+          "tail_lines": {
+            "default": 100,
+            "title": "Tail Lines",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "namespace",
+          "name"
+        ],
+        "title": "get_pod_logsArguments",
+        "type": "object"
+      },
+      "name": "get_pod_logs"
+    },
+    {
+      "description": "Services with type, selector, ports and how many endpoints are ready\n        (0 ready = nothing can serve traffic).\n\n        Args:\n            namespace: e.g. 'prod'.\n            label_selector: e.g. 'app=redis'.\n            limit: max services (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "label_selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Label Selector"
+          },
+          "limit": {
+            "default": 50,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "namespace": {
+            "title": "Namespace",
+            "type": "string"
+          }
+        },
+        "required": [
+          "namespace"
+        ],
+        "title": "list_servicesArguments",
+        "type": "object"
+      },
+      "name": "list_services"
+    }
+  ]
+}

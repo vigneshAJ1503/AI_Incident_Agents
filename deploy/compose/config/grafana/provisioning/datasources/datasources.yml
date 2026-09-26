@@ -1,0 +1,27 @@
+# Grafana datasources (PR-020). Fixed uids so dashboards and the agents' deep links
+# (capabilities.metrics.settings.ui_link_template) can reference them.
+apiVersion: 1
+
+datasources:
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://aiops-prometheus:9090
+    isDefault: true
+    editable: false
+    jsonData:
+      timeInterval: 30s          # = scrape_interval: $__rate_interval never drops below 2 scrapes
+      httpMethod: POST
+
+  - name: Elasticsearch logs
+    uid: elasticsearch
+    type: elasticsearch
+    access: proxy
+    url: http://aiops-elasticsearch:9200
+    editable: false
+    jsonData:
+      index: "*-prod-*,logs-k8s-*"
+      timeField: "@timestamp"
+      logMessageField: message
+      logLevelField: level

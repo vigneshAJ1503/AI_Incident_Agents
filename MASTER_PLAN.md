@@ -488,13 +488,13 @@ Pin exact versions in `.env` (`ES_VERSION=…`, etc.) during PR-007, using the l
 |-----------|-------|---------|----------|
 | Elasticsearch | `docker.elastic.co/elasticsearch/elasticsearch:8.19.4` (security disabled locally, bound to 127.0.0.1) | 9200 | PR-007 |
 | Kibana | `docker.elastic.co/kibana/kibana:8.19.4` | 5601 | PR-007 |
-| Prometheus | `prom/prometheus` | 9090 | PR-020 |
+| Prometheus | `prom/prometheus:v3.15.0` (2d retention, 30 s scrapes, 256 MB limit) | 9090 | PR-020 |
 | Alertmanager | `prom/alertmanager` | 9093 | PR-023 |
-| Grafana | `grafana/grafana` | 3000 | PR-020 |
+| Grafana | `grafana/grafana:13.2.2` (opt-in, `make ui-up`) | 3000 | PR-020 |
 | Postgres | `postgres:16-alpine` (knowledge search uses built-in full-text search) | 15432 | PR-007 |
 | Redis | `redis:7.4-alpine` | 16379 | PR-007 |
 | Fluent Bit (in Minikube) | `fluent/fluent-bit` | — | PR-016 |
-| kube-state-metrics (in Minikube) | `registry.k8s.io/kube-state-metrics/kube-state-metrics` | NodePort 30080 | PR-020 |
+| kube-state-metrics (in Minikube) | `registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.20.0` (`prod` only, pods + deployments) | NodePort 30080 | PR-020 |
 | Sample services (in Minikube) | built locally: `aiops/<svc>:<ver>` (`minikube image load`) | NodePort 30001–30004 | PR-015 |
 | Elasticsearch MCP | Elastic's official MCP server (evaluate the current recommendation in PR-008) | 8101 | PR-008 |
 | Jira MCP | `ghcr.io/sooperset/mcp-atlassian` | 8102 | PR-012 |
@@ -1010,10 +1010,13 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-020 · Prometheus + Grafana + kube-state-metrics
 - **Branch:** `feat/020-prometheus-grafana`
 - **Scope:**
-  - Prometheus (joins the `minikube` network, scrapes the service NodePorts and kube-state-metrics)
-  - Grafana with provisioned datasources and "Service Overview" and "K8s Workloads" dashboards
-  - the metrics `http_requests_total`, `http_request_duration_seconds`, `http_5xx_total`, CPU/memory and DB pool in-use/size
-- ✅ The dashboards show live data; injected faults are visible.
+  - Prometheus (joins the `aiops` network, scrapes the service NodePorts and kube-state-metrics every 30 s, 2-day retention) **loads `alert-rules.yml` and sends to Alertmanager: real alerts fire from real metrics** (S1 → `DatabaseConnectionPoolExhausted` + `HighErrorRate`, S2 → `PodOOMKilled` + `PodCrashLooping`, S4 → `DeploymentReplicasMismatch`, S5 → `RedisDown`)
+  - kube-state-metrics in `deploy/k8s/monitoring` (`--namespaces=prod`, pods + deployments, `app`/`team` label allowlist), part of `make k8s-up`
+  - Grafana (**opt-in**, `make ui-up`) with provisioned datasources (Prometheus, Elasticsearch) and "Service Overview" and "K8s Workloads" dashboards
+  - the metrics `http_requests_total`, `http_request_duration_seconds`, DB pool active/max/pending, `redis_up`, and process RSS/CPU (`process_*`)
+  - `alertmanager-mcp`'s `alert_history` reads Prometheus `ALERTS` (resolved alerts included)
+  - *Deviations:* no separate `http_5xx_total` (5xx = `http_requests_total{status=~"5.."}`); CPU/memory come from the apps' `process_*` metrics, not cAdvisor, which would need a kubelet `nodes/proxy` token (too much power for a read-only stack). Seeded alerts stay for fixed-time evals (`docs/setup/alerts.md`).
+- ✅ The dashboards show live data; injected faults are visible and fire the expected alerts (`docs/setup/metrics.md`).
 
 #### PR-021 · Prometheus MCP (+ Grafana MCP for links)
 - **Branch:** `feat/021-prometheus-mcp`

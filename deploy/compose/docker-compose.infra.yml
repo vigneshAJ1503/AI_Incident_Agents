@@ -77,9 +77,10 @@ services:
       timeout: 3s
       retries: 20
 
-  # PR-023. Alerts are seeded through its API (`make seed-alerts S=S1`) until Prometheus
-  # (PR-020) evaluates deploy/compose/config/prometheus/alert-rules.yml. Alerts live in
-  # memory only: a restart drops them (silences survive in the am-data volume).
+  # PR-023. Real alerts come from Prometheus (PR-020), which evaluates
+  # config/prometheus/alert-rules.yml against the live cluster. `make seed-alerts S=S1`
+  # still posts synthetic alerts for the Alert agent's fixed-time evals (docs/setup/alerts.md).
+  # Alerts live in memory only: a restart drops them (silences survive in the am-data volume).
   alertmanager:
     image: prom/alertmanager:${ALERTMANAGER_VERSION:-v0.34.1}
     container_name: aiops-alertmanager
@@ -101,10 +102,80 @@ services:
       timeout: 3s
       retries: 20
 
+  # PR-020. Scrapes the sample services and kube-state-metrics in Minikube through their
+  # NodePorts, evaluates config/prometheus/alert-rules.yml and sends alerts to Alertmanager.
+  # Lean: 30 s scrapes (prometheus.yml), 2 days / 512 MB of data.
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_VERSION:-v3.15.0}
+    container_name: aiops-prometheus
+    user: "65534:65534"   # nobody (the image default, made explicit)
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-2d}
+      - --storage.tsdb.retention.size=512MB
+      - --web.listen-address=:9090
+      - --web.external-url=${PROMETHEUS_URL:-http://localhost:9090}
+      - --query.timeout=30s
+      - --query.max-samples=5000000
+    ports:
+      - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./config/prometheus/alert-rules.yml:/etc/prometheus/rules/alert-rules.yml:ro
+      - prom-data:/prometheus
+    mem_limit: ${PROMETHEUS_MEM_LIMIT:-256m}
+    depends_on:
+      alertmanager:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:9090/-/ready"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # PR-020. Optional UI (`make ui-up`): dashboards over Prometheus and Elasticsearch,
+  # provisioned from config/grafana. Agents never need it; they build deep links instead.
+  grafana:
+    image: grafana/grafana:${GRAFANA_VERSION:-13.2.2}
+    container_name: aiops-grafana
+    profiles: ["ui"]
+    user: "472:0"   # the image's grafana user (numeric)
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-aiops-local-only}
+      # Local only (127.0.0.1): read-only anonymous viewers, so deep links open directly.
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_ANALYTICS_REPORTING_ENABLED=false
+      - GF_ANALYTICS_CHECK_FOR_UPDATES=false
+      - GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES=false
+      - GF_NEWS_NEWS_FEED_ENABLED=false
+      - GF_PLUGINS_PREINSTALL_DISABLED=true
+      - GF_SERVER_ROOT_URL=${GRAFANA_URL:-http://localhost:3000}
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - ./config/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./config/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    mem_limit: 320m   # ~200 MB in use with both dashboards open
+    depends_on:
+      prometheus:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://localhost:3000/api/health | grep -q ok || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 20s
+
 volumes:
   es-data:
   pg-data:
   am-data:
+  prom-data:
+  grafana-data:
 
 networks:
   default:

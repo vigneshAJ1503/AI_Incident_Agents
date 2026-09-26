@@ -41,5 +41,8 @@ for deploy in postgres redis payment-service order-service user-service inventor
     exit 1
   fi
 done
+echo "==> deploying kube-state-metrics (namespace monitoring, NodePort 30080)"
+"${KUBECTL[@]}" apply -k deploy/k8s/monitoring >/dev/null
+"${KUBECTL[@]}" -n monitoring rollout status deployment/kube-state-metrics --timeout=180s >/dev/null
 "${KUBECTL[@]}" -n prod get pods -o wide
-echo "==> NodePorts on ${STATIC_IP}: payment 30081, order 30082, user 30083, inventory 30084"
+echo "==> NodePorts on ${STATIC_IP}: payment 30081, order 30082, user 30083, inventory 30084, kube-state-metrics 30080"

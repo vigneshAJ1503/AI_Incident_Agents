@@ -7,7 +7,8 @@ from mcp import Client
 
 from alertmanager_mcp.am import AlertmanagerClient
 from alertmanager_mcp.config import ServerSettings
-from alertmanager_mcp.server import HISTORY_NOTE, create_server
+from alertmanager_mcp.prom import PrometheusClient
+from alertmanager_mcp.server import HISTORY_NOTE, PROMETHEUS_HISTORY_NOTE, create_server
 
 SETTINGS = ServerSettings(max_results=2, max_filters=3, max_time_range_hours=24)
 
@@ -278,6 +279,7 @@ async def test_alert_history_is_honest_about_coverage() -> None:
     )
     data = result.structured_content
     assert data["complete"] is False and data["note"] == HISTORY_NOTE
+    assert data["sources"] == ["alertmanager"]
     assert "ALERTS" in data["note"]
     # started before the end of the range, oldest first (silenced ones included)
     assert [a["fingerprint"] for a in data["alerts"]] == ["ddd4", "ccc3", "bbb2"]
@@ -301,3 +303,104 @@ async def test_alertmanager_errors_surface() -> None:
     async with Client(server) as client:
         result = await client.call_tool("list_silences", {})
     assert result.is_error and "unreachable" in result.content[0].text
+
+
+# --------------------------------------------------------------------------- Prometheus ALERTS
+
+T0 = 1790330400  # 2026-09-25T10:00:00Z
+
+
+def fake_prom(seen: list[httpx2.Request], *, fail: bool = False) -> httpx2.AsyncClient:
+    def handle(request: httpx2.Request) -> httpx2.Response:
+        seen.append(request)
+        assert request.method == "GET"  # read-only
+        assert request.url.path == "/api/v1/query_range"
+        if fail:
+            return httpx2.Response(503, text="unavailable")
+        labels = {
+            "__name__": "ALERTS",
+            "namespace": "prod",
+            "service": "payment-service",
+            "alertstate": "firing",
+        }
+        return httpx2.Response(
+            200,
+            json={
+                "status": "success",
+                "data": {
+                    "resultType": "matrix",
+                    "result": [
+                        {  # resolved: fired 10:02-10:05 (samples every 30 s)
+                            "metric": {
+                                **labels,
+                                "alertname": "HighLatencyP95",
+                                "severity": "warning",
+                            },
+                            "values": [[T0 + 120 + 30 * i, "1"] for i in range(7)],
+                        },
+                        {  # same labels as the Alertmanager alert ccc3: still firing at the end
+                            "metric": {
+                                **labels,
+                                "alertname": "DatabaseConnectionPoolExhausted",
+                                "severity": "critical",
+                            },
+                            "values": [[T0 + 600 + 30 * i, "1"] for i in range(11)],
+                        },
+                    ],
+                },
+            },
+        )
+
+    return httpx2.AsyncClient(base_url="http://prom", transport=httpx2.MockTransport(handle))
+
+
+async def history_with_prometheus(fail: bool = False) -> tuple[Any, list[httpx2.Request]]:
+    settings = ServerSettings(max_results=10, max_time_range_hours=24, prometheus_url="http://prom")
+    prom_seen: list[httpx2.Request] = []
+    server = create_server(
+        settings,
+        AlertmanagerClient(settings, fake_am([])),
+        PrometheusClient(settings, fake_prom(prom_seen, fail=fail)),
+    )
+    async with Client(server) as client:
+        result = await client.call_tool(
+            "alert_history",
+            {
+                "start": "2026-09-25T10:00:00Z",
+                "end": "2026-09-25T10:15:00Z",
+                "service": "payment-service",
+                "labels": {"namespace": "prod"},
+            },
+        )
+    return result.structured_content, prom_seen
+
+
+async def test_alert_history_from_prometheus_alerts() -> None:
+    data, seen = await history_with_prometheus()
+    params = seen[0].url.params
+    assert params["query"] == (
+        'ALERTS{alertstate="firing",namespace="prod",service="payment-service"}'
+    )
+    assert params["step"] == "30"
+    assert data["complete"] is True and data["note"] == PROMETHEUS_HISTORY_NOTE
+    assert data["sources"] == ["prometheus", "alertmanager"]
+    by_name = {(a["alertname"], a["source"]): a for a in data["alerts"]}
+    resolved = by_name[("HighLatencyP95", "prometheus")]
+    assert resolved["state"] == "resolved"
+    assert resolved["firing_since"] == "2026-09-25T10:02:00Z"
+    assert resolved["resolved_at"] == "2026-09-25T10:05:30Z"
+    assert resolved["started_before_range"] is False
+    firing = by_name[("DatabaseConnectionPoolExhausted", "prometheus")]
+    assert firing["state"] == "firing" and firing["resolved_at"] is None
+    # annotations joined from Alertmanager by identical labels
+    assert firing["fingerprint"] == "ccc3" and firing["runbook_url"]
+    # Alertmanager-only alerts (e.g. seeded, no ALERTS series) are kept
+    assert ("HighErrorRate", "alertmanager") in by_name
+    assert ("DatabaseConnectionPoolExhausted", "alertmanager") not in by_name
+    assert data["alerts"][0]["alertname"] == "HighLatencyP95"  # oldest first
+
+
+async def test_alert_history_falls_back_when_prometheus_fails() -> None:
+    data, _ = await history_with_prometheus(fail=True)
+    assert data["complete"] is False and data["sources"] == ["alertmanager"]
+    assert "Prometheus could not be queried" in data["note"]

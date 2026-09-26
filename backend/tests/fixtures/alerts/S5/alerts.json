@@ -90,7 +90,7 @@
           "alerts": [
             {
               "alertname": "RedisDown",
-              "description": "The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services fall back to the database; expect higher latency everywhere.",
+              "description": "Services report Redis unreachable (or no redis_up data) for 1 minute. They fall back to the database; expect higher latency everywhere.",
               "fingerprint": "23e630d4f4c3394f",
               "generator_url": "aiops-seed://S5/RedisDown",
               "inhibited_by": [],
@@ -121,7 +121,7 @@
           "total": 1,
           "truncated": false
         },
-        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"service=\\\"redis\\\"\"\n  ],\n  \"total\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"by_severity\": {\n    \"critical\": 1\n  },\n  \"alerts\": [\n    {\n      \"fingerprint\": \"23e630d4f4c3394f\",\n      \"alertname\": \"RedisDown\",\n      \"service\": \"redis\",\n      \"severity\": \"critical\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:11:00.000Z\",\n      \"summary\": \"redis: cache is unreachable\",\n      \"description\": \"The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services fall back to the database; expect higher latency everywhere.\",\n      \"runbook_url\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"labels\": {\n        \"alertname\": \"RedisDown\",\n        \"namespace\": \"prod\",\n        \"service\": \"redis\",\n        \"severity\": \"critical\",\n        \"team\": \"platform\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S5/RedisDown\"\n    }\n  ]\n}"
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"service=\\\"redis\\\"\"\n  ],\n  \"total\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"by_severity\": {\n    \"critical\": 1\n  },\n  \"alerts\": [\n    {\n      \"fingerprint\": \"23e630d4f4c3394f\",\n      \"alertname\": \"RedisDown\",\n      \"service\": \"redis\",\n      \"severity\": \"critical\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:11:00.000Z\",\n      \"summary\": \"redis: cache is unreachable\",\n      \"description\": \"Services report Redis unreachable (or no redis_up data) for 1 minute. They fall back to the database; expect higher latency everywhere.\",\n      \"runbook_url\": \"knowledge-base/runbooks/redis-outage.md\",\n      \"labels\": {\n        \"alertname\": \"RedisDown\",\n        \"namespace\": \"prod\",\n        \"service\": \"redis\",\n        \"severity\": \"critical\",\n        \"team\": \"platform\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S5/RedisDown\"\n    }\n  ]\n}"
       },
       "tool": "list_alerts"
     },

@@ -41,10 +41,10 @@ The whole platform runs inside **5 GB** of Docker memory. Optional UIs are off b
 | Postgres + Redis + Alertmanager | ~0.1 GB | |
 | MCP servers (6) | ~0.35 GB | kubernetes-mcp (PR-018): ~53 MiB, `mem_limit: 128m` |
 | Minikube: 4 sample services, Fluent Bit, kube-state-metrics (from PR-015) | ~2.2 GB | `minikube start --memory=2200 --cpus=2` |
-| Prometheus (from PR-020) | ~0.2 GB | short retention |
+| Prometheus (from PR-020) | ~0.07 GB (measured) | 30 s scrapes, 2-day retention, `mem_limit: 256m` |
 | **Always-on total** | **~3.7 GB** | measured: 1.4 GB before Minikube |
 | Kibana (`make ui-up`) | +0.6 GB | optional, on demand |
-| Grafana (`make ui-up`, from PR-020) | +0.15 GB | optional, on demand |
+| Grafana (`make ui-up` / `make grafana-up`, from PR-020) | +0.2 GB (measured) | optional, on demand |
 
 Agents, tests and evals never need the UIs. Use `make ui-up` to look at logs and dashboards, and `make ui-down` when you're done.
 

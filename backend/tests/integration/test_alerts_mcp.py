@@ -69,7 +69,13 @@ async def test_alerts_capability_end_to_end() -> None:
                     "service": "payment-service",
                 },
             )
-            assert history.ok and history.data["complete"] is False
+            assert history.ok, history.content
+            # complete (resolved alerts included) only when the server reads Prometheus ALERTS
+            assert history.data["complete"] is ("prometheus" in history.data["sources"])
+            # seeded alerts bypass Prometheus: they still show up, from Alertmanager
+            assert {"DatabaseConnectionPoolExhausted", "HighErrorRate"} <= {
+                a["alertname"] for a in history.data["alerts"]
+            }
             guarded = await tools.call("list_alerts", {"labels": {"service=~": ".+"}})
             assert not guarded.ok and "invalid label name" in guarded.content
     finally:

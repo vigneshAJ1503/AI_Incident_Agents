@@ -82,6 +82,51 @@ tests:
             exp_annotations:
               summary: "redis: cache is unreachable"
               description: >-
-                The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
-                fall back to the database; expect higher latency everywhere.
+                Services report Redis unreachable (or no redis_up data) for 1 minute. They fall
+                back to the database; expect higher latency everywhere.
               runbook_url: knowledge-base/runbooks/redis-outage.md
+
+  # S4: a rollout stuck on a nonexistent image. The old ReplicaSet still serves all 3
+  # replicas (available == desired), but the new pod never becomes available.
+  - interval: 1m
+    input_series:
+      - series: 'kube_deployment_spec_replicas{namespace="prod",deployment="user-service"}'
+        values: "3x10"
+      - series: 'kube_deployment_status_replicas_available{namespace="prod",deployment="user-service"}'
+        values: "3x10"
+      - series: 'kube_deployment_status_replicas_unavailable{namespace="prod",deployment="user-service"}'
+        values: "0 1x9"
+      - series: 'kube_deployment_labels{namespace="prod",deployment="user-service",label_app="user-service",label_team="identity"}'
+        values: "1x10"
+      # healthy: nothing unavailable, spec == available
+      - series: 'kube_deployment_spec_replicas{namespace="prod",deployment="payment-service"}'
+        values: "1x10"
+      - series: 'kube_deployment_status_replicas_available{namespace="prod",deployment="payment-service"}'
+        values: "1x10"
+      - series: 'kube_deployment_status_replicas_unavailable{namespace="prod",deployment="payment-service"}'
+        values: "0x10"
+      - series: 'kube_deployment_labels{namespace="prod",deployment="payment-service",label_app="payment-service",label_team="payments"}'
+        values: "1x10"
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: DeploymentReplicasMismatch
+        exp_alerts: []
+      - eval_time: 8m
+        alertname: DeploymentReplicasMismatch
+        exp_alerts:
+          - exp_labels:
+              alertname: DeploymentReplicasMismatch
+              severity: warning
+              namespace: prod
+              deployment: user-service
+              label_app: user-service
+              label_team: identity
+              service: user-service
+              team: identity
+            exp_annotations:
+              summary: "user-service: replicas unavailable or fewer than desired"
+              description: >-
+                Deployment prod/user-service has had unavailable replicas, or fewer available
+                replicas than desired, for 5 minutes (a stuck rollout: image pull failures,
+                failing probes, capacity).
+              runbook_url: knowledge-base/runbooks/bad-deployment-rollback.md

@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import io
 import json
+import sys
 from typing import Any
 
 import httpx
@@ -193,6 +194,8 @@ async def test_metrics_contract() -> None:
     ) in text
     assert "http_request_duration_seconds_bucket" in text
     assert "db_pool_connections_active" in text and "db_pool_connections_pending" in text
+    if sys.platform.startswith("linux"):  # process_* metrics come from /proc
+        assert "process_resident_memory_bytes" in text
 
 
 def test_config_rejects_unknown_service(monkeypatch: pytest.MonkeyPatch) -> None:

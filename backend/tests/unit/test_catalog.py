@@ -68,7 +68,10 @@ def test_identifiers_merge_environment_overrides(catalog: ServiceCatalog) -> Non
         "index_pattern": "payment-prod-*",
     }
     assert service.identifiers("logs") == {"service_value": "payment-service"}
-    assert service.identifiers("metrics", "production") == {}
+    assert service.identifiers("metrics", "production") == {
+        "labels": {"service": "payment-service", "namespace": "prod"}
+    }
+    assert service.identifiers("unknown-capability", "production") == {}
 
 
 def test_duplicate_alias_rejected() -> None:

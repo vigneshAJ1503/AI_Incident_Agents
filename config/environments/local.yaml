@@ -152,6 +152,51 @@ capabilities:
       # Deep link for evidence, e.g. a Lens/Headlamp/cloud console URL. Unset locally.
       # {namespace} {kind} {name} are filled in.
       ui_link_template: ${K8S_UI_LINK_TEMPLATE:-}
+  metrics:
+    # Own thin read-only prometheus-mcp (ADR-0009). Works with any Prometheus-compatible
+    # query API (Prometheus, Thanos, Mimir, VictoriaMetrics): point METRICS_PROM_URL at it.
+    provider: prometheus
+    mcp:
+      transport: http
+      url: ${METRICS_MCP_URL:-http://localhost:8103/mcp}
+      timeout_s: 30
+    # Read-only by construction (the server has no write or admin tools).
+    tool_allowlist: [query, query_range, list_metrics, metric_metadata, get_targets]
+    limits:
+      max_results: 50
+      max_time_range_hours: 24
+      query_timeout_s: 20
+    settings:
+      # PromQL label and metric names = portability. Change these to match another
+      # company's instrumentation; per-service label VALUES come from the service catalog
+      # (metrics: {labels: {service: ..., namespace: ...}}).
+      labels:
+        service: service
+        namespace: namespace
+        status: status              # HTTP status code on the request counter
+        k8s_app: label_app          # kube-state-metrics' app label (kube_pod_labels)
+      metrics:
+        requests: http_requests_total                   # counter
+        latency_histogram: http_request_duration_seconds  # histogram (_bucket)
+        db_pool_active: db_pool_connections_active
+        db_pool_max: db_pool_connections_max
+        db_pool_pending: db_pool_connections_pending
+        cache_up: redis_up                              # 1 = cache reachable
+        memory_rss: process_resident_memory_bytes
+        restarts: kube_pod_container_status_restarts_total
+        last_terminated_reason: kube_pod_container_status_last_terminated_reason
+        pod_labels: kube_pod_labels
+      error_status_regex: "5.."
+      rate_window: 2m              # rate() window (>= 4 scrapes at 30 s)
+      step: 30s                    # query_range resolution
+      baseline_minutes: 30         # compared window: [start - baseline, start]
+      # Deep links. Grafana is optional locally (make ui-up); agents never need it.
+      #   {service} {namespace} {from_ms} {to_ms} {panel} are filled in.
+      ui_link_template: "${GRAFANA_URL:-http://localhost:3000}/d/aiops-service-overview/service-overview?orgId=1&var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}"
+      #   the exact PromQL of a piece of evidence: {query} {range} {end_utc} (always available)
+      explore_link_template: "${PROMETHEUS_URL:-http://localhost:9090}/query?g0.expr={query}&g0.tab=graph&g0.range_input={range}&g0.end_input={end_utc}"
+      # Panel ids in the Service Overview dashboard (deploy/compose/config/grafana).
+      panels: { rps: 5, error_rate: 6, latency: 7, db_pool: 9, memory: 10, cache: 4 }
   code:
     provider: git                      # local git-mcp (ADR-0007); github/gitlab in companies
     mcp:

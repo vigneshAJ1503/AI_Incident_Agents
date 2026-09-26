@@ -55,6 +55,20 @@ Provisioned from git, nothing is clicked together by hand:
 
 Anonymous users get the Viewer role (the port is bound to 127.0.0.1); admin login is `admin` / `GRAFANA_ADMIN_PASSWORD`. Panel ids are stable because the agents build deep links to them (`viewPanel=<id>`).
 
+## The `metrics` capability: prometheus-mcp and links (PR-021)
+
+Agents read metrics only through `mcp-servers/prometheus-mcp` (127.0.0.1:8103, ADR-0009): `query`, `query_range`, `list_metrics`, `metric_metadata`, `get_targets`. Its guardrails are server-side: ≤ 24 h ranges, ≥ 15 s steps, ≤ 1,100 points and ≤ 50 series, a 20 s query timeout, no bare `{…}` selectors, and a metric allowlist (`METRICS_ALLOWLIST`).
+
+```bash
+make prometheus-mcp-up        # or make mcp-up (all MCP servers)
+```
+
+Portability lives in `config/environments/local.yaml` → `capabilities.metrics.settings`: metric names (`metrics.requests`, `metrics.latency_histogram`, …) and label names (`labels.service`, `labels.namespace`, …). Label *values* per service come from the service catalog (`metrics: {labels: {service: payment-service, namespace: prod}}`).
+
+There is no Grafana MCP. Evidence links are built from two templates:
+- `ui_link_template`: a Grafana dashboard panel (`/d/aiops-service-overview/...&viewPanel=6`), which opens once `make grafana-up` runs;
+- `explore_link_template`: the exact PromQL in the always-on Prometheus UI.
+
 ## Memory
 
 Measured with `docker stats` / `crictl stats` (PR-020, ~1,700 active series):
@@ -64,5 +78,6 @@ Measured with `docker stats` / `crictl stats` (PR-020, ~1,700 active series):
 | Prometheus after ~30 min of scraping | ~62 MiB (TSDB on disk: < 1 MB) | `mem_limit: 256m`, 2 days / 512 MB retention |
 | kube-state-metrics (inside Minikube) | ~14 MB | 96 Mi |
 | Grafana (optional) | ~205 MiB | `mem_limit: 320m` |
+| prometheus-mcp (PR-021) | ~52 MiB | `mem_limit: 128m` |
 
 Prometheus stays small because it scrapes only 5 targets every 30 s. If you add targets, keep an eye on `curl -s localhost:9090/api/v1/status/tsdb`.

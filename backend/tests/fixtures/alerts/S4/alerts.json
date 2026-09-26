@@ -15,7 +15,7 @@
           "alerts": [
             {
               "alertname": "DeploymentReplicasMismatch",
-              "description": "Deployment prod/user-service has had fewer available replicas than desired for 5 minutes (image pull failures, failing probes, capacity).",
+              "description": "Deployment prod/user-service has had unavailable replicas, or fewer available replicas than desired, for 5 minutes (a stuck rollout: image pull failures, failing probes, capacity).",
               "fingerprint": "bb7f70400a5ce680",
               "generator_url": "aiops-seed://S4/DeploymentReplicasMismatch",
               "inhibited_by": [],
@@ -33,7 +33,7 @@
               "silenced_by": [],
               "starts_at": "2026-09-25T10:15:00.000Z",
               "state": "active",
-              "summary": "user-service: available replicas do not match the spec"
+              "summary": "user-service: replicas unavailable or fewer than desired"
             }
           ],
           "by_severity": {
@@ -48,7 +48,7 @@
           "total": 1,
           "truncated": false
         },
-        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"namespace=\\\"prod\\\"\",\n    \"service=\\\"user-service\\\"\"\n  ],\n  \"total\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"by_severity\": {\n    \"warning\": 1\n  },\n  \"alerts\": [\n    {\n      \"fingerprint\": \"bb7f70400a5ce680\",\n      \"alertname\": \"DeploymentReplicasMismatch\",\n      \"service\": \"user-service\",\n      \"severity\": \"warning\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:15:00.000Z\",\n      \"summary\": \"user-service: available replicas do not match the spec\",\n      \"description\": \"Deployment prod/user-service has had fewer available replicas than desired for 5 minutes (image pull failures, failing probes, capacity).\",\n      \"runbook_url\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"labels\": {\n        \"alertname\": \"DeploymentReplicasMismatch\",\n        \"deployment\": \"user-service\",\n        \"namespace\": \"prod\",\n        \"service\": \"user-service\",\n        \"severity\": \"warning\",\n        \"team\": \"identity\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S4/DeploymentReplicasMismatch\"\n    }\n  ]\n}"
+        "text": "{\n  \"state\": \"all\",\n  \"filters\": [\n    \"namespace=\\\"prod\\\"\",\n    \"service=\\\"user-service\\\"\"\n  ],\n  \"total\": 1,\n  \"returned\": 1,\n  \"truncated\": false,\n  \"by_severity\": {\n    \"warning\": 1\n  },\n  \"alerts\": [\n    {\n      \"fingerprint\": \"bb7f70400a5ce680\",\n      \"alertname\": \"DeploymentReplicasMismatch\",\n      \"service\": \"user-service\",\n      \"severity\": \"warning\",\n      \"state\": \"active\",\n      \"starts_at\": \"2026-09-25T10:15:00.000Z\",\n      \"summary\": \"user-service: replicas unavailable or fewer than desired\",\n      \"description\": \"Deployment prod/user-service has had unavailable replicas, or fewer available replicas than desired, for 5 minutes (a stuck rollout: image pull failures, failing probes, capacity).\",\n      \"runbook_url\": \"knowledge-base/runbooks/bad-deployment-rollback.md\",\n      \"labels\": {\n        \"alertname\": \"DeploymentReplicasMismatch\",\n        \"deployment\": \"user-service\",\n        \"namespace\": \"prod\",\n        \"service\": \"user-service\",\n        \"severity\": \"warning\",\n        \"team\": \"identity\"\n      },\n      \"silenced_by\": [],\n      \"inhibited_by\": [],\n      \"generator_url\": \"aiops-seed://S4/DeploymentReplicasMismatch\"\n    }\n  ]\n}"
       },
       "tool": "list_alerts"
     },

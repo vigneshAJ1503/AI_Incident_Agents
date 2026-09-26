@@ -1,0 +1,45 @@
+# Prometheus for the local stack (PR-020). Lean: 30 s scrapes, only the targets the
+# agents and alert rules need, short retention (see docker-compose.infra.yml).
+#
+# Targets live in Minikube (profile `aiops`, node IP 172.21.0.100 on the `aiops` Docker
+# network) and are reached through NodePorts:
+#   30081-30084  the four sample services' /metrics
+#   30080        kube-state-metrics (deploy/k8s/monitoring, `make monitoring-up`)
+# Change the addresses here if your node IP differs (`minikube -p aiops ip`).
+
+global:
+  scrape_interval: 30s
+  scrape_timeout: 10s
+  evaluation_interval: 30s
+
+rule_files:
+  - /etc/prometheus/rules/alert-rules.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["aiops-alertmanager:9093"]
+
+scrape_configs:
+  # The sample services already label their own series with service/team/namespace (the
+  # metric contract in alert-rules.yml). The target labels below only fill in series that
+  # don't carry them (process_resident_memory_bytes, process_cpu_seconds_total);
+  # honor_labels keeps the application's own values whenever both exist.
+  - job_name: sample-services
+    honor_labels: true
+    static_configs:
+      - targets: ["172.21.0.100:30081"]
+        labels: { service: payment-service, team: payments, namespace: prod }
+      - targets: ["172.21.0.100:30082"]
+        labels: { service: order-service, team: commerce, namespace: prod }
+      - targets: ["172.21.0.100:30083"]
+        labels: { service: user-service, team: identity, namespace: prod }
+      - targets: ["172.21.0.100:30084"]
+        labels: { service: inventory-service, team: commerce, namespace: prod }
+
+  # Object state for pods and deployments in `prod`. honor_labels keeps kube-state-metrics'
+  # `namespace`/`pod` labels (the objects' own), which the alert rules join on.
+  - job_name: kube-state-metrics
+    honor_labels: true
+    static_configs:
+      - targets: ["172.21.0.100:30080"]

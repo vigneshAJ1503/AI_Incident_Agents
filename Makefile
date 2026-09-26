@@ -68,17 +68,21 @@ COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f
 S ?= S1
 
 .PHONY: infra-up
-infra-up: ## Start the lean data stack: Elasticsearch, Postgres, Redis, Alertmanager (no UIs)
+infra-up: ## Start the lean data stack: Elasticsearch, Postgres, Redis, Alertmanager, Prometheus (no UIs)
 	@./scripts/ensure-network.sh
 	$(COMPOSE) up -d --wait
 
 .PHONY: ui-up
-ui-up: ## Start the optional UIs (Kibana, ~0.6 GB); agents never need them
-	$(COMPOSE) --profile ui up -d --wait kibana
+ui-up: ## Start the optional UIs (Kibana ~0.6 GB, Grafana ~0.1 GB); agents never need them
+	$(COMPOSE) --profile ui up -d --wait kibana grafana
+
+.PHONY: grafana-up
+grafana-up: ## Start only Grafana (http://localhost:3000, dashboards "Service Overview", "K8s Workloads")
+	$(COMPOSE) --profile ui up -d --wait grafana
 
 .PHONY: ui-down
 ui-down: ## Stop the optional UIs to free memory
-	$(COMPOSE) --profile ui stop kibana
+	$(COMPOSE) --profile ui stop kibana grafana
 
 .PHONY: infra-up-lite
 infra-up-lite: ## Alias of infra-up (kept for compatibility)
@@ -130,6 +134,11 @@ KUBECTL := kubectl --context aiops
 k8s-up: ## Start the lean Minikube cluster (2.2 GB) and deploy the sample services
 	./scripts/minikube-up.sh
 
+.PHONY: monitoring-up
+monitoring-up: ## Deploy kube-state-metrics into the cluster (NodePort 30080; part of k8s-up)
+	$(KUBECTL) apply -k deploy/k8s/monitoring
+	$(KUBECTL) -n monitoring rollout status deployment/kube-state-metrics --timeout=180s
+
 .PHONY: k8s-status
 k8s-status: ## Show sample-service pods and the cluster's memory use
 	$(KUBECTL) -n prod get pods -o wide
@@ -180,6 +189,14 @@ eval: venv-fix ## Score an agent on scenarios: make eval AGENT=logs MODE=replay|
 PROMETHEUS_IMAGE := prom/prometheus:v3.15.0
 ALERTMANAGER_IMAGE := prom/alertmanager:v0.34.1
 
+.PHONY: prometheus-up
+prometheus-up: ## Start only Prometheus (http://localhost:9090; part of infra-up)
+	$(COMPOSE) up -d --wait prometheus
+
+.PHONY: prometheus-reload
+prometheus-reload: ## Reload prometheus.yml / alert-rules.yml without a restart (SIGHUP)
+	docker kill -s HUP aiops-prometheus
+
 .PHONY: alertmanager-up
 alertmanager-up: ## Start only Alertmanager (part of infra-up too)
 	$(COMPOSE) up -d --wait alertmanager
@@ -193,7 +210,11 @@ record-fixtures-alerts: venv-fix ## Re-record Alert agent fixtures (needs alertm
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_alerts
 
 .PHONY: check-rules
-check-rules: ## Validate the alert rules (promtool check + unit tests) and alertmanager.yml (Docker)
+check-rules: ## Validate prometheus.yml, the alert rules (check + unit tests) and alertmanager.yml (Docker)
+	docker run --rm --entrypoint promtool \
+		-v "$(CURDIR)/deploy/compose/config/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro" \
+		-v "$(CURDIR)/deploy/compose/config/prometheus/alert-rules.yml:/etc/prometheus/rules/alert-rules.yml:ro" \
+		$(PROMETHEUS_IMAGE) check config /etc/prometheus/prometheus.yml
 	docker run --rm --entrypoint promtool -v "$(CURDIR)/deploy/compose/config/prometheus:/rules:ro" \
 		-w /rules $(PROMETHEUS_IMAGE) check rules alert-rules.yml
 	docker run --rm --entrypoint promtool -v "$(CURDIR)/deploy/compose/config/prometheus:/rules:ro" \

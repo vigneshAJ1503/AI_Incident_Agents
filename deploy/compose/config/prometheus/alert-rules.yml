@@ -14,7 +14,8 @@
 #   http_request_duration_seconds_bucket{service,team,namespace,le}
 #   db_pool_connections_active / db_pool_connections_max / db_pool_connections_pending
 #   kube-state-metrics with --metric-labels-allowlist=pods=[app,team],deployments=[app,team]
-#   redis_up (redis_exporter)
+#   redis_up{service,team,namespace} (each service's view of its Redis connection)
+#   process_resident_memory_bytes (target labels service/team/namespace, prometheus.yml)
 
 groups:
   - name: aiops-service-slo
@@ -108,12 +109,18 @@ groups:
             memory limit (OOMKilled) and restarted in the last 10 minutes.
           runbook_url: knowledge-base/runbooks/memory-leak-oom.md
 
+      # A stuck rollout keeps the OLD ReplicaSet serving (available == desired, e.g. S4's
+      # ImagePullBackOff), so unavailable replicas count as a mismatch too.
       - alert: DeploymentReplicasMismatch
         expr: |
           (
-            max by (namespace, deployment) (kube_deployment_spec_replicas)
-              !=
-            max by (namespace, deployment) (kube_deployment_status_replicas_available)
+            (
+              max by (namespace, deployment) (kube_deployment_spec_replicas)
+                !=
+              max by (namespace, deployment) (kube_deployment_status_replicas_available)
+            )
+            or
+            max by (namespace, deployment) (kube_deployment_status_replicas_unavailable) > 0
           )
           * on (namespace, deployment) group_left (label_app, label_team) kube_deployment_labels
         for: 5m
@@ -122,10 +129,11 @@ groups:
           service: "{{ $labels.label_app }}"
           team: "{{ $labels.label_team }}"
         annotations:
-          summary: "{{ $labels.deployment }}: available replicas do not match the spec"
+          summary: "{{ $labels.deployment }}: replicas unavailable or fewer than desired"
           description: >-
-            Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had fewer available
-            replicas than desired for 5 minutes (image pull failures, failing probes, capacity).
+            Deployment {{ $labels.namespace }}/{{ $labels.deployment }} has had unavailable replicas,
+            or fewer available replicas than desired, for 5 minutes (a stuck rollout: image pull
+            failures, failing probes, capacity).
           runbook_url: knowledge-base/runbooks/bad-deployment-rollback.md
 
   - name: aiops-dependencies
@@ -140,6 +148,6 @@ groups:
         annotations:
           summary: "redis: cache is unreachable"
           description: >-
-            The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services
-            fall back to the database; expect higher latency everywhere.
+            Services report Redis unreachable (or no redis_up data) for 1 minute. They fall
+            back to the database; expect higher latency everywhere.
           runbook_url: knowledge-base/runbooks/redis-outage.md

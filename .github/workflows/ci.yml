@@ -104,7 +104,9 @@ jobs:
         run: docker build -t aiops/sample-service:ci .
       - name: Kubernetes manifests render
         working-directory: .
-        run: kubectl kustomize deploy/k8s/base > /dev/null
+        run: |
+          kubectl kustomize deploy/k8s/base > /dev/null
+          kubectl kustomize deploy/k8s/monitoring > /dev/null
 
   secrets:
     name: secret scan

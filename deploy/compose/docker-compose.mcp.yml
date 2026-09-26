@@ -95,6 +95,8 @@ services:
       - MAX_RESULTS=${ALERTS_MAX_RESULTS:-200}
       - MAX_TIME_RANGE_HOURS=${ALERTS_MAX_TIME_RANGE_HOURS:-168}
       - QUERY_TIMEOUT_S=${ALERTS_QUERY_TIMEOUT_S:-15}
+      # alert_history reads the ALERTS series here (resolved alerts included); unset = AM only
+      - PROMETHEUS_URL=${ALERTS_PROMETHEUS_URL:-http://aiops-prometheus:9090}
     ports:
       - "127.0.0.1:${ALERTS_MCP_PORT:-8105}:8105"
     mem_limit: 128m

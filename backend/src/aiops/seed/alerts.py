@@ -86,16 +86,17 @@ RULES: dict[str, RuleTemplate] = {
     ),
     "DeploymentReplicasMismatch": RuleTemplate(
         "warning",
-        "{deployment}: available replicas do not match the spec",
-        "Deployment {namespace}/{deployment} has had fewer available replicas than desired "
-        "for 5 minutes (image pull failures, failing probes, capacity).",
+        "{deployment}: replicas unavailable or fewer than desired",
+        "Deployment {namespace}/{deployment} has had unavailable replicas, or fewer available "
+        "replicas than desired, for 5 minutes (a stuck rollout: image pull failures, failing "
+        "probes, capacity).",
         "bad-deployment-rollback.md",
     ),
     "RedisDown": RuleTemplate(
         "critical",
         "redis: cache is unreachable",
-        "The Redis exporter cannot reach Redis (or reports no data) for 1 minute. Services "
-        "fall back to the database; expect higher latency everywhere.",
+        "Services report Redis unreachable (or no redis_up data) for 1 minute. They fall back "
+        "to the database; expect higher latency everywhere.",
         "redis-outage.md",
     ),
 }

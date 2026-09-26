@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram
+from prometheus_client import CollectorRegistry, Counter, Gauge, Histogram, ProcessCollector
 
 LABELS = ("service", "team", "namespace")
 
@@ -38,3 +38,7 @@ class Metrics:
         self.redis_up = Gauge(
             "redis_up", "1 if the last Redis operation succeeded", LABELS, registry=self.registry
         )
+        # Standard process_* metrics (resident memory, CPU seconds) read from /proc on Linux
+        # (none elsewhere). They carry no service labels: Prometheus adds service/team/namespace
+        # as target labels (deploy/compose/config/prometheus/prometheus.yml).
+        ProcessCollector(registry=self.registry)

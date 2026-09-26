@@ -24,17 +24,28 @@ from alertmanager_mcp.guards import (
     validate_fingerprint,
     validate_time_range,
 )
+from alertmanager_mcp.prom import PrometheusClient, PrometheusError, firing_intervals
 
 INSTRUCTIONS = """Read-only access to Alertmanager: firing alerts, alert groups and silences.
 Filter by labels (equality only), e.g. service='payment-service'. Alerts are symptoms
 reported by monitoring rules: evidence to correlate with other data, not a root cause.
-Alertmanager keeps no history of resolved alerts; alert_history says what it can cover."""
+Alertmanager keeps no history of resolved alerts; alert_history reads Prometheus's ALERTS
+series when Prometheus is configured, and says what it covered ('complete', 'sources')."""
 
 HISTORY_NOTE = (
     "Alertmanager keeps no alert history: its API returns only alerts that have not ended "
     "(resolved alerts are dropped). These are the alerts still firing that overlap the "
-    "requested range. Full history (resolved alerts) comes from the Prometheus ALERTS / "
-    "ALERTS_FOR_STATE series once Prometheus is connected (PR-020)."
+    "requested range. Full history (resolved alerts) needs the Prometheus ALERTS series: "
+    "set PROMETHEUS_URL on this server."
+)
+PROMETHEUS_HISTORY_NOTE = (
+    "Firing intervals from Prometheus's ALERTS series (resolved alerts included), plus "
+    "alerts known only to Alertmanager (posted by another source, e.g. seeded alerts). "
+    "Times are accurate to one step."
+)
+PROMETHEUS_DOWN_NOTE = (
+    "Prometheus could not be queried ({error}); showing only the alerts Alertmanager still "
+    "holds (no resolved alerts)."
 )
 
 SEVERITY_RANK = {"critical": 0, "error": 1, "warning": 2, "info": 3}
@@ -109,8 +120,17 @@ def silence_could_apply(silence: dict[str, Any], labels: dict[str, str]) -> bool
     return True
 
 
-def create_server(settings: ServerSettings, am: AlertmanagerClient | None = None) -> MCPServer:
+def _label_key(labels: dict[str, Any]) -> tuple[tuple[str, str], ...]:
+    return tuple(sorted((str(k), str(v)) for k, v in labels.items()))
+
+
+def create_server(
+    settings: ServerSettings,
+    am: AlertmanagerClient | None = None,
+    prometheus: PrometheusClient | None = None,
+) -> MCPServer:
     client = am or AlertmanagerClient(settings)
+    prom = prometheus or (PrometheusClient(settings) if settings.prometheus_url else None)
     server = MCPServer("alertmanager-mcp", instructions=INSTRUCTIONS, version="0.1.0")
 
     async def guarded[T](coro: Awaitable[T]) -> T:
@@ -306,7 +326,8 @@ def create_server(settings: ServerSettings, am: AlertmanagerClient | None = None
     ) -> dict[str, Any]:
         """Alerts that were firing at some point in [start, end] (ISO-8601 UTC), oldest first.
 
-        Limited while Alertmanager is the only source: see 'complete' and 'note' in the result.
+        With Prometheus configured, includes alerts that already resolved (firing_since /
+        resolved_at); otherwise only still-firing alerts: see 'complete' and 'note'.
         Args:
             start: window start, e.g. '2026-09-25T10:00:00Z'.
             end: window end.
@@ -325,11 +346,48 @@ def create_server(settings: ServerSettings, am: AlertmanagerClient | None = None
             if (starts := _ts(a["starts_at"])) is not None and starts <= finish
         ]
         alerts.sort(key=lambda a: str(a["starts_at"]))
+        time_range = {"start": begin.isoformat(), "end": finish.isoformat()}
+        note = HISTORY_NOTE
+        if prom is not None:
+            try:
+                series, step = await prom.firing_series(matchers, begin, finish)
+            except PrometheusError as exc:
+                note = PROMETHEUS_DOWN_NOTE.format(error=exc)
+            else:
+                history = firing_intervals(series, step, begin, finish)
+                # Annotations (summary, runbook) live in Alertmanager, not in ALERTS.
+                current = {_label_key(a["labels"]): a for a in alerts}
+                for entry in history:
+                    match = current.get(_label_key(entry["labels"]))
+                    if match is not None:
+                        entry.update(
+                            fingerprint=match["fingerprint"],
+                            summary=match["summary"],
+                            runbook_url=match["runbook_url"],
+                            starts_at=match["starts_at"],
+                        )
+                known = {_label_key(e["labels"]) for e in history}
+                extra = [
+                    {**a, "source": "alertmanager"}
+                    for a in alerts
+                    if _label_key(a["labels"]) not in known
+                ]
+                merged = history + extra
+                return {
+                    "sources": ["prometheus", "alertmanager"],
+                    "complete": True,
+                    "note": PROMETHEUS_HISTORY_NOTE,
+                    "step_s": step,
+                    "time_range": time_range,
+                    "filters": matchers,
+                    **page(merged, cap),
+                    "alerts": merged[:cap],
+                }
         return {
-            "source": "alertmanager",
+            "sources": ["alertmanager"],
             "complete": False,
-            "note": HISTORY_NOTE,
-            "time_range": {"start": begin.isoformat(), "end": finish.isoformat()},
+            "note": note,
+            "time_range": time_range,
             "filters": matchers,
             **page(alerts, cap),
             "alerts": alerts[:cap],

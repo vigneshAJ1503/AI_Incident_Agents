@@ -21,6 +21,9 @@ class ServerSettings:
     max_filters: int = 10  # label matchers per call
     max_time_range_hours: float = 168.0  # alert_history window
     query_timeout_s: float = 15.0
+    # Optional: alert_history reads Prometheus's ALERTS series (resolved alerts included).
+    prometheus_url: str | None = None
+    history_step_s: int = 30  # >= the rule evaluation interval
 
     @classmethod
     def from_env(cls) -> ServerSettings:
@@ -33,4 +36,6 @@ class ServerSettings:
             max_filters=int(_env("MAX_FILTERS", "10")),
             max_time_range_hours=float(_env("MAX_TIME_RANGE_HOURS", "168")),
             query_timeout_s=float(_env("QUERY_TIMEOUT_S", "15")),
+            prometheus_url=(os.environ.get("PROMETHEUS_URL") or "").strip().rstrip("/") or None,
+            history_step_s=int(_env("HISTORY_STEP_S", "30")),
         )

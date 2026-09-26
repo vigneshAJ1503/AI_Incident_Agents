@@ -69,6 +69,22 @@ There is no Grafana MCP. Evidence links are built from two templates:
 - `ui_link_template`: a Grafana dashboard panel (`/d/aiops-service-overview/...&viewPanel=6`), which opens once `make grafana-up` runs;
 - `explore_link_template`: the exact PromQL in the always-on Prometheus UI.
 
+## The Metrics agent (UC-05, PR-022)
+
+`backend/src/aiops/agents/metrics_agent/` (agent `metrics`, capability `metrics`, evidence kind `metric`, prompt `config/prompts/metrics/v1.md`):
+
+1. **PromQL library** (`promql.py`), built only from settings: requests/s, 5xx ratio, p95/p99 latency, DB pool utilisation and waiters, cache up, process RSS, container restarts and OOM kills (kube-state-metrics joined on `label_app`). Each query covers the service **and its catalog dependencies** (`service=~"a|b|c"`), so there are 10 `query_range` calls over `[window start − baseline_minutes, window end]` at 30 s.
+2. **Deterministic anomaly detection** (`analysis.py`): the baseline is the median before the window. A change point is the first point of a sustained deviation (3 of 4 points, about 1.5 min). Magnitude is the median and peak during the anomaly, ratio and z-score. Rules are per metric (e.g. error ratio +2 points and ×3, latency +200 ms and ×2, pool ≥ 90 %, cache 0).
+3. **Evidence** per metric: `{metric, baseline, current, start_time, window, query, services{…}, series{…} (≤ 40 points each, for charts)}` with a Grafana panel link (or a Prometheus query link).
+4. **Signals** (authoritative, data-derived): `error_rate_up`, `latency_up`, `traffic_drop`, `traffic_spike`, `db_pool_saturated`, `memory_pressure`, `cache_down`, `dependency_latency_up`, `no_anomaly`.
+5. The LLM gets the overview and at most ~3 follow-up queries, then `finalize` restores the data signals and status.
+
+**Fixtures are recorded live**, not seeded: `make record-metrics S=S1` runs `aiops fault run S1 -- python -m tests.fixtures.record_metrics`. It waits until 6 minutes after the injection (the fault stays active meanwhile), then records a 15-minute window plus the 15-minute baseline before it. The window is stored in `backend/tests/fixtures/metrics/<S>/meta.json` (`start`, `end`, `incident_start`), and the replay task is rebuilt from it. `S=S0` records the healthy baseline (it takes the cluster lock itself). Record when the cluster has been quiet for ~15 minutes (30 for S0), or the baseline includes someone else's fault.
+
+```bash
+make eval AGENT=metrics MODE=replay     # zero tokens, 6/6
+```
+
 ## Memory
 
 Measured with `docker stats` / `crictl stats` (PR-020, ~1,700 active series):

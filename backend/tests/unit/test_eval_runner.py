@@ -13,7 +13,16 @@ from typer.testing import CliRunner
 
 from aiops.cli.main import app
 from aiops.core.config import load_settings
-from aiops.core.models import AgentResult, AgentStatus, ClaimKind, Evidence, EvidenceKind, Finding
+from aiops.core.models import (
+    AgentResult,
+    AgentStatus,
+    ClaimKind,
+    Evidence,
+    EvidenceKind,
+    Finding,
+    TimeRange,
+)
+from aiops.evals.replay import ReplayMeta
 from aiops.evals.runner import (
     EvalError,
     EvalPaths,
@@ -258,3 +267,27 @@ def test_cli_below_min_pass_rate_exits_1(monkeypatch: pytest.MonkeyPatch) -> Non
 def test_cli_rejects_unknown_mode() -> None:
     result = cli.invoke(app, ["eval", "run", "--mode", "dry", "--no-write"])
     assert result.exit_code == 2
+
+
+def test_replay_meta_sets_the_task_window(tmp_path: Path) -> None:
+    """Fixtures recorded from a live fault carry their window in meta.json."""
+    assert ReplayMeta.load(tmp_path) is None
+    (tmp_path / "meta.json").write_text(
+        json.dumps(
+            {
+                "scenario": "S1",
+                "start": "2026-09-26T09:23:00Z",
+                "end": "2026-09-26T09:38:00Z",
+                "incident_start": "2026-09-26T09:32:12Z",
+            }
+        )
+    )
+    meta = ReplayMeta.load(tmp_path)
+    assert meta is not None
+    assert meta.incident_start == datetime(2026, 9, 26, 9, 32, 12, tzinfo=UTC)
+    window = TimeRange(start=meta.start, end=meta.end)
+    task = BY_ID["S1"].task("metrics", meta.end, window)
+    assert task.context.time_range == window
+    # without an explicit window, the scenario's own window (30m) ends at `now`
+    default = BY_ID["S1"].task("metrics", meta.end)
+    assert default.context.time_range.duration.total_seconds() == 30 * 60

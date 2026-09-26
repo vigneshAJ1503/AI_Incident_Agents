@@ -7,8 +7,11 @@ guardrails produce from recorded MCP fixtures.
 
 from __future__ import annotations
 
+import json
 import re
+from dataclasses import dataclass
 from datetime import UTC, datetime
+from pathlib import Path
 
 from aiops.core.models import TokenUsage
 from aiops.llm.base import ChatMessage, LLMResponse, ToolSpec
@@ -16,6 +19,38 @@ from aiops.llm.fake import Responder, tool_call
 
 #: Anchor time of every recorded fixture (tests/fixtures/<agent>/<scenario>/).
 REPLAY_NOW = datetime(2026, 9, 25, 10, 30, tzinfo=UTC)
+#: Fixtures recorded from a LIVE fault (not at REPLAY_NOW) store their window here.
+REPLAY_META = "meta.json"
+
+
+def _ts(value: str) -> datetime:
+    parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    return (parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)).astimezone(UTC)
+
+
+@dataclass(frozen=True)
+class ReplayMeta:
+    """The task window a live fixture was recorded with (``meta.json``)."""
+
+    scenario: str
+    start: datetime
+    end: datetime
+    incident_start: datetime | None = None
+
+    @classmethod
+    def load(cls, directory: Path) -> ReplayMeta | None:
+        path = directory / REPLAY_META
+        if not path.is_file():
+            return None
+        data = json.loads(path.read_text())
+        incident = data.get("incident_start")
+        return cls(
+            scenario=str(data["scenario"]),
+            start=_ts(data["start"]),
+            end=_ts(data["end"]),
+            incident_start=_ts(incident) if incident else None,
+        )
+
 
 OVERVIEW_HEADING = "## Overview"
 _LABELLED_EVIDENCE = re.compile(r"\[(ev-[0-9a-f]+)\] (\w+)")

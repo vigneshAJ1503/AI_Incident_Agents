@@ -189,7 +189,7 @@ capabilities:
       error_status_regex: "5.."
       rate_window: 2m              # rate() window (>= 4 scrapes at 30 s)
       step: 30s                    # query_range resolution
-      baseline_minutes: 30         # compared window: [start - baseline, start]
+      baseline_minutes: 15         # compared window: [start - baseline, start]
       # Deep links. Grafana is optional locally (make ui-up); agents never need it.
       #   {service} {namespace} {from_ms} {to_ms} {panel} are filled in.
       ui_link_template: "${GRAFANA_URL:-http://localhost:3000}/d/aiops-service-overview/service-overview?orgId=1&var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}"
@@ -253,6 +253,15 @@ agents:
       max_tool_calls: 10
       max_execution_s: 45
       max_tokens: 30000
+  metrics:
+    model_role: agent
+    # 10 deterministic query_range calls (service + catalog dependencies in each), then
+    # <= 3 LLM follow-ups (query / query_range / get_targets)
+    limits:
+      max_steps: 4
+      max_tool_calls: 13
+      max_execution_s: 60
+      max_tokens: 40000
   code:
     model_role: agent
     # 2 deterministic calls (releases, commits) + up to 3 diffs + up to 5 LLM follow-ups

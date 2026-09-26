@@ -1030,12 +1030,13 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-022 · Metrics Agent
 - **Branch:** `feat/022-metrics-agent`
 - **Scope:**
-  - a PromQL library in the prompt
-  - deterministic anomaly detection (baseline vs current, in Python)
-  - detects traffic, latency and error-rate spikes, CPU saturation and memory pressure
-  - evidence `{metric, baseline, current, window}` plus the series for charts
+  - a PromQL library built from capability settings (`agents/metrics_agent/promql.py`, summarised in the prompt): RPS, 5xx ratio, p95/p99, DB pool utilisation/waiters, cache up, process RSS, restarts and OOM kills (kube-state-metrics). Each query covers the service **and its catalog dependencies**
+  - deterministic anomaly detection in Python: baseline median vs the window, sustained change point (start time), ratio and z-score
+  - signals `error_rate_up, latency_up, traffic_drop, traffic_spike, db_pool_saturated, memory_pressure, cache_down, dependency_latency_up, no_anomaly`
+  - evidence `{metric, baseline, current, window, start_time}` plus the series for charts and Grafana panel / Prometheus query links
+  - *Deviations:* no CPU-saturation signal (no cAdvisor, see PR-020); DB pool saturation takes its place. Fixtures are **recorded from live faults** (`make record-metrics S=S1`), with the window in `meta.json`, which the replay runner honours.
 - 🎯 UC-05
-- ✅ S1: p95 ≥ 5× and the 5xx jump, with correct start times; S3: cross-service latency detected.
+- ✅ S1: p95 ≥ 5× and the 5xx jump, with correct start times; S3: cross-service latency detected. `make eval AGENT=metrics MODE=replay` 6/6.
 
 ### Phase 6 — Alerts slice (EPIC-008)
 

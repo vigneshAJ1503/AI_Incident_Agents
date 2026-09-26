@@ -1,0 +1,7 @@
+# Cross-service (live metrics, `aiops fault run S3`): inventory-service's p95 jumps from
+# ~30 ms to ~5 s, order-service's p95 follows in the same step and its calls time out (5xx).
+status: [success]
+signals: [latency_up, dependency_latency_up, error_rate_up]
+forbidden_signals: [no_anomaly, cache_down, db_pool_saturated, memory_pressure]
+must_mention: [inventory-service, latency p95 up]
+min_evidence: 10

@@ -43,13 +43,14 @@ class Scenario(BaseModel):
         """No ground-truth root cause: any reported anomaly is a false positive."""
         return self.root_cause is None
 
-    def task(self, agent: str, now: datetime) -> AgentTask:
-        """The agent task an engineer's question produces, with the window ending at ``now``."""
+    def task(self, agent: str, now: datetime, time_range: TimeRange | None = None) -> AgentTask:
+        """The agent task an engineer's question produces, with the window ending at ``now``
+        (or exactly ``time_range``, e.g. the window a live fixture was recorded with)."""
         context = IncidentContext(
             question=self.question,
             service=self.service,
             environment=self.environment,
-            time_range=TimeRange.last(self.window, now=now),
+            time_range=time_range or TimeRange.last(self.window, now=now),
         )
         expectation = self.agents.get(agent)
         hints = dict(expectation.hints) if expectation else {}

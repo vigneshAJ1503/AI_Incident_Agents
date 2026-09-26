@@ -1,0 +1,7 @@
+# UC-05 acceptance, on live metrics (fixture recorded during `aiops fault run S1`): the pool
+# saturates and p95 spikes within a minute of the rollout, then the 5xx ratio climbs.
+status: [success]
+signals: [error_rate_up, db_pool_saturated, latency_up]
+forbidden_signals: [no_anomaly, cache_down, memory_pressure, dependency_latency_up]
+must_mention: [payment-service, error rate up, db pool]
+min_evidence: 10

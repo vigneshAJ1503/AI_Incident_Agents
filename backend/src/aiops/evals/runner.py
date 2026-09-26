@@ -1,7 +1,8 @@
 """Eval runner: score an agent against scenario ground truth (MASTER_PLAN.md §15).
 
 Two modes:
-  * ``replay`` (default): recorded MCP fixtures + a scripted LLM that submits the
+  * ``replay`` (default): recorded MCP fixtures (anchored at REPLAY_NOW, or at the window
+    in ``meta.json`` for fixtures recorded from a live fault) + a scripted LLM that submits the
     agent's deterministic overview. Zero tokens, deterministic, runs in CI.
   * ``live``: seed each scenario into the local stack at the current time, then run
     the agent with the configured hosted LLM.
@@ -30,8 +31,8 @@ import aiops.agents  # noqa: F401  (registers built-in agents)
 from aiops.agents.deps import build_deps
 from aiops.agents.registry import AGENTS
 from aiops.core.config import Settings, find_config_dir
-from aiops.core.models import AgentResult, AgentStatus, ClaimKind
-from aiops.evals.replay import REPLAY_NOW, echo_responder
+from aiops.core.models import AgentResult, AgentStatus, ClaimKind, TimeRange
+from aiops.evals.replay import REPLAY_NOW, ReplayMeta, echo_responder
 from aiops.evals.scenario import Scenario, load_scenarios
 from aiops.evals.scoring import Check, score_agent
 from aiops.llm.base import LLMProvider
@@ -53,6 +54,8 @@ BENIGN_SIGNALS = frozenset(
         "no_active_alerts",
         # code: no risky change in the lookback window
         "no_recent_changes",
+        # metrics: every metric within its baseline
+        "no_anomaly",
     }
 )
 
@@ -347,8 +350,10 @@ async def run_eval(
     es_url = es_url or os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
 
     results: list[ScenarioEval] = []
+    live_recorded = False  # some replay fixtures carry their own window (meta.json)
     for scenario in scenarios:
         replay_dir: Path | None = None
+        time_range: TimeRange | None = None
         llm: LLMProvider | None
         if mode == "replay":
             replay_dir = paths.fixtures / agent / scenario.id
@@ -359,13 +364,17 @@ async def run_eval(
                     on_result(evaluation)
                 continue
             now = REPLAY_NOW
+            meta = ReplayMeta.load(replay_dir)  # fixtures recorded from a live fault
+            if meta is not None:
+                now, time_range = meta.end, TimeRange(start=meta.start, end=meta.end)
+                live_recorded = True
             llm = llm_factory() if llm_factory else FakeLLMProvider(responder=echo_responder())
         else:
             now = await asyncio.to_thread(seed_live, scenario, agent_cls.spec.capabilities, es_url)
             llm = llm_factory() if llm_factory else None  # None = configured provider
 
         deps = build_deps(settings, llm=llm, replay_dir=replay_dir)
-        result = await agent_cls(deps).run(scenario.task(agent, now))
+        result = await agent_cls(deps).run(scenario.task(agent, now, time_range))
         evaluation = evaluate_result(scenario, agent, result)
         results.append(evaluation)
         if on_result:
@@ -376,7 +385,13 @@ async def run_eval(
         mode=mode,
         environment=settings.environment,
         generated_at=datetime.now(UTC),
-        anchor=REPLAY_NOW.isoformat() if mode == "replay" else "seeded at run time",
+        anchor=(
+            "seeded at run time"
+            if mode == "live"
+            else "the live recording windows in meta.json"
+            if live_recorded
+            else REPLAY_NOW.isoformat()
+        ),
         results=results,
         summary=EvalSummary.of(results),
     )
@@ -395,7 +410,7 @@ def _cell(text: str) -> str:
 
 MODE_NOTES: dict[Mode, str] = {
     "replay": (
-        "Replay: recorded MCP fixtures (window ending {anchor}) and a scripted LLM that "
+        "Replay: recorded MCP fixtures (windows anchored at {anchor}) and a scripted LLM that "
         "submits the agent's deterministic overview with status `no_signal`. Zero tokens. "
         "This scores the deterministic investigation and guardrails, not LLM reasoning."
     ),

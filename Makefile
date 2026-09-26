@@ -197,6 +197,14 @@ prometheus-up: ## Start only Prometheus (http://localhost:9090; part of infra-up
 prometheus-mcp-up: ## Build and start only prometheus-mcp on 127.0.0.1:8103 (the metrics capability)
 	$(MCP_COMPOSE) up -d --build --wait prometheus-mcp
 
+.PHONY: record-metrics
+record-metrics: venv-fix ## Record Metrics agent fixtures from a LIVE fault: make record-metrics S=S1 (S0 = healthy, no fault)
+	@if [[ "$(S)" == S0 ]]; then \
+		cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_metrics --scenario S0; \
+	else \
+		cd $(BACKEND) && uv run --no-sync aiops fault run $(S) -- uv run --no-sync python -m tests.fixtures.record_metrics; \
+	fi
+
 .PHONY: prometheus-reload
 prometheus-reload: ## Reload prometheus.yml / alert-rules.yml without a restart (SIGHUP)
 	docker kill -s HUP aiops-prometheus

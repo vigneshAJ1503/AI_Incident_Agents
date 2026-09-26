@@ -1,0 +1,8 @@
+{
+  "scenario": "S3",
+  "start": "2026-09-26T10:23:00Z",
+  "end": "2026-09-26T10:38:00Z",
+  "incident_start": "2026-09-26T10:32:37Z",
+  "recorded_at": "2026-09-26T10:38:38Z",
+  "source": "live Prometheus (aiops fault run)"
+}

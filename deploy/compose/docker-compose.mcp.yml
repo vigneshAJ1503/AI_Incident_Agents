@@ -147,6 +147,31 @@ services:
     mem_limit: 128m
     restart: unless-stopped
 
+  # PR-021: our own thin read-only Prometheus MCP (ADR-0009), backing the `metrics`
+  # capability. Guardrails are server-side: range/step/points/series caps, a query timeout,
+  # no bare {…} or __name__ selectors, and an optional metric allowlist.
+  prometheus-mcp:
+    build:
+      context: ../../mcp-servers/prometheus-mcp
+    image: aiops/prometheus-mcp:0.1.0
+    container_name: aiops-prometheus-mcp
+    environment:
+      - PROM_URL=${METRICS_PROM_URL:-http://aiops-prometheus:9090}
+      - QUERY_TIMEOUT_S=${METRICS_QUERY_TIMEOUT_S:-20}
+      - MAX_RANGE_HOURS=${METRICS_MAX_RANGE_HOURS:-24}
+      - MAX_POINTS=${METRICS_MAX_POINTS:-1100}
+      - MIN_STEP_S=${METRICS_MIN_STEP_S:-15}
+      - MAX_SERIES=${METRICS_MAX_SERIES:-50}
+      - METRIC_ALLOWLIST=${METRICS_ALLOWLIST:-http_.*,db_pool_.*,redis_up,process_.*,kube_.*,up,ALERTS.*}
+    ports:
+      - "127.0.0.1:${METRICS_MCP_PORT:-8103}:8103"
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    restart: unless-stopped
+
 networks:
   default:
     name: aiops

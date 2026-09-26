@@ -193,6 +193,10 @@ ALERTMANAGER_IMAGE := prom/alertmanager:v0.34.1
 prometheus-up: ## Start only Prometheus (http://localhost:9090; part of infra-up)
 	$(COMPOSE) up -d --wait prometheus
 
+.PHONY: prometheus-mcp-up
+prometheus-mcp-up: ## Build and start only prometheus-mcp on 127.0.0.1:8103 (the metrics capability)
+	$(MCP_COMPOSE) up -d --build --wait prometheus-mcp
+
 .PHONY: prometheus-reload
 prometheus-reload: ## Reload prometheus.yml / alert-rules.yml without a restart (SIGHUP)
 	docker kill -s HUP aiops-prometheus

@@ -498,8 +498,8 @@ Pin exact versions in `.env` (`ES_VERSION=…`, etc.) during PR-007, using the l
 | Sample services (in Minikube) | built locally: `aiops/<svc>:<ver>` (`minikube image load`) | NodePort 30001–30004 | PR-015 |
 | Elasticsearch MCP | Elastic's official MCP server (evaluate the current recommendation in PR-008) | 8101 | PR-008 |
 | Jira MCP | `ghcr.io/sooperset/mcp-atlassian` | 8102 | PR-012 |
-| Prometheus MCP | `ghcr.io/pab1it0/prometheus-mcp-server` | 8103 | PR-021 |
-| Grafana MCP | `mcp/grafana` (official, grafana/mcp-grafana) | 8104 | PR-021 |
+| Prometheus MCP | built locally from `mcp-servers/prometheus-mcp` (ADR-0009; `pab1it0/prometheus-mcp-server` evaluated: no range/series guards) | 8103 | PR-021 |
+| Grafana MCP | **not run** (ADR-0009): agents build Grafana deep links from `ui_link_template`; `grafana/mcp-grafana` can be plugged in by companies | (8104) | PR-021 |
 | Alertmanager MCP | built locally from `mcp-servers/alertmanager-mcp` | 8105 | PR-024 |
 | Kubernetes MCP | built locally from `mcp-servers/kubernetes-mcp` (read-only; ADR-0008) | 8106 | PR-018 |
 | Git MCP | `mcp/git` | 8107 | PR-027 |
@@ -1018,12 +1018,13 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
   - *Deviations:* no separate `http_5xx_total` (5xx = `http_requests_total{status=~"5.."}`); CPU/memory come from the apps' `process_*` metrics, not cAdvisor, which would need a kubelet `nodes/proxy` token (too much power for a read-only stack). Seeded alerts stay for fixed-time evals (`docs/setup/alerts.md`).
 - ✅ The dashboards show live data; injected faults are visible and fire the expected alerts (`docs/setup/metrics.md`).
 
-#### PR-021 · Prometheus MCP (+ Grafana MCP for links)
+#### PR-021 · Prometheus MCP (+ Grafana links)
 - **Branch:** `feat/021-prometheus-mcp`
 - **Scope:**
-  - tools `query, query_range, get_targets`
-  - query safety: timeout, range limit and step limit
-  - Grafana MCP for panel and dashboard links only
+  - our own thin read-only `mcp-servers/prometheus-mcp` (ADR-0009): tools `query, query_range, list_metrics, metric_metadata, get_targets`
+  - query safety, server-side: timeout, range limit (also for `[range]`/offsets inside PromQL), min step and max points per series, max series, no bare `{…}`/`__name__` selectors, optional metric allowlist
+  - *Deviation:* **no Grafana MCP** (memory; Grafana is opt-in). Panel and query deep links come from `capabilities.metrics.settings.ui_link_template` / `explore_link_template` (`aiops.core.links`); companies can add `grafana/mcp-grafana`
+  - capability `metrics` in `local.yaml` (metric and label names as portability settings) + catalog `metrics: {labels: {...}}`
 - ✅ The contract tests pass; an oversized range is rejected.
 
 #### PR-022 · Metrics Agent

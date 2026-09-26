@@ -1,0 +1,412 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "end": "2026-09-26T10:13:14Z",
+        "query": "FROM logs-k8s-* | WHERE kubernetes.labels.app == \"payment-service\" | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-26T10:01:43Z\"), \"current\", \"baseline\") | STATS count = COUNT(*) BY window, level = level",
+        "start": "2026-09-26T09:46:43Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "window",
+            "level"
+          ],
+          "row_count": 3,
+          "rows": [
+            [
+              1975,
+              "current",
+              "INFO"
+            ],
+            [
+              45,
+              "current",
+              "ERROR"
+            ],
+            [
+              2626,
+              "baseline",
+              "INFO"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-26T10:13:14+00:00",
+            "start": "2026-09-26T09:46:43+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"window\",\n    \"level\"\n  ],\n  \"rows\": [\n    [\n      1975,\n      \"current\",\n      \"INFO\"\n    ],\n    [\n      45,\n      \"current\",\n      \"ERROR\"\n    ],\n    [\n      2626,\n      \"baseline\",\n      \"INFO\"\n    ]\n  ],\n  \"row_count\": 3,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-26T09:46:43+00:00\",\n    \"end\": \"2026-09-26T10:13:14+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-26T10:13:14Z",
+        "query": "FROM logs-k8s-* | WHERE kubernetes.labels.app == \"payment-service\" | WHERE level IN (\"ERROR\", \"FATAL\", \"CRITICAL\", \"WARN\") | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-26T10:01:43Z\"), \"current\", \"baseline\") | STATS count = COUNT(*), first_seen = MIN(@timestamp), last_seen = MAX(@timestamp) BY window, level = level, msg = message.keyword | SORT count DESC | LIMIT 1000",
+        "start": "2026-09-26T09:46:43Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "first_seen",
+            "last_seen",
+            "window",
+            "level",
+            "msg"
+          ],
+          "row_count": 12,
+          "rows": [
+            [
+              8,
+              "2026-09-26T10:12:13.719Z",
+              "2026-09-26T10:13:08.473Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=15)"
+            ],
+            [
+              8,
+              "2026-09-26T10:12:05.140Z",
+              "2026-09-26T10:12:43.655Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)"
+            ],
+            [
+              6,
+              "2026-09-26T10:12:13.799Z",
+              "2026-09-26T10:13:08.488Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)"
+            ],
+            [
+              5,
+              "2026-09-26T10:12:14.173Z",
+              "2026-09-26T10:12:49.253Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)"
+            ],
+            [
+              3,
+              "2026-09-26T10:12:16.956Z",
+              "2026-09-26T10:12:49.274Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)"
+            ],
+            [
+              3,
+              "2026-09-26T10:12:05.033Z",
+              "2026-09-26T10:12:12.204Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)"
+            ],
+            [
+              3,
+              "2026-09-26T10:12:26.182Z",
+              "2026-09-26T10:12:48.679Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)"
+            ],
+            [
+              3,
+              "2026-09-26T10:12:05.950Z",
+              "2026-09-26T10:12:24.418Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)"
+            ],
+            [
+              2,
+              "2026-09-26T10:12:09.122Z",
+              "2026-09-26T10:12:44.953Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)"
+            ],
+            [
+              2,
+              "2026-09-26T10:12:36.081Z",
+              "2026-09-26T10:12:45.876Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)"
+            ],
+            [
+              1,
+              "2026-09-26T10:12:17.081Z",
+              "2026-09-26T10:12:17.081Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)"
+            ],
+            [
+              1,
+              "2026-09-26T10:12:44.978Z",
+              "2026-09-26T10:12:44.978Z",
+              "current",
+              "ERROR",
+              "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=1, waiting=19)"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-26T10:13:14+00:00",
+            "start": "2026-09-26T09:46:43+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"first_seen\",\n    \"last_seen\",\n    \"window\",\n    \"level\",\n    \"msg\"\n  ],\n  \"rows\": [\n    [\n      8,\n      \"2026-09-26T10:12:13.719Z\",\n      \"2026-09-26T10:13:08.473Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=15)\"\n    ],\n    [\n      8,\n      \"2026-09-26T10:12:05.140Z\",\n      \"2026-09-26T10:12:43.655Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)\"\n    ],\n    [\n      6,\n      \"2026-09-26T10:12:13.799Z\",\n      \"2026-09-26T10:13:08.488Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)\"\n    ],\n    [\n      5,\n      \"2026-09-26T10:12:14.173Z\",\n      \"2026-09-26T10:12:49.253Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)\"\n    ],\n    [\n      3,\n      \"2026-09-26T10:12:16.956Z\",\n      \"2026-09-26T10:12:49.274Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)\"\n    ],\n    [\n      3,\n      \"2026-09-26T10:12:05.033Z\",\n      \"2026-09-26T10:12:12.204Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)\"\n    ],\n    [\n      3,\n      \"2026-09-26T10:12:26.182Z\",\n      \"2026-09-26T10:12:48.679Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)\"\n    ],\n    [\n      3,\n      \"2026-09-26T10:12:05.950Z\",\n      \"2026-09-26T10:12:24.418Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)\"\n    ],\n    [\n      2,\n      \"2026-09-26T10:12:09.122Z\",\n      \"2026-09-26T10:12:44.953Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)\"\n    ],\n    [\n      2,\n      \"2026-09-26T10:12:36.081Z\",\n      \"2026-09-26T10:12:45.876Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)\"\n    ],\n    [\n      1,\n      \"2026-09-26T10:12:17.081Z\",\n      \"2026-09-26T10:12:17.081Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)\"\n    ],\n    [\n      1,\n      \"2026-09-26T10:12:44.978Z\",\n      \"2026-09-26T10:12:44.978Z\",\n      \"current\",\n      \"ERROR\",\n      \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=1, waiting=19)\"\n    ]\n  ],\n  \"row_count\": 12,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-26T09:46:43+00:00\",\n    \"end\": \"2026-09-26T10:13:14+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-26T10:13:14Z",
+        "query": "FROM logs-k8s-* | WHERE kubernetes.labels.app == \"payment-service\" | EVAL window = CASE(@timestamp >= TO_DATETIME(\"2026-09-26T10:01:43Z\"), \"current\", \"baseline\") | EVAL is_start = CASE(message LIKE \"Starting*\", 1, 0) | STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN(@timestamp) BY window, version = version",
+        "start": "2026-09-26T09:46:43Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "count",
+            "starts",
+            "first_seen",
+            "window",
+            "version"
+          ],
+          "row_count": 3,
+          "rows": [
+            [
+              243,
+              1,
+              "2026-09-26T10:11:44.446Z",
+              "current",
+              "v1.8.2"
+            ],
+            [
+              1777,
+              0,
+              "2026-09-26T10:01:43.115Z",
+              "current",
+              "v1.8.1"
+            ],
+            [
+              2626,
+              0,
+              "2026-09-26T09:46:43.042Z",
+              "baseline",
+              "v1.8.1"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-26T10:13:14+00:00",
+            "start": "2026-09-26T09:46:43+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"count\",\n    \"starts\",\n    \"first_seen\",\n    \"window\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      243,\n      1,\n      \"2026-09-26T10:11:44.446Z\",\n      \"current\",\n      \"v1.8.2\"\n    ],\n    [\n      1777,\n      0,\n      \"2026-09-26T10:01:43.115Z\",\n      \"current\",\n      \"v1.8.1\"\n    ],\n    [\n      2626,\n      0,\n      \"2026-09-26T09:46:43.042Z\",\n      \"baseline\",\n      \"v1.8.1\"\n    ]\n  ],\n  \"row_count\": 3,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-26T09:46:43+00:00\",\n    \"end\": \"2026-09-26T10:13:14+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    },
+    {
+      "arguments": {
+        "end": "2026-09-26T10:13:14Z",
+        "query": "FROM logs-k8s-* | WHERE kubernetes.labels.app == \"payment-service\" | WHERE @timestamp >= TO_DATETIME(\"2026-09-26T10:01:43Z\") AND message LIKE \"Database connection timeout: could not acquire a connection from the pool within*\" | KEEP @timestamp, trace_id, version | SORT @timestamp ASC | LIMIT 5",
+        "start": "2026-09-26T09:46:43Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "columns": [
+            "@timestamp",
+            "trace_id",
+            "version"
+          ],
+          "row_count": 5,
+          "rows": [
+            [
+              "2026-09-26T10:12:05.033Z",
+              "3c1d7dfe084c43d8",
+              "v1.8.2"
+            ],
+            [
+              "2026-09-26T10:12:05.140Z",
+              "ec7330579aa1acdc",
+              "v1.8.2"
+            ],
+            [
+              "2026-09-26T10:12:05.926Z",
+              "3f18f28f7ae905db",
+              "v1.8.2"
+            ],
+            [
+              "2026-09-26T10:12:05.950Z",
+              "69f198337ca73249",
+              "v1.8.2"
+            ],
+            [
+              "2026-09-26T10:12:07.179Z",
+              "b011e8cbff9a83c3",
+              "v1.8.2"
+            ]
+          ],
+          "time_range": {
+            "end": "2026-09-26T10:13:14+00:00",
+            "start": "2026-09-26T09:46:43+00:00"
+          },
+          "truncated": false
+        },
+        "text": "{\n  \"columns\": [\n    \"@timestamp\",\n    \"trace_id\",\n    \"version\"\n  ],\n  \"rows\": [\n    [\n      \"2026-09-26T10:12:05.033Z\",\n      \"3c1d7dfe084c43d8\",\n      \"v1.8.2\"\n    ],\n    [\n      \"2026-09-26T10:12:05.140Z\",\n      \"ec7330579aa1acdc\",\n      \"v1.8.2\"\n    ],\n    [\n      \"2026-09-26T10:12:05.926Z\",\n      \"3f18f28f7ae905db\",\n      \"v1.8.2\"\n    ],\n    [\n      \"2026-09-26T10:12:05.950Z\",\n      \"69f198337ca73249\",\n      \"v1.8.2\"\n    ],\n    [\n      \"2026-09-26T10:12:07.179Z\",\n      \"b011e8cbff9a83c3\",\n      \"v1.8.2\"\n    ]\n  ],\n  \"row_count\": 5,\n  \"truncated\": false,\n  \"time_range\": {\n    \"start\": \"2026-09-26T09:46:43+00:00\",\n    \"end\": \"2026-09-26T10:13:14+00:00\"\n  }\n}"
+      },
+      "tool": "execute_esql"
+    }
+  ],
+  "tools": [
+    {
+      "description": "List the log indices you are allowed to query, with document counts and sizes.",
+      "input_schema": {
+        "properties": {},
+        "title": "list_indicesArguments",
+        "type": "object"
+      },
+      "name": "list_indices"
+    },
+    {
+      "description": "Field names and types for an index pattern, e.g. 'payment-prod-*'.",
+      "input_schema": {
+        "properties": {
+          "index": {
+            "title": "Index",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index"
+        ],
+        "title": "get_mappingArguments",
+        "type": "object"
+      },
+      "name": "get_mapping"
+    },
+    {
+      "description": "Return sample log documents.\n\n        Args:\n            index: allowed index pattern, e.g. 'payment-prod-*'.\n            start: window start, ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z').\n            end: window end, ISO-8601 UTC.\n            query: optional Lucene query, e.g. 'message:\"connection timeout\" AND status_code:500'.\n            levels: optional log levels, e.g. ['ERROR', 'WARN'].\n            size: max documents to return (capped by the server).\n            sort: 'desc' = newest first, 'asc' = oldest first (use asc to find first occurrence).\n            fields: optional list of fields to return.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "fields": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Fields"
+          },
+          "index": {
+            "title": "Index",
+            "type": "string"
+          },
+          "levels": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Levels"
+          },
+          "query": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "size": {
+            "default": 20,
+            "title": "Size",
+            "type": "integer"
+          },
+          "sort": {
+            "default": "desc",
+            "enum": [
+              "desc",
+              "asc"
+            ],
+            "title": "Sort",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "index",
+          "start",
+          "end"
+        ],
+        "title": "search_logsArguments",
+        "type": "object"
+      },
+      "name": "search_logs"
+    },
+    {
+      "description": "Run a read-only ES|QL query, automatically limited to [start, end].\n\n        The query must start with 'FROM <allowed index pattern>'. Example:\n          FROM payment-prod-* | WHERE level == \"ERROR\"\n          | STATS count = COUNT(*), first_seen = MIN(@timestamp) BY error_type | SORT count DESC\n        Args:\n            query: ES|QL query.\n            start: window start, ISO-8601 UTC.\n            end: window end, ISO-8601 UTC.\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "execute_esqlArguments",
+        "type": "object"
+      },
+      "name": "execute_esql"
+    }
+  ]
+}

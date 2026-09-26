@@ -156,6 +156,27 @@ k8s-down: ## Stop the cluster (keeps it; frees its memory)
 k8s-delete: ## DELETE the cluster entirely
 	minikube delete -p aiops
 
+# --- Real log shipping (PR-016): Fluent Bit -> Elasticsearch logs-k8s-* -----------------
+.PHONY: logging-up
+logging-up: venv-fix ## Ship prod pod logs to Elasticsearch (logs-k8s-*): ES template + 2d ILM, then Fluent Bit
+	cd $(BACKEND) && uv run --no-sync aiops seed k8s-logging
+	$(KUBECTL) apply -k deploy/k8s/logging
+	$(KUBECTL) -n logging rollout status ds/fluent-bit --timeout=180s
+
+.PHONY: logging-status
+logging-status: ## Show Fluent Bit, its memory, and the logs-k8s-* indices
+	$(KUBECTL) -n logging get pods -o wide
+	-$(KUBECTL) -n logging top pods 2>/dev/null
+	@curl -s 'http://localhost:9200/_cat/indices/logs-k8s-*?v&h=index,docs.count,store.size&s=index'
+
+.PHONY: logging-down
+logging-down: ## Remove Fluent Bit (logs-k8s-* indices stay until ILM deletes them)
+	$(KUBECTL) delete -k deploy/k8s/logging --ignore-not-found
+
+.PHONY: test-logging
+test-logging: venv-fix ## Live test: fresh cluster logs reach logs-k8s-* within ~30s (needs logging-up)
+	cd $(BACKEND) && uv run --no-sync pytest tests/integration/test_k8s_logging_live.py -m integration -o addopts="" -v
+
 # --- Fault injection (PR-017): one scenario at a time, guarded by .data/cluster.lock ---
 .PHONY: inject-fault
 inject-fault: venv-fix ## Inject a live incident: make inject-fault S=S1 (or TYPE=db-timeout)

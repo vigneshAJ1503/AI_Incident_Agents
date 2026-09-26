@@ -13,7 +13,13 @@ from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
-from aiops.core.config import ConfigError, Settings, format_validation_error, load_yaml
+from aiops.core.config import (
+    ConfigError,
+    Settings,
+    deep_merge,
+    format_validation_error,
+    load_extending_yaml,
+)
 
 _SEPARATORS = re.compile(r"[\s_./]+")
 
@@ -21,6 +27,22 @@ _SEPARATORS = re.compile(r"[\s_./]+")
 def normalize(text: str) -> str:
     """'Payments_API ' -> 'payments-api'."""
     return _SEPARATORS.sub("-", text.strip().casefold()).strip("-")
+
+
+def merge_catalogs(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """Catalog ``extends``: services merge by ``name`` (deep), new names are appended."""
+    services = [dict(s) for s in base.get("services") or []]
+    by_name = {s.get("name"): i for i, s in enumerate(services)}
+    for entry in override.get("services") or []:
+        index = by_name.get(entry.get("name"))
+        if index is None:
+            by_name[entry.get("name")] = len(services)
+            services.append(entry)
+        else:
+            services[index] = deep_merge(services[index], entry)
+    merged = deep_merge(base, {k: v for k, v in override.items() if k != "services"})
+    merged["services"] = services
+    return merged
 
 
 class _Model(BaseModel):
@@ -98,8 +120,9 @@ class ServiceCatalog:
 
     @classmethod
     def from_file(cls, path: Path) -> ServiceCatalog:
+        """Load a catalog; ``extends: <catalog>`` overrides another one service by service."""
         try:
-            data = CatalogFile.model_validate(load_yaml(path))
+            data = CatalogFile.model_validate(load_extending_yaml(path, merge_catalogs))
         except ValidationError as err:
             raise ConfigError(format_validation_error(err, path)) from err
         return cls(data)

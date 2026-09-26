@@ -107,6 +107,7 @@ jobs:
         run: |
           kubectl kustomize deploy/k8s/base > /dev/null
           kubectl kustomize deploy/k8s/monitoring > /dev/null
+          kubectl kustomize deploy/k8s/logging > /dev/null
 
   secrets:
     name: secret scan

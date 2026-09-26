@@ -14,6 +14,13 @@ from aiops.seed.alertmanager import AlertmanagerSeeder
 from aiops.seed.alerts import DEFAULT_TTL, NAMESPACE, scenario_alerts
 from aiops.seed.elasticsearch import ElasticsearchSeeder, SeedError
 from aiops.seed.git_repo import RepoSeedError, build_sample_repo, default_repo_path
+from aiops.seed.k8s_logs import (
+    DEFAULT_RETENTION,
+    K8S_ILM_POLICY,
+    K8S_INDEX_PREFIX,
+    K8S_TEMPLATE_NAME,
+    ensure_k8s_logging,
+)
 from aiops.seed.logs import ENV_SHORT, SCENARIOS, LogGenerator, SeedWindow, index_name
 
 app = typer.Typer(help="Seed local infrastructure with scenario data.", no_args_is_help=True)
@@ -207,4 +214,28 @@ def seed_repo(
     console.print(
         f"{len(summary.commits)} commits, {len(summary.tags)} release tags · "
         f"HEAD {summary.head[:10]} · {target}"
+    )
+
+
+@app.command("k8s-logging")
+def seed_k8s_logging(
+    retention: str = typer.Option(
+        DEFAULT_RETENTION, help="Delete each daily logs-k8s-* index after this age (ILM)."
+    ),
+    es_url: str = typer.Option(
+        os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200"),
+        "--es-url",
+        help="Elasticsearch URL.",
+    ),
+) -> None:
+    """Install the logs-k8s-* index template + ILM retention for real Kubernetes logs (idempotent)."""
+    try:
+        version = ensure_k8s_logging(es_url, retention=retention)
+    except SeedError as exc:
+        err_console.print(f"[red]Setting up k8s logging failed:[/red] {exc}")
+        raise typer.Exit(code=1) from exc
+    console.print(
+        f"Elasticsearch {version}: template [bold]{K8S_TEMPLATE_NAME}[/bold] "
+        f"({K8S_INDEX_PREFIX}-*) and ILM policy [bold]{K8S_ILM_POLICY}[/bold] "
+        f"(delete after {retention}) are in place."
     )

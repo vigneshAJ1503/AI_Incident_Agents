@@ -1,0 +1,19 @@
+# Service catalog for `AIOPS_ENV=local-k8s` (PR-016): the `local` catalog, except that
+# production logs come from the real cluster, where every service shares `logs-k8s-*`
+# (the Log agent filters on `logs.service_value`, see config/environments/local-k8s.yaml).
+# Services merge by name with the parent catalog; only the differences are listed.
+extends: local
+
+services:
+  - name: payment-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: "logs-k8s-*" } } }
+  - name: order-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: "logs-k8s-*" } } }
+  - name: user-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: "logs-k8s-*" } } }
+  - name: inventory-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: "logs-k8s-*" } } }

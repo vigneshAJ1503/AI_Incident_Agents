@@ -236,15 +236,58 @@ def load_yaml(path: Path) -> dict[str, Any]:
     return data
 
 
+def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]:
+    """``override`` on top of ``base``: mappings merge recursively, anything else replaces."""
+    merged = dict(base)
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(merged.get(key), dict):
+            merged[key] = deep_merge(merged[key], value)
+        else:
+            merged[key] = value
+    return merged
+
+
+def load_extending_yaml(
+    path: Path,
+    merge: Any = deep_merge,
+    *,
+    drop: tuple[str, ...] = (),
+    _seen: tuple[Path, ...] = (),
+) -> dict[str, Any]:
+    """Load ``path``; ``extends: <name>`` = a sibling file it overrides (chains allowed).
+
+    ``drop`` = keys of the parent that a child never inherits (e.g. ``environment``).
+    """
+    if path in _seen:
+        chain = " -> ".join(p.stem for p in (*_seen, path))
+        raise ConfigError(f"Circular 'extends' in {path.parent}: {chain}")
+    data = load_yaml(path)
+    parent_name = data.pop("extends", None)
+    if parent_name is None:
+        return data
+    if not isinstance(parent_name, str) or not parent_name.strip():
+        raise ConfigError(f"{path}: 'extends' must be the name of a sibling file")
+    parent_path = path.parent / f"{parent_name.strip()}.yaml"
+    parent = load_extending_yaml(parent_path, merge, drop=drop, _seen=(*_seen, path))
+    for key in drop:
+        parent.pop(key, None)
+    result: dict[str, Any] = merge(parent, data)
+    return result
+
+
 def load_settings(env: str | None = None, config_dir: Path | None = None) -> Settings:
-    """Load and validate ``config/environments/<env>.yaml``. Fails fast with readable errors."""
+    """Load and validate ``config/environments/<env>.yaml``. Fails fast with readable errors.
+
+    An environment may start from another one with ``extends: <env>`` and override only
+    what differs (e.g. ``local-k8s`` = ``local`` with real Kubernetes logs).
+    """
     config_dir = config_dir or find_config_dir()
     load_dotenv(config_dir.parent / ".env", override=False)
     env = env or os.environ.get(ENV_VAR) or DEFAULT_ENV
     path = config_dir / "environments" / f"{env}.yaml"
 
     missing: list[str] = []
-    raw = _drop_empty(interpolate(load_yaml(path), missing))
+    raw = _drop_empty(interpolate(load_extending_yaml(path, drop=("environment",)), missing))
     if missing:
         names = ", ".join(sorted(set(missing)))
         raise ConfigError(f"Missing required environment variables for {path.name}: {names}")

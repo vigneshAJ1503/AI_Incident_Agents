@@ -9,7 +9,9 @@ Investigation loop:
   4. deterministic signals are merged into the report (they can't be dropped).
 
 Vendor-neutral: index from the service catalog; field names, levels and the UI
-link template from the ``logs`` capability settings.
+link template from the ``logs`` capability settings. When all services share one
+index (e.g. real Kubernetes logs, ``logs-k8s-*``), ``settings.service_filter: true``
+narrows every query to ``fields.service == <catalog logs.service_value>``.
 """
 
 from __future__ import annotations
@@ -65,6 +67,28 @@ class LogScope:
     baseline: timedelta
     startup_pattern: str
     link_template: str | None
+    #: Service value to filter on when several services share one index (None = no filter).
+    service_value: str | None = None
+
+    @property
+    def service_where(self) -> str | None:
+        """ES|QL condition selecting this service's lines in a shared index."""
+        if self.service_value is None:
+            return None
+        return f"{self.fields['service']} == {esql_string(self.service_value)}"
+
+    @property
+    def source(self) -> str:
+        """``FROM <index>``, narrowed to the service when the index is shared."""
+        where = self.service_where
+        return f"FROM {self.index}" + (f" | WHERE {where}" if where else "")
+
+    @property
+    def service_kql(self) -> str:
+        """KQL clause for UI links ('' when the index isn't shared)."""
+        if self.service_value is None:
+            return ""
+        return f'{self.fields["service"]}:"{self.service_value}"'
 
 
 class LogAgent(BaseAgent):
@@ -93,6 +117,11 @@ class LogAgent(BaseAgent):
                 f"No log index configured for service '{ctx.service}' in '{ctx.environment}'. "
                 "Add logs.index_pattern to the service catalog."
             )
+        # Shared index (e.g. every pod's logs in logs-k8s-*): opt-in filter on the service
+        # field, value from the catalog (logs.service_value, default: the service name).
+        service_value: str | None = None
+        if settings.get("service_filter") and ctx.service:
+            service_value = str(identifiers.get("service_value") or ctx.service)
         return LogScope(
             index=str(index),
             fields=fields,
@@ -101,12 +130,15 @@ class LogAgent(BaseAgent):
             baseline=timedelta(hours=float(settings.get("baseline_hours", DEFAULT_BASELINE_HOURS))),
             startup_pattern=str(settings.get("startup_pattern", DEFAULT_STARTUP_PATTERN)),
             link_template=settings.get("ui_link_template"),
+            service_value=service_value,
         )
 
     def ui_link(self, scope: LogScope, run: AgentRun, kql: str) -> str | None:
         if not scope.link_template:
             return None
         window = run.task.context.time_range
+        if scope.service_kql:
+            kql = f"{scope.service_kql} and ({kql})" if kql else scope.service_kql
         return scope.link_template.format(
             start=iso(window.start), end=iso(window.end), kql=quote(kql, safe="")
         )
@@ -140,7 +172,7 @@ class LogAgent(BaseAgent):
 
         volume, volume_ev, err = await self._esql(
             run,
-            f"FROM {scope.index} | {window_eval} | STATS count = COUNT(*) BY window, level = {f['level']}",
+            f"{scope.source} | {window_eval} | STATS count = COUNT(*) BY window, level = {f['level']}",
             f"Log volume by level: incident window vs {scope.baseline} baseline",
         )
         if volume_ev is None:
@@ -148,7 +180,7 @@ class LogAgent(BaseAgent):
 
         patterns, patterns_ev, err = await self._esql(
             run,
-            f"FROM {scope.index} | WHERE {f['level']} IN ({levels}) | {window_eval} "
+            f"{scope.source} | WHERE {f['level']} IN ({levels}) | {window_eval} "
             f"| STATS count = COUNT(*), first_seen = MIN({f['timestamp']}), last_seen = MAX({f['timestamp']}) "
             f"BY window, level = {f['level']}, msg = {f['message_keyword']} "
             f"| SORT count DESC | LIMIT {PATTERN_GROUP_LIMIT}",
@@ -162,7 +194,7 @@ class LogAgent(BaseAgent):
         if "version" in f:
             lifecycle, lifecycle_ev, err = await self._esql(
                 run,
-                f"FROM {scope.index} | {window_eval} "
+                f"{scope.source} | {window_eval} "
                 f"| EVAL is_start = CASE({f['message']} LIKE {esql_string(scope.startup_pattern)}, 1, 0) "
                 f"| STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN({f['timestamp']}) "
                 f"BY window, version = {f['version']}",
@@ -229,7 +261,7 @@ class LogAgent(BaseAgent):
         )
         data, evidence, _ = await self._esql(
             run,
-            f'FROM {scope.index} | WHERE {f["timestamp"]} >= TO_DATETIME("{start}") '
+            f'{scope.source} | WHERE {f["timestamp"]} >= TO_DATETIME("{start}") '
             f"AND {f['message']} LIKE {esql_like(prefix)} "
             f"| KEEP {keep} | SORT {f['timestamp']} ASC | LIMIT {TRACE_SAMPLE}",
             f"First occurrences + trace ids of '{prefix}...'",
@@ -250,7 +282,14 @@ class LogAgent(BaseAgent):
     # -- investigation -------------------------------------------------------------------
 
     def fields_table(self, scope: LogScope) -> str:
-        return "\n".join(f"- {role}: `{name}`" for role, name in scope.fields.items())
+        table = "\n".join(f"- {role}: `{name}`" for role, name in scope.fields.items())
+        if scope.service_where:
+            table += (
+                "\n\nThe index is shared by all services: every query MUST filter on this "
+                f"service, e.g. `{scope.source} | ...` (search_logs: add `{scope.service_kql}` "
+                "to the query)."
+            )
+        return table
 
     def prompt_variables(self, run: AgentRun) -> dict[str, object]:
         variables = super().prompt_variables(run)

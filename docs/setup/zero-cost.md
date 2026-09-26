@@ -40,7 +40,7 @@ The whole platform runs inside **5 GB** of Docker memory. Optional UIs are off b
 | Elasticsearch (512 MB heap) | ~0.9 GB | `ES_HEAP`/`ES_MEM_LIMIT` in `.env` |
 | Postgres + Redis + Alertmanager | ~0.1 GB | |
 | MCP servers (6) | ~0.35 GB | kubernetes-mcp (PR-018): ~53 MiB, `mem_limit: 128m` |
-| Minikube: 4 sample services, Fluent Bit, kube-state-metrics (from PR-015) | ~2.2 GB | `minikube start --memory=2200 --cpus=2` |
+| Minikube: 4 sample services, Fluent Bit, kube-state-metrics (from PR-015) | ~2.2 GB | `minikube start --memory=2200 --cpus=2`; Fluent Bit measured at ~9 MB (PR-016, [logging.md](logging.md)) |
 | Prometheus (from PR-020) | ~0.07 GB (measured) | 30 s scrapes, 2-day retention, `mem_limit: 256m` |
 | **Always-on total** | **~3.7 GB** | measured: 1.4 GB before Minikube |
 | Kibana (`make ui-up`) | +0.6 GB | optional, on demand |

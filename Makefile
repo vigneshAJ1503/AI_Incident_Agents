@@ -273,3 +273,11 @@ kubernetes-mcp-up: ## Build and start only kubernetes-mcp on 127.0.0.1:8106 (nee
 .PHONY: k8s-can-i
 k8s-can-i: ## Show what the read-only ServiceAccount may do in prod (no writes, secrets, exec)
 	$(KUBECTL) auth can-i --list -n prod --as=system:serviceaccount:aiops-system:aiops-reader
+
+# --- K8s agent (PR-019) ------------------------------------------------------------------
+.PHONY: record-k8s-fixtures
+record-k8s-fixtures: venv-fix ## Re-record K8s agent fixtures LIVE: S1-S5 via aiops fault run, then S0 (~15 min)
+	cd $(BACKEND) && for s in S1 S2 S3 S4 S5; do \
+		uv run --no-sync aiops fault run $$s -- uv run --no-sync python -m tests.fixtures.record_k8s || exit 1; \
+	done
+	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_k8s --scenario S0

@@ -149,6 +149,9 @@ capabilities:
       default_namespace: prod
       # Dependencies (catalog depends_on) that aren't catalog services: deployment = name.
       include_dependencies: true
+      # A readiness probe failing for at most this long right after a container starts is
+      # start-up noise, not a probe_failures signal (liveness failures always count).
+      probe_startup_grace_s: 60
       # Deep link for evidence, e.g. a Lens/Headlamp/cloud console URL. Unset locally.
       # {namespace} {kind} {name} are filled in.
       ui_link_template: ${K8S_UI_LINK_TEMPLATE:-}
@@ -251,6 +254,15 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 10
+      max_execution_s: 45
+      max_tokens: 30000
+  k8s:
+    model_role: agent
+    # 3-4 deterministic calls (deployment + history, pods, Warning events, dependencies),
+    # then <= 2 LLM follow-ups (get_pod_logs previous=true, get_pod, list_events)
+    limits:
+      max_steps: 4
+      max_tool_calls: 8
       max_execution_s: 45
       max_tokens: 30000
   code:

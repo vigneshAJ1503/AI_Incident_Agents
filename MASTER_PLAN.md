@@ -1004,6 +1004,16 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
   - S2 → OOMKilled plus the restart count
   - S4 → ImagePullBackOff
   - S1 → the v1.8.2 rollout time
+- **Delivered:** `backend/src/aiops/agents/k8s_agent/` (agent `k8s`, prompt `k8s/v1.md`,
+  `docs/agents/k8s.md`). Deterministic phase: `get_deployment` (+ rollout history),
+  `list_pods`, Warning `list_events` in the window, `list_deployments` for the catalog
+  `depends_on`. Signals: `pod_restarts, oom_killed, crash_loop, image_pull_error,
+  replicas_unavailable, probe_failures, dependency_unavailable, recent_rollout, healthy`,
+  plus `dependency_rollout` (added: S3 reports the inventory-service v1.4.2 rollout as a fact
+  while order-service stays `healthy`). **Fixtures recorded live** on Minikube
+  (`aiops fault run S<n> -- python -m tests.fixtures.record_k8s`, S0 on a quiet cluster), each
+  with a `meta.json` window that replays reuse (`aiops.evals.replay.replay_task`, now used
+  by the eval runner). Replay eval 6/6, S0 no false positive.
 
 ### Phase 5 — Metrics slice (EPIC-007)
 

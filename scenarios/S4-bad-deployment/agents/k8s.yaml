@@ -1,0 +1,7 @@
+# UC-07 acceptance: ImagePullBackOff on the new v3.2.0 pod, replicas unavailable, and the rollout.
+# (The old ReplicaSet keeps serving: only unavailableReplicas / updated 1/3 show the stuck rollout.)
+status: [success]
+signals: [image_pull_error, replicas_unavailable, recent_rollout]
+forbidden_signals: [oom_killed, dependency_unavailable, healthy]
+must_mention: [ImagePullBackOff, v3.2.0]
+min_evidence: 4

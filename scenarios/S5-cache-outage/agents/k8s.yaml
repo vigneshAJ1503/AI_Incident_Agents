@@ -1,0 +1,6 @@
+# Redis (a catalog dependency of payment-service) is scaled to 0: nothing can serve it.
+status: [success]
+signals: [dependency_unavailable]
+forbidden_signals: [oom_killed, crash_loop, image_pull_error, replicas_unavailable, recent_rollout, healthy]
+must_mention: [redis, scaled to 0]
+min_evidence: 4

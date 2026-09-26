@@ -45,6 +45,8 @@ scenarios/<id>/
 | `replay` (default) | fixtures recorded at 2026-09-25T10:30Z in `backend/tests/fixtures/<agent>/<scenario>/` | scripted: submits the agent's deterministic overview with status `no_signal` (zero tokens) | CI (via pytest), every PR |
 | `live` | each scenario seeded into the local Elasticsearch at the current time | the configured hosted LLM (fails fast if no key) | before tagging a release |
 
+Fixtures recorded **live** against the real cluster (K8s agent, PR-019: `aiops fault run S<n> -- python -m tests.fixtures.record_k8s`) can't be anchored at the fixed time. Such a fixture directory has a `meta.json` (`start`, `end`, `incident_start`), and replay uses that window, with `incident_start` passed as a hint (`aiops.evals.replay.replay_task`).
+
 Per scenario the scorecard records the `agents/<agent>.yaml` checks, evidence-citation validity (every cited evidence id exists), tool calls, LLM calls, tokens and latency. It also aggregates the pass rate, the **false-positive rate** (scenarios with `root_cause: null` where the agent reports `success` or any anomaly signal), and averages. A live run leaves the last scenario seeded; restore the default with `make seed-logs S=S1`.
 
 ### Plan datasets → scenarios

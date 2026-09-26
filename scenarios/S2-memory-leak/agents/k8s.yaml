@@ -1,0 +1,6 @@
+# UC-07 acceptance: OOMKilled plus the restart count (the pod then crash-loops and is unready).
+status: [success]
+signals: [oom_killed, pod_restarts]
+forbidden_signals: [image_pull_error, dependency_unavailable, healthy]
+must_mention: [OOMKilled, restart]
+min_evidence: 4

@@ -1,0 +1,8 @@
+# Cache outage (live metrics, `aiops fault run S5`): redis_up drops to 0 for payment-service and
+# its dependency user-service within ~30 s, then both fall back to the database and p95 rises
+# (payment ~1 s -> ~4.6 s, user-service ~24 ms -> ~2.4 s). No 5xx: the fallback works.
+status: [success]
+signals: [cache_down, latency_up, dependency_latency_up]
+forbidden_signals: [no_anomaly, error_rate_up, db_pool_saturated, memory_pressure]
+must_mention: [payment-service, cache DOWN, latency p95 up]
+min_evidence: 10

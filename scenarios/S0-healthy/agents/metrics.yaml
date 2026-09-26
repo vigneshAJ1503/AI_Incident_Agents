@@ -1,0 +1,7 @@
+# Healthy (live metrics, recorded with no fault active): every metric of payment-service and
+# its dependency user-service stays within its baseline. No false positives.
+status: [no_signal]
+signals: [no_anomaly]
+forbidden_signals: [error_rate_up, latency_up, traffic_drop, traffic_spike, db_pool_saturated, memory_pressure, cache_down, dependency_latency_up]
+must_mention: [No metric anomaly, payment-service]
+min_evidence: 10

@@ -1,0 +1,10 @@
+# Bad deployment (live metrics, `aiops fault run S4`): the stuck rollout (ImagePullBackOff) keeps
+# the old ReplicaSet serving, so user-service's errors, latency, saturation and memory stay at
+# baseline: metrics can't see this root cause (the K8s agent can, PR-019). No required signal.
+# Note: user-service traffic was bursty during the recording (external load, 2-77 req/s), and
+# the only anomaly found, a traffic drop, started BEFORE the injection; it is not asserted.
+status: [success, no_signal]
+signals: []
+forbidden_signals: [error_rate_up, latency_up, db_pool_saturated, memory_pressure, cache_down, dependency_latency_up]
+must_mention: [user-service]
+min_evidence: 10

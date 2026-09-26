@@ -55,6 +55,8 @@ BENIGN_SIGNALS = frozenset(
         "healthy",
         # code: no risky change in the lookback window
         "no_recent_changes",
+        # metrics: every metric within its baseline
+        "no_anomaly",
     }
 )
 

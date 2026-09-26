@@ -1,0 +1,7 @@
+# Memory leak (live metrics, `aiops fault run S2`): order-service RSS climbs ~2-3x within a
+# minute, the container is OOMKilled and restarts repeatedly, so its throughput drops.
+status: [success]
+signals: [memory_pressure, traffic_drop]
+forbidden_signals: [no_anomaly, cache_down, db_pool_saturated, dependency_latency_up]
+must_mention: [order-service, memory rss up, OOMKilled]
+min_evidence: 10

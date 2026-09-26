@@ -501,7 +501,7 @@ Pin exact versions in `.env` (`ES_VERSION=…`, etc.) during PR-007, using the l
 | Prometheus MCP | `ghcr.io/pab1it0/prometheus-mcp-server` | 8103 | PR-021 |
 | Grafana MCP | `mcp/grafana` (official, grafana/mcp-grafana) | 8104 | PR-021 |
 | Alertmanager MCP | built locally from `mcp-servers/alertmanager-mcp` | 8105 | PR-024 |
-| Kubernetes MCP | `ghcr.io/containers/kubernetes-mcp-server` (read-only mode) | 8106 | PR-018 |
+| Kubernetes MCP | built locally from `mcp-servers/kubernetes-mcp` (read-only; ADR-0008) | 8106 | PR-018 |
 | Git MCP | `mcp/git` | 8107 | PR-027 |
 | Knowledge MCP | built locally from `mcp-servers/knowledge-mcp` | 8108 | PR-028 |
 | Mock tickets MCP | built locally from `mcp-servers/mock-tickets-mcp` | 8109 | PR-012 |
@@ -987,6 +987,14 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
   - allowlist `list_pods, get_pod, list_deployments, get_deployment, list_events, get_service, get_logs`
   - **prohibited:** delete, scale, restart, patch, apply, exec
 - ✅ The contract test passes; a write attempt is denied both by the allowlist and by RBAC.
+- **Delivered (deviations, ADR-0008):** our own `mcp-servers/kubernetes-mcp` instead of
+  `containers/kubernetes-mcp-server` (no rollout-history tool, no namespace allowlist or output
+  caps, pre-1.0 tool names). Tools: `list_namespaces, list_pods, get_pod, list_events,
+  list_deployments, get_deployment` (+ rollout history), `get_pod_logs` (was `get_logs`) and
+  `list_services` (was `get_service`, now with ready-endpoint counts). ServiceAccount
+  `aiops-system/aiops-reader`: namespaced read rules bound per namespace (RoleBinding in `prod`),
+  no Secrets **and no ConfigMaps**. `make k8s-reader-kubeconfig` (24 h token in `.data/`),
+  `make kubernetes-mcp-up` (≈53 MiB). Live proof: `tests/integration/test_k8s_mcp.py`.
 
 #### PR-019 · K8s Agent
 - **Branch:** `feat/019-k8s-agent`

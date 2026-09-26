@@ -230,3 +230,21 @@ git-mcp-up: ## Build and start only git-mcp on 127.0.0.1:8107 (mounts .data/samp
 record-code: venv-fix ## Re-record Code agent fixtures from the live git-mcp (needs git-mcp-up)
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_code
 	@$(MAKE) --no-print-directory seed-repo S=S1
+
+# --- Kubernetes MCP (PR-018): read-only ServiceAccount + kubernetes-mcp ---------------
+.PHONY: k8s-rbac
+k8s-rbac: ## Apply the read-only RBAC for the agents (aiops-system/aiops-reader)
+	$(KUBECTL) apply -k deploy/k8s/rbac
+
+.PHONY: k8s-reader-kubeconfig
+k8s-reader-kubeconfig: ## RBAC + a short-lived read-only kubeconfig in .data/k8s (rerun when the token expires)
+	./scripts/k8s-reader-kubeconfig.sh
+
+.PHONY: kubernetes-mcp-up
+kubernetes-mcp-up: ## Build and start only kubernetes-mcp on 127.0.0.1:8106 (needs k8s-reader-kubeconfig)
+	@test -f .data/k8s/aiops-reader.kubeconfig || ./scripts/k8s-reader-kubeconfig.sh
+	$(MCP_COMPOSE) up -d --build --wait kubernetes-mcp
+
+.PHONY: k8s-can-i
+k8s-can-i: ## Show what the read-only ServiceAccount may do in prod (no writes, secrets, exec)
+	$(KUBECTL) auth can-i --list -n prod --as=system:serviceaccount:aiops-system:aiops-reader

@@ -119,6 +119,32 @@ services:
     mem_limit: 256m
     restart: unless-stopped
 
+  # Read-only Kubernetes access (PR-018, ADR-0008) as the aiops-reader ServiceAccount.
+  # Create the kubeconfig first: make k8s-reader-kubeconfig (token in .data/, git-ignored).
+  # The API server is the Minikube node on the aiops network (https://172.21.0.100:8443).
+  kubernetes-mcp:
+    build:
+      context: ../../mcp-servers/kubernetes-mcp
+    image: aiops/kubernetes-mcp:0.1.0
+    container_name: aiops-kubernetes-mcp
+    environment:
+      - KUBECONFIG=/etc/aiops/kubeconfig
+      - ALLOWED_NAMESPACES=${K8S_ALLOWED_NAMESPACES:-prod}
+      - MAX_RESULTS=${K8S_MAX_RESULTS:-200}
+      - MAX_LOG_LINES=${K8S_MAX_LOG_LINES:-300}
+      - MAX_SINCE_HOURS=${K8S_MAX_SINCE_HOURS:-48}
+      - QUERY_TIMEOUT_S=${K8S_QUERY_TIMEOUT_S:-15}
+    volumes:
+      - ${K8S_READER_KUBECONFIG_FILE:-../../.data/k8s/aiops-reader.kubeconfig}:/etc/aiops/kubeconfig:ro
+    ports:
+      - "127.0.0.1:${K8S_MCP_PORT:-8106}:8106"
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    restart: unless-stopped
+
 networks:
   default:
     name: aiops

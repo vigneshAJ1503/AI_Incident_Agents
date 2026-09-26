@@ -969,10 +969,12 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-017 · Fault injection framework
 - **Branch:** `feat/017-fault-injection`
 - **Scope:**
-  - `make inject-fault TYPE=<db-timeout|high-latency|memory-leak|crash-loop|network-error|bad-config|dependency-failure> SERVICE=<svc>`
-  - `make revert-fault`
-  - live scenarios S0–S5 (§6), each with `expected.yaml`
-- ✅ Every fault visibly breaks things and reverts cleanly.
+  - `aiops fault inject|revert|status|list|run` and `make inject-fault S=S1` (or `TYPE=db-timeout|memory-leak|crash-loop|high-latency|dependency-failure|bad-config|bad-deployment|cache-outage`), `make revert-fault`, `make fault-status`
+  - **one scenario at a time** via an exclusive cluster lock (`.data/cluster.lock`); `aiops fault run S1 -- <cmd>` holds it across inject → settle → command → **always** revert (used by fixture recorders and evals)
+  - revert = re-apply `deploy/k8s/base` (git is the source of truth for "healthy")
+  - `network-error` was dropped: S3 (slow dependency) and S5 (cache outage) cover the network-failure behaviours without extra tooling
+  - infra fix: the `aiops` Docker network is created outside compose with a pinned subnet, so `infra-down` can't break Minikube
+- ✅ Every fault visibly breaks things and reverts cleanly (`make test-faults`: S1–S5 live).
 - 🏷 `v0.3.0`
 
 ### Phase 4 — Kubernetes slice (EPIC-006)

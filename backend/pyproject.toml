@@ -62,8 +62,9 @@ asyncio_mode = "auto"
 markers = [
     "integration: requires the local stack (make infra-up)",
     "eval: scenario evaluations (slow, uses the LLM)",
+    "faults: live fault injection into the local cluster (slow, ~12 min)",
 ]
-addopts = "-m 'not integration and not eval'"
+addopts = "-m 'not integration and not eval and not faults'"
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = ["typer.Option", "typer.Argument"]

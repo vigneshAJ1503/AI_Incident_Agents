@@ -1,0 +1,82 @@
+# Read-only identity for the Kubernetes MCP server (PR-018, ADR-0008).
+#
+# Least privilege, in two parts:
+#   * aiops-reader-workloads: get/list/watch on workload objects, bound with a RoleBinding
+#     in each namespace the agents may investigate (only `prod` locally). Nothing else.
+#   * aiops-reader-cluster: get/list/watch on nodes and namespaces (cluster-scoped).
+#
+# Deliberately NOT granted: secrets, configmaps (they often hold credentials in real
+# companies), pods/exec, pods/attach, pods/portforward, serviceaccounts/token, and every
+# write verb (create, update, patch, delete, deletecollection).
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: aiops-system
+  labels: { app.kubernetes.io/part-of: aiops }
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: aiops-reader
+  namespace: aiops-system
+  labels: { app.kubernetes.io/part-of: aiops }
+automountServiceAccountToken: false
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aiops-reader-workloads
+  labels: { app.kubernetes.io/part-of: aiops }
+rules:
+  - apiGroups: [""]
+    resources: [pods, pods/log, events, services, endpoints]
+    verbs: [get, list, watch]
+  - apiGroups: [events.k8s.io]
+    resources: [events]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets, statefulsets, daemonsets]
+    verbs: [get, list, watch]
+  - apiGroups: [discovery.k8s.io]
+    resources: [endpointslices]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: aiops-reader-cluster
+  labels: { app.kubernetes.io/part-of: aiops }
+rules:
+  - apiGroups: [""]
+    resources: [nodes, namespaces]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: aiops-reader-cluster
+  labels: { app.kubernetes.io/part-of: aiops }
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aiops-reader-cluster
+subjects:
+  - kind: ServiceAccount
+    name: aiops-reader
+    namespace: aiops-system
+---
+# One RoleBinding per investigated namespace (add more for staging, ...).
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: aiops-reader-workloads
+  namespace: prod
+  labels: { app.kubernetes.io/part-of: aiops }
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: aiops-reader-workloads
+subjects:
+  - kind: ServiceAccount
+    name: aiops-reader
+    namespace: aiops-system

@@ -128,6 +128,30 @@ capabilities:
         alertname: alertname
       critical_severities: [critical, page, P1]
       ui_link_template: "${ALERTMANAGER_URL:-http://localhost:9093}/#/alerts?silenced=false&inhibited=false&filter={filter}"
+  k8s:
+    provider: kubernetes               # own read-only kubernetes-mcp (ADR-0008)
+    mcp:
+      transport: http
+      url: ${K8S_MCP_URL:-http://localhost:8106/mcp}
+      timeout_s: 20
+    # Read-only by construction (no write/exec/secret tools on the server) AND by RBAC
+    # (the aiops-reader ServiceAccount only has get/list/watch, deploy/k8s/rbac).
+    tool_allowlist:
+      [list_namespaces, list_pods, get_pod, list_events, list_deployments, get_deployment,
+       get_pod_logs, list_services]
+    limits:
+      max_results: 200
+      max_time_range_hours: 48
+      query_timeout_s: 15
+    settings:
+      # Deployment, label selector, container and namespace per service come from the
+      # service catalog (k8s: {deployment, label_selector, container, namespace}).
+      default_namespace: prod
+      # Dependencies (catalog depends_on) that aren't catalog services: deployment = name.
+      include_dependencies: true
+      # Deep link for evidence, e.g. a Lens/Headlamp/cloud console URL. Unset locally.
+      # {namespace} {kind} {name} are filled in.
+      ui_link_template: ${K8S_UI_LINK_TEMPLATE:-}
   code:
     provider: git                      # local git-mcp (ADR-0007); github/gitlab in companies
     mcp:

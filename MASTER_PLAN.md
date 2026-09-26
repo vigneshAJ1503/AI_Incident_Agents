@@ -965,6 +965,11 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
   - index pattern `logs-k8s-*`
   - switch the Log agent to real logs **by editing `local.yaml` only** (field mapping + index)
 - ✅ The Log agent works on real logs with **zero code change**. This is an early portability proof.
+- **Done (deviations):**
+  - `deploy/k8s/logging`: Fluent Bit `5.1.2` DaemonSet (namespace `logging`, read-only RBAC, 64 Mi limit), `prod` only, app JSON lifted to top level, `kubernetes.*` metadata, daily `logs-k8s-YYYY.MM.DD`. It runs as UID 0 with all capabilities dropped and `/var/log` read-only (kubelet log files are root-only). `make logging-up` also installs the `logs-k8s-*` index template (priority 200, above the built-in `logs-*-*` data-stream template) and a **2-day ILM** retention (`aiops seed k8s-logging`).
+  - The switch is a new environment instead of an edit of `local.yaml`: `AIOPS_ENV=local-k8s`. `config/environments/local-k8s.yaml` and `config/service-catalog/local-k8s.yaml` use a new generic **`extends:`** (deep merge; catalogs merge services by name), so they only hold the differences and `local` (synthetic logs, fixtures, evals) is untouched.
+  - All services share one index, so the Log agent gained one generic, opt-in knob: `logs.settings.service_filter: true` filters every query on `fields.service` (here `kubernetes.labels.app`) == the catalog's `logs.service_value`. Off by default; no Kubernetes or Fluent Bit knowledge in agent code. `baseline_hours: 0.25` (15 min): other agents keep injecting scenarios on the shared cluster, so a long clean baseline rarely exists. Live incident fixtures use a window starting 10 min before the injection (stored in `meta.json`), and the recorder refuses windows polluted by other agents' scenarios.
+  - Proof: fixtures recorded live under `aiops fault run` (`backend/tests/fixtures/logs-k8s/S0,S1` + `meta.json` window), replayed in `test_log_agent_k8s.py`. See `docs/setup/logging.md`, ADR-0010.
 
 #### PR-017 · Fault injection framework
 - **Branch:** `feat/017-fault-injection`

@@ -46,11 +46,12 @@ class ElasticsearchSeeder:
             raise SeedError(f"Elasticsearch not reachable: {exc}. Run `make infra-up`.") from exc
         return str(info.get("version", {}).get("number", "?"))
 
+    def put(self, path: str, body: dict[str, Any], action: str) -> Any:
+        """Idempotent PUT (templates, ILM policies)."""
+        return self._check(self._client.put(path, json=body), action)
+
     def ensure_template(self) -> None:
-        self._check(
-            self._client.put(f"/_index_template/{TEMPLATE_NAME}", json=INDEX_TEMPLATE),
-            "create index template",
-        )
+        self.put(f"/_index_template/{TEMPLATE_NAME}", INDEX_TEMPLATE, "create index template")
 
     def delete_seeded_indices(self, environment_short: str = "prod") -> None:
         # Explicit names (action.destructive_requires_name=true forbids wildcards on delete).

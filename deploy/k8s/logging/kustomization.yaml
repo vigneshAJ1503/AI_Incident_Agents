@@ -1,0 +1,15 @@
+# Real log shipping (PR-016): Fluent Bit DaemonSet -> Elasticsearch `logs-k8s-YYYY.MM.DD`.
+# Apply with `make logging-up` (it also installs the ES index template + ILM retention).
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: logging
+resources:
+  - namespace.yaml
+  - rbac.yaml
+  - daemonset.yaml
+configMapGenerator:
+  # The name gets a content hash, so a config change rolls the DaemonSet.
+  - name: fluent-bit-config
+    files:
+      - fluent-bit.conf
+      - parsers.conf

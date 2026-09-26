@@ -1,0 +1,26 @@
+# Local development on REAL Kubernetes logs (PR-016, docs/setup/logging.md).
+#
+# Same stack as `local`; only the `logs` capability differs. Fluent Bit ships every
+# `prod` pod's logs into ONE shared index family (logs-k8s-YYYY.MM.DD), so:
+#   - the catalog variant `local-k8s` points every service at `logs-k8s-*`;
+#   - `service_filter` narrows each query to the investigated service, on the field
+#     mapped as `service` below (the Kubernetes `app` label), value = catalog
+#     `logs.service_value`.
+# No agent code knows about Kubernetes or Fluent Bit.
+#
+#   AIOPS_ENV=local-k8s uv run aiops agent run logs "Payment API is returning HTTP 500" ...
+extends: local
+environment: local-k8s
+service_catalog: local-k8s
+
+capabilities:
+  logs:
+    settings:
+      fields:
+        # Kubernetes metadata added by Fluent Bit (set for every line, even non-JSON ones).
+        service: kubernetes.labels.app
+      service_filter: true
+      # The cluster keeps 2 days of logs (ILM) and is often freshly started: compare the
+      # incident with the previous 15 minutes instead of 24h (the shared cluster runs other
+      # agents' scenarios too, so a long clean baseline is rare; see docs/setup/logging.md).
+      baseline_hours: 0.25

@@ -108,5 +108,12 @@ The stream ends after `investigation_finished`. Clients reconnect with `Last-Eve
 }
 ```
 
+## Additions requested by the Web UI (PR-036)
+Backwards compatible; the UI treats all of them as optional.
+- `GET /health` adds `faults_enabled: bool` (true when `AIOPS_ENABLE_FAULTS=1`), so the Scenarios page can disable Inject/Revert with an explanation instead of waiting for a `403`.
+- Investigation `status` may be `cancelled` after `POST /investigations/{id}/cancel` (the final `investigation_finished` event carries `{status: "cancelled"}`).
+- SSE resume: besides the `Last-Event-ID` header (sent by the browser on its own reconnects), accept `?last_event_id=<seq>` on `/events`; `EventSource` can't set headers when the UI reopens a closed stream.
+- SSE framing: the UI listens to both unnamed (`data:` only) and named (`event: <type>`) messages; send `id: <seq>` on every event.
+
 ## Demo data
 `aiops demo seed` (PR-034) runs full investigations in **replay** mode over scenarios S0–S5 (recorded fixtures, fake LLM, zero tokens). It stores them with `mode: "demo"`, plus a synthetic 14-day history (about 40 investigations spread over the services, with realistic statuses, severities and durations) so the dashboard has charts on first launch. The UI also ships a **static demo dataset** (`frontend/src/demo/*.json`, generated from the same contract), so it can run with no backend at all (`NEXT_PUBLIC_DEMO=1`).

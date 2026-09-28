@@ -1,10 +1,16 @@
-# Local development environment (MASTER_PLAN.md §10.1).
-# Agents bind to capabilities, never to vendors. To onboard another environment,
-# copy this file, change providers/URLs/field mappings, and set AIOPS_ENV.
-# ${VAR} = required env var, ${VAR:-default} = optional.
+# Profile `local`: the zero-cost demo on synthetic data (MASTER_PLAN.md §10.1, ADR-0011).
+# Agents bind to capabilities, never to vendors. To onboard a company, don't edit this:
+#   uv run aiops profile init <company>        (starts from profiles/_template, documented)
+# and select it with AIOPS_PROFILE=<company>. Guide: docs/portability.md.
+# ${VAR} = required env var, ${VAR:-default} = optional (names listed in .env.example).
+# The profile name is the folder name; the service catalog is services.yaml next to this.
 
-environment: local
-service_catalog: local
+metadata:
+  company: AI Incident Agents (local demo)
+  description: >-
+    Zero-cost local stack: synthetic logs in Elasticsearch, Alertmanager, Prometheus,
+    Minikube, a local git repo, mock tickets and Postgres full-text runbooks.
+  owners: [vigneshAJ1503]
 
 llm:
   provider: ${LLM_PROVIDER:-openai_compat}   # openai_compat (hosted Groq/Gemini) | fake

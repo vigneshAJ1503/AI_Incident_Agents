@@ -1,0 +1,49 @@
+# =====================================================================================
+# SERVICE CATALOG TEMPLATE: every service agents may investigate, and what it is called
+# in each tool. Agents never invent a service that isn't here (they ask instead).
+# Tip: generate it from Backstage / your CMDB / Kubernetes labels (`aiops catalog import`
+# is planned, PR-P3). `extends: <profile>` merges another profile's catalog by service name.
+# =====================================================================================
+
+# Deployment environments and what people call them ("prod", "prd", "live" -> production).
+environments:
+  production:
+    aliases: [prod, prd, live]
+  staging:
+    aliases: [stage, stg]
+
+services:
+  - name: checkout-service                  # canonical name (lowercase, dashes)
+    description: Takes payments for a cart.  # one line; helps the planner
+    aliases: [checkout, checkout-api, cart] # what humans type ("the checkout API")
+    owners: { team: payments, slack: "#payments-oncall" }
+    depends_on: [postgres, payment-gateway] # catalog services or plain infra names
+    runbooks: [checkout-service.md]         # paths in the knowledge base
+
+    # Identifiers per CAPABILITY (defaults for every environment). Keys by capability:
+    #   logs:     service_value (value of fields.service), index_pattern
+    #   metrics:  labels: {<label name>: <value>}   (label names: profile.yaml metrics.labels)
+    #   alerts:   labels: {<label name>: <value>}
+    #   k8s:      deployment, label_selector, container, namespace
+    #   code:     repo, paths
+    #   tickets:  components, labels (Jira)
+    capabilities:
+      logs: { service_value: checkout-service }
+      metrics: { labels: { service: checkout-service } }
+      alerts: { labels: { service: checkout-service } }
+      k8s: { deployment: checkout, label_selector: app=checkout, container: app }
+      code: { repo: checkout, paths: [src/] }
+      tickets: { components: [Checkout], labels: [checkout-service] }
+
+    # Per-environment overrides (merged over the defaults above).
+    environments:
+      production:
+        capabilities:
+          logs: { index_pattern: "logs-checkout-prod-*" }
+          metrics: { labels: { service: checkout-service, namespace: checkout-prod } }
+          alerts: { labels: { service: checkout-service, env: prod } }
+          k8s: { namespace: checkout-prod }
+      staging:
+        capabilities:
+          logs: { index_pattern: "logs-checkout-staging-*" }
+          k8s: { namespace: checkout-staging }

@@ -1,0 +1,257 @@
+# =====================================================================================
+# COMPANY PROFILE TEMPLATE. Start a real one with:   uv run aiops profile init <company>
+# Guide: docs/portability.md (provider matrix, day-1 checklist) · ADR-0011 (format)
+# =====================================================================================
+#
+# One folder per company, chosen with AIOPS_PROFILE=<company> (or --profile <company>):
+#   profile.yaml    this file: LLM, capabilities (= which tool backs logs/metrics/...),
+#                   limits, guardrails, per-agent settings
+#   services.yaml   the service catalog: service -> its identifiers in every tool
+#   .env.example    every ${VAR} this profile uses; copy to .env (gitignored) and fill in
+#   prompts/        OPTIONAL prompt overrides: prompts/<agent>/vN.md replaces (or adds to)
+#                   config/prompts/<agent>/vN.md
+#
+# Rules
+#   - Agents bind to CAPABILITIES, never vendors. Everything vendor-specific lives here:
+#     provider, MCP endpoint, tool names, field/label names, index patterns, link templates.
+#   - Secrets ONLY as ${VAR} references. ${VAR} = required (validate fails if unset),
+#     ${VAR:-default} = optional.
+#   - Credentials must be READ-ONLY (docs/portability.md, "read-only credentials").
+#   - Unknown keys are errors (typos are caught). Check with: aiops profile validate <name>
+#   - `extends: <profile>` inherits another profile and overrides only what differs
+#     (mappings merge, lists/values replace). E.g. acme-staging: `extends: acme`.
+#
+# extends: acme
+
+metadata:
+  company: "Your Company"
+  description: "Production incident investigation for Your Company"
+  owners: [you@example.com]          # who maintains this profile
+
+# ------------------------------------------------------------------------------ LLM
+# Hosted models only. openai_compat = any OpenAI-compatible Chat Completions API with tool
+# calling: Groq, Gemini (OpenAI endpoint), OpenAI, Azure OpenAI, a LiteLLM/vLLM gateway.
+# Planned: anthropic, bedrock (docs/portability.md).
+llm:
+  provider: openai_compat
+  base_url: ${OPENAI_COMPAT_BASE_URL}
+  api_key: ${OPENAI_COMPAT_API_KEY}           # SECRET
+  models:
+    fast: ${LLM_MODEL_FAST:-}                 # cheap/fast model (optional; falls back to agent)
+    agent: ${LLM_MODEL_AGENT}                 # specialist agents
+    rca: ${LLM_MODEL_RCA:-}                   # root-cause synthesis (optional)
+  timeout_s: 60
+  max_retries: 4
+
+# Global per-agent budget (agents.<name>.limits overrides it).
+limits:
+  max_steps: 8
+  max_tool_calls: 10
+  max_execution_s: 60
+  max_tokens: 60000
+
+guardrails:
+  read_only: true                             # agents never get write tools
+  redact: [emails, ip_addresses, jwt, bearer_tokens, api_keys, credit_cards]
+  max_tool_output_chars: 8000
+  audit_log_path: .data/audit.jsonl
+  approvals_path: .data/approvals.json
+  approvals_audit_path: .data/approvals-audit.jsonl
+  approval_ttl_hours: 24
+
+# ------------------------------------------------------------------------- capabilities
+# Each capability = provider + MCP server + read-only tool allowlist + settings.
+# Remove (or `enabled: false`) a capability the company doesn't have; its agent then
+# reports "not configured" instead of failing the investigation.
+# Common keys:
+#   provider        which backend (see the matrix in docs/portability.md)
+#   mcp             {transport: http, url} or {transport: stdio, command, args, env}
+#   tool_allowlist  the ONLY tools agents may call (read-only ones)
+#   write_allowlist tools only the human-approval executor may call (tickets only)
+#   limits          max_results / max_time_range_hours / query_timeout_s
+#   settings        provider-specific mapping: THIS is where portability happens
+capabilities:
+  logs:
+    provider: elasticsearch                   # implemented: elasticsearch (incl. Elastic Cloud)
+                                              # planned: opensearch, loki, splunk, datadog
+    mcp:
+      transport: http
+      url: ${LOGS_MCP_URL}                    # mcp-servers/elasticsearch-mcp, run by you
+      timeout_s: 30
+    tool_allowlist: [list_indices, get_mapping, search_logs, execute_esql]
+    limits:
+      max_results: 1000
+      max_time_range_hours: 48
+      query_timeout_s: 30
+    settings:
+      # Your log schema. Look at one document (aiops mcp call logs get_mapping ...) and map
+      # each logical field to your field name. Keyword sub-field: <message>.keyword.
+      fields:
+        timestamp: "@timestamp"
+        level: log.level                      # e.g. level, severity, log.level
+        message: message
+        message_keyword: message.keyword      # aggregatable copy of message
+        service: service.name                 # ECS: service.name; k8s: kubernetes.labels.app
+        environment: service.environment
+        trace_id: trace.id
+        status_code: http.response.status_code
+        endpoint: url.path
+        version: service.version
+        error_type: error.type
+      # Index: per service in services.yaml (logs.index_pattern). If ALL services share one
+      # index family, set it here and turn on service_filter (filters on fields.service,
+      # value = catalog logs.service_value):
+      # index_pattern: "logs-*"
+      # service_filter: true
+      error_levels: [ERROR, FATAL, CRITICAL]
+      pattern_levels: [ERROR, FATAL, CRITICAL, WARN]
+      baseline_hours: 24                      # "is this normal?" comparison window
+      startup_pattern: "Starting*"            # a line your apps print on start-up
+      # Evidence deep link. {start} {end} (ISO) and {kql} (URL-encoded) are filled in.
+      ui_link_template: "${KIBANA_URL}/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))"
+
+  metrics:
+    provider: prometheus                      # any Prometheus-compatible API: Prometheus,
+                                              # Thanos, Mimir, VictoriaMetrics, AMP, GMP
+                                              # planned: datadog
+    mcp:
+      transport: http
+      url: ${METRICS_MCP_URL}                 # mcp-servers/prometheus-mcp -> your query API
+      timeout_s: 30
+    tool_allowlist: [query, query_range, list_metrics, metric_metadata, get_targets]
+    limits:
+      max_results: 50
+      max_time_range_hours: 24
+      query_timeout_s: 20
+    settings:
+      # Label NAMES in your metrics (values per service come from services.yaml).
+      labels:
+        service: service                      # e.g. job, app, service, app_kubernetes_io_name
+        namespace: namespace
+        status: status                        # HTTP status label (code, status_code, ...)
+        k8s_app: label_app                    # kube_pod_labels' app label
+      # Metric NAMES. Rename to your instrumentation (OpenTelemetry: http_server_...).
+      metrics:
+        requests: http_requests_total
+        latency_histogram: http_request_duration_seconds
+        db_pool_active: db_pool_connections_active
+        db_pool_max: db_pool_connections_max
+        db_pool_pending: db_pool_connections_pending
+        cache_up: redis_up
+        memory_rss: process_resident_memory_bytes
+        restarts: kube_pod_container_status_restarts_total
+        last_terminated_reason: kube_pod_container_status_last_terminated_reason
+        pod_labels: kube_pod_labels
+      error_status_regex: "5.."
+      rate_window: 2m
+      step: 30s
+      baseline_minutes: 30
+      # {service} {namespace} {from_ms} {to_ms} {panel}; set to "" if you have no dashboard.
+      ui_link_template: "${GRAFANA_URL}/d/<dashboard-uid>/service-overview?var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}"
+      # {query} {range} {end_utc}: opens the exact query of a piece of evidence.
+      explore_link_template: "${PROMETHEUS_URL}/query?g0.expr={query}&g0.tab=graph&g0.range_input={range}&g0.end_input={end_utc}"
+      panels: { rps: 1, error_rate: 2, latency: 3, db_pool: 4, memory: 5, cache: 6 }
+
+  alerts:
+    provider: alertmanager                    # planned: pagerduty, opsgenie
+    mcp:
+      transport: http
+      url: ${ALERTS_MCP_URL}                  # mcp-servers/alertmanager-mcp -> your Alertmanager
+      timeout_s: 20
+    tool_allowlist: [list_alerts, get_alert, list_silences, get_alert_groups, alert_history]
+    limits:
+      max_results: 200
+      max_time_range_hours: 168
+      query_timeout_s: 15
+    settings:
+      labels:                                 # label NAMES on your alerts
+        service: service                      # e.g. service, app, job
+        severity: severity
+        alertname: alertname
+      critical_severities: [critical, page, P1]
+      ui_link_template: "${ALERTMANAGER_URL}/#/alerts?silenced=false&inhibited=false&filter={filter}"
+
+  k8s:
+    provider: kubernetes                      # EKS, GKE, AKS, OpenShift, ...
+    mcp:
+      transport: http
+      url: ${K8S_MCP_URL}                     # mcp-servers/kubernetes-mcp, read-only RBAC
+      timeout_s: 20
+    tool_allowlist:
+      [list_namespaces, list_pods, get_pod, list_events, list_deployments, get_deployment,
+       get_pod_logs, list_services]
+    limits:
+      max_results: 200
+      max_time_range_hours: 48
+      query_timeout_s: 15
+    settings:
+      default_namespace: default              # when a service has no k8s.namespace
+      include_dependencies: true
+      probe_startup_grace_s: 60
+      # {namespace} {kind} {name}, e.g. a Lens/Headlamp/cloud console URL. "" = no link.
+      ui_link_template: ${K8S_UI_LINK_TEMPLATE:-}
+
+  code:
+    provider: git                             # local read-only clones; planned: github, gitlab
+    mcp:
+      transport: http
+      url: ${CODE_MCP_URL}                    # mcp-servers/git-mcp over mirrored repos
+      timeout_s: 30
+    tool_allowlist: [list_repositories, list_releases, search_commits, get_commit, get_diff]
+    limits:
+      max_results: 200
+      max_time_range_hours: 2160
+      query_timeout_s: 20
+    settings:
+      lookback_hours: 24
+      release_tag_template: "{service}/{version}"   # your release tag scheme, e.g. "v{version}"
+      max_diffs: 3
+      suspect_threshold: 0.3
+      include_dependencies: true
+      # e.g. "https://github.com/<org>/{repo}/commit/{sha}" or GitLab's "/-/commit/{sha}"
+      ui_link_template: ${CODE_UI_LINK_TEMPLATE:-}
+
+  tickets:
+    provider: jira                            # jira (mcp-atlassian contract) | mock (offline)
+    mcp:
+      transport: http
+      url: ${TICKETS_MCP_URL}                 # sooperset/mcp-atlassian, pinned version
+      timeout_s: 30
+    tool_allowlist: [jira_search, jira_get_issue]
+    # Never given to agents: only `aiops approvals approve` runs these, after a human says yes.
+    write_allowlist: [jira_create_issue, jira_add_comment, jira_update_issue]
+    limits:
+      max_results: 20
+      query_timeout_s: 30
+    settings:
+      project_key: ${TICKETS_PROJECT_KEY}     # REQUIRED for jira: where incidents live
+      write_requires_approval: true
+      resolved_lookback_days: 90
+      ui_link_template: "${JIRA_URL}/browse/{key}"
+      # Optional: your symptom vocabulary (name: {triggers: regex, search: [terms]})
+      # symptom_terms: { timeout: { triggers: "time[ds]? ?outs?", search: [timeout] } }
+
+  knowledge:
+    provider: postgres_fts                    # markdown runbooks -> Postgres FTS
+                                              # planned: confluence
+    mcp:
+      transport: http
+      url: ${KNOWLEDGE_MCP_URL}               # mcp-servers/knowledge-mcp
+      timeout_s: 15
+    tool_allowlist: [search, get_doc, list_docs]
+    limits:
+      max_results: 10
+      query_timeout_s: 10
+    settings:
+      # {path} = the runbook's path in your docs repo
+      ui_link_template: "https://github.com/<org>/<runbooks-repo>/blob/main/{path}"
+      search_k: 8
+      top_docs: 3
+
+# ------------------------------------------------------------------------------ agents
+# Per-agent overrides: enabled, prompt_version (null = latest), model_role (fast|agent|rca),
+# limits. Omitted agents use the defaults and the global limits above.
+agents:
+  logs:
+    limits: { max_steps: 6, max_tool_calls: 10, max_execution_s: 60, max_tokens: 40000 }
+  # tickets: { prompt_version: v1 }

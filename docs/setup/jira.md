@@ -28,7 +28,7 @@ Links such as `http://localhost:8109/browse/OPS-12` open a minimal page served b
 2. **Create the project:** a Scrum/Kanban *software* project with key **`OPS`**. Add components
    `payments`, `orders`, `identity`, `inventory` (Project settings → Components). The agent
    searches by these components and the service labels (`payment-service`, ...) from
-   `config/service-catalog/local.yaml` (`tickets: {components, labels}`).
+   `profiles/local/services.yaml` (`tickets: {components, labels}`).
 3. **Create an API token:** <https://id.atlassian.com/manage-profile/security/api-tokens>.
    Prefer a dedicated user that only has access to `OPS` (least privilege).
 4. **`.env`:**

@@ -1,4 +1,4 @@
-"""Log agent on REAL Kubernetes logs (PR-016): AIOPS_ENV=local-k8s, zero code change.
+"""Log agent on REAL Kubernetes logs (PR-016): AIOPS_PROFILE=local-k8s, zero code change.
 
 Fixtures were recorded live from Fluent Bit -> Elasticsearch (logs-k8s-*) while
 `aiops fault run` held the cluster lock (tests/fixtures/record_logs_k8s.py). A live

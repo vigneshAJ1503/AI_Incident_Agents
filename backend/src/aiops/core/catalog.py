@@ -129,8 +129,7 @@ class ServiceCatalog:
 
     @classmethod
     def from_settings(cls, settings: Settings) -> ServiceCatalog:
-        path = settings.config_dir / "service-catalog" / f"{settings.service_catalog}.yaml"
-        return cls.from_file(path)
+        return cls.from_file(settings.catalog_path())
 
     # -- queries -------------------------------------------------------------------------
 

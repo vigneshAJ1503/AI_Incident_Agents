@@ -2,16 +2,19 @@
 #
 # Same stack as `local`; only the `logs` capability differs. Fluent Bit ships every
 # `prod` pod's logs into ONE shared index family (logs-k8s-YYYY.MM.DD), so:
-#   - the catalog variant `local-k8s` points every service at `logs-k8s-*`;
+#   - this profile's services.yaml points every service at `logs-k8s-*`;
 #   - `service_filter` narrows each query to the investigated service, on the field
 #     mapped as `service` below (the Kubernetes `app` label), value = catalog
 #     `logs.service_value`.
 # No agent code knows about Kubernetes or Fluent Bit.
 #
-#   AIOPS_ENV=local-k8s uv run aiops agent run logs "Payment API is returning HTTP 500" ...
+#   AIOPS_PROFILE=local-k8s uv run aiops agent run logs "Payment API is returning HTTP 500" ...
 extends: local
-environment: local-k8s
-service_catalog: local-k8s
+
+metadata:
+  company: AI Incident Agents (local demo)
+  description: The local profile, with real Minikube pod logs shipped by Fluent Bit.
+  owners: [vigneshAJ1503]
 
 capabilities:
   logs:

@@ -13,6 +13,7 @@ from aiops.cli import (
     knowledge_cmd,
     llm_cmd,
     mcp_cmd,
+    profile_cmd,
     prompts_cmd,
     schemas_cmd,
     seed_cmd,
@@ -25,6 +26,7 @@ app = typer.Typer(
     help="AI Incident Agents — investigate incidents from the command line.",
     no_args_is_help=True,
 )
+app.add_typer(profile_cmd.app, name="profile")
 app.add_typer(config_cmd.app, name="config")
 app.add_typer(catalog_cmd.app, name="catalog")
 app.add_typer(schemas_cmd.app, name="schemas")

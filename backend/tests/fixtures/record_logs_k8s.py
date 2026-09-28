@@ -1,4 +1,4 @@
-"""Record Log-agent fixtures on REAL Kubernetes logs (PR-016, AIOPS_ENV=local-k8s).
+"""Record Log-agent fixtures on REAL Kubernetes logs (PR-016, AIOPS_PROFILE=local-k8s).
 
 Live incidents aren't at a fixed time, so the window used is stored in ``meta.json``
 next to the fixtures; replay tests rebuild the exact task from it.

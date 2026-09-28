@@ -24,7 +24,7 @@ resolutiondate, assignee, reporter, labels, components, created, updated, commen
 `fields` (comma-separated, or `*all`). Arguments the mock doesn't need (`expand`, `page_token`,
 `use_display_names`, ...) are accepted and ignored so clients stay compatible.
 
-Agents only get the read tools (capability allowlist in `config/environments/*.yaml`). Write
+Agents only get the read tools (capability allowlist in `profiles/*/profile.yaml`). Write
 tools are executed by the approval framework (PR-014) after a human approves.
 
 ### JQL subset

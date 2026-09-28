@@ -29,5 +29,10 @@ def handle_errors[**P, R](func: Callable[P, R]) -> Callable[P, R]:
 
 
 EnvOption = typer.Option(
-    None, "--env", "-e", help="Environment name (default: $AIOPS_ENV or 'local')."
+    None,
+    "--profile",
+    "--env",
+    "-e",
+    help="Profile name (default: $AIOPS_PROFILE, else the deprecated $AIOPS_ENV, else "
+    "'local'). --env is a deprecated alias.",
 )

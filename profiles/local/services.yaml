@@ -1,5 +1,6 @@
-# Service Catalog (MASTER_PLAN.md §10.2): service -> identifiers per capability.
-# Capability blocks at service level are defaults; environments.<env>.capabilities override them.
+# Service catalog of profile `local` (MASTER_PLAN.md §10.2): service -> identifiers per
+# capability. Capability blocks at service level are defaults;
+# environments.<env>.capabilities override them. Field reference: profiles/_template/services.yaml
 
 environments:
   production:

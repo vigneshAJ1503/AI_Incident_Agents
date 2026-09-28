@@ -1,0 +1,46 @@
+# Investigation-level expectations WITHOUT recorded data (PR-040, docs/evals.md):
+# negative, ambiguous and paraphrased questions for the planner (service identification).
+# `aiops evaluate` also scores every scenario question (S0-S5) the same way, from the
+# question alone.
+#
+#   expect: service        -> the plan runs on `service` (never a different one)
+#   expect: clarification  -> the planner asks instead of guessing; `candidates` (optional)
+#                             must all be offered; the plan never names a service
+#
+# Services must exist in the profile's catalog (profiles/<profile>/services.yaml); names
+# listed under `never` must NOT appear as the planned service (hallucination check).
+cases:
+  - id: N1
+    title: Vague question
+    question: Something is broken
+    expect: clarification
+
+  - id: N2
+    title: Unknown service is never invented
+    question: checkout-gateway is returning 500s in production
+    expect: clarification
+    never: [checkout-gateway]
+
+  - id: N3
+    title: Unknown service (billing) is never invented
+    question: The billing-service is down in prod
+    expect: clarification
+    never: [billing-service]
+
+  - id: N4
+    title: Two unrelated services named
+    question: order-service and user-service are both failing
+    expect: clarification
+    candidates: [order-service, user-service]
+
+  - id: P1
+    title: Alias (checkout -> order-service)
+    question: checkout is down in prod
+    expect: service
+    service: order-service
+
+  - id: P2
+    title: Paraphrase without environment
+    question: Payments are slow
+    expect: service
+    service: payment-service

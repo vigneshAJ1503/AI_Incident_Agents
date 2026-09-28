@@ -345,3 +345,13 @@ agents:
       max_tool_calls: 10
       max_execution_s: 120
       max_tokens: 40000
+
+# System evaluation (PR-040, `aiops evaluate`, docs/evals.md).
+evals:
+  # Cost estimate, USD per 1M tokens. Keys, most specific first: model id, provider host
+  # (e.g. api.groq.com), "*". Unlisted = 0: the free tiers this project uses cost nothing.
+  pricing:
+    "*": { input: 0.0, output: 0.0 }
+    # some-paid-model: { input: 0.60, output: 0.80 }   # illustrative; use your price page
+  llm_judge: false   # also grade root causes with an LLM (needs a key; `--judge`)
+  tolerance: 0.0     # regression gate: tolerated drop/rise of a rate vs the baseline

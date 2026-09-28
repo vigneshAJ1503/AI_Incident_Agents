@@ -326,6 +326,26 @@ class OrchestratorConfig(_Strict):
     severity: SeverityRules = Field(default_factory=SeverityRules)
 
 
+class ModelPrice(_Strict):
+    """USD per million tokens."""
+
+    input: float = Field(default=0.0, ge=0)
+    output: float = Field(default=0.0, ge=0)
+
+
+class EvalsConfig(_Strict):
+    """The system evaluation (PR-040, ``aiops evaluate``, docs/evals.md)."""
+
+    #: Price table for the cost estimate, USD per 1M tokens. Keys, most specific first: the
+    #: model id (``llama-3.3-70b-versatile``), the provider host (``api.groq.com``), ``*``.
+    #: Unlisted = 0 (the free tiers this project uses).
+    pricing: dict[str, ModelPrice] = Field(default_factory=dict)
+    #: Also score root causes with an LLM judge (needs a hosted LLM key; skipped otherwise).
+    llm_judge: bool = False
+    #: Regression gate: tolerated drop/rise of a rate before the run fails.
+    tolerance: float = Field(default=0.0, ge=0, le=1)
+
+
 class StorageConfig(_Strict):
     """The evidence store (PR-032): investigations, events, approvals, audit."""
 
@@ -390,6 +410,7 @@ class Settings(_Strict):
     orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
     api: ApiConfig = Field(default_factory=ApiConfig)
+    evals: EvalsConfig = Field(default_factory=EvalsConfig)
     service_catalog: str = "local"
 
     # Set by the loader, not by YAML.

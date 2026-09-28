@@ -1,0 +1,44 @@
+{
+  "mode": "replay",
+  "agents": {
+    "alerts": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "code": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "k8s": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "knowledge": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "logs": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "metrics": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    },
+    "tickets": {
+      "pass_rate": 1.0,
+      "false_positive_rate": 0.0
+    }
+  },
+  "investigations": {
+    "pass_rate": 1.0,
+    "root_cause_accuracy": 1.0,
+    "false_positive_rate": 0.0
+  },
+  "planner": {
+    "pass_rate": 0.9167,
+    "service_accuracy": 0.875,
+    "clarification_accuracy": 1.0
+  },
+  "source": "2026-09-28-system-replay"
+}

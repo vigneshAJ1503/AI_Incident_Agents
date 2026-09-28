@@ -1,0 +1,8 @@
+{
+  "scenario": "S5",
+  "start": "2026-09-28T14:16:00Z",
+  "end": "2026-09-28T14:31:00Z",
+  "incident_start": "2026-09-28T14:25:29Z",
+  "recorded_at": "2026-09-28T14:31:30Z",
+  "source": "live Prometheus (aiops fault run)"
+}

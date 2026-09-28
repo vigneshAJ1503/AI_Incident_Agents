@@ -1,0 +1,8 @@
+{
+  "scenario": "S0",
+  "start": "2026-09-28T13:58:00Z",
+  "end": "2026-09-28T14:13:00Z",
+  "incident_start": null,
+  "recorded_at": "2026-09-28T14:13:01Z",
+  "source": "live Prometheus, no fault"
+}

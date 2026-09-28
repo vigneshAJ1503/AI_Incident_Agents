@@ -109,7 +109,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           >
             <SearchIcon aria-hidden className="size-4" />
             <span className="flex-1 truncate text-left">
-              {NEW_ROUTE ? "Ask about an incident or search…" : "Search…"}
+              {NEW_ROUTE ? "Ask a question or search…" : "Search…"}
             </span>
             <Kbd>⌘K</Kbd>
           </button>

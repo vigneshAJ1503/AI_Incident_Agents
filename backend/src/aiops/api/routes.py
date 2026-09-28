@@ -12,13 +12,18 @@ from typing import Annotated, Any
 from fastapi import APIRouter, Depends, Header, Query, Request
 from fastapi.responses import PlainTextResponse, StreamingResponse
 
-from aiops import __version__
-from aiops.agents.registry import AGENTS
 from aiops.agents.tickets_agent.draft import ACTIONS, draft_ticket
 from aiops.api import models as m
 from aiops.api.context import ApiContext
 from aiops.api.errors import ApiError, not_found
-from aiops.api.health import llm_configured, llm_missing
+from aiops.api.platform import (
+    agents_of,
+    answer,
+    health_of,
+    replay_reasons,
+    root_cause_statement,
+    scenario_suggestions,
+)
 from aiops.api.runner import RunMode
 from aiops.api.scenarios import faults_enabled, injectable
 from aiops.api.sse import event_stream
@@ -32,7 +37,7 @@ from aiops.core.models import Investigation, InvestigationStatus, utcnow
 from aiops.evals.scenario import Scenario
 from aiops.faults import FaultError
 from aiops.mcp import tickets
-from aiops.orchestrator.dashboard import agent_stats, dashboard_summary
+from aiops.orchestrator.dashboard import dashboard_summary
 from aiops.orchestrator.engine import InvestigationRequest
 from aiops.store.repository import summary_of
 
@@ -60,22 +65,7 @@ ERRORS: dict[int | str, dict[str, Any]] = {
 @router.get("/health", response_model=m.HealthResponse, tags=["meta"])
 async def health(ctx: Ctx) -> m.HealthResponse:
     """Profile, LLM (never the key), capability reachability (cached TCP checks), store."""
-    store_ok = True
-    try:
-        async with asyncio.timeout(max(ctx.settings.api.health_timeout_s, 2.0)):
-            await ctx.store.count()
-    except Exception:
-        store_ok = False
-    llm = ctx.settings.llm
-    return m.HealthResponse(
-        status="ok" if store_ok else "degraded",
-        version=__version__,
-        profile=ctx.settings.profile,
-        llm=m.LLMHealth(provider=llm.provider, configured=llm_configured(ctx.settings)),
-        capabilities=await ctx.health.status(),  # type: ignore[arg-type]
-        faults_enabled=faults_enabled(),
-        store="ok" if store_ok else "down",
-    )
+    return await health_of(ctx)
 
 
 @router.get("/services", response_model=list[m.ServiceOut], tags=["catalog"])
@@ -96,27 +86,7 @@ async def services(ctx: Ctx) -> list[m.ServiceOut]:
 @router.get("/agents", response_model=list[m.AgentOut], tags=["catalog"])
 async def agents(ctx: Ctx) -> list[m.AgentOut]:
     """The agent registry + 7-day statistics from the evidence store."""
-    since = utcnow() - timedelta(days=7)
-    recent = await ctx.store.search(since=since, limit=STATS_LIMIT)
-    stats = {a["name"]: a for a in agent_stats(recent)}
-    enabled = {n for n, c in ctx.settings.capabilities.items() if c.enabled}
-    out = []
-    for spec in AGENTS.specs():
-        stat = stats.get(spec.name, {})
-        out.append(
-            m.AgentOut(
-                name=spec.name,
-                version=spec.version,
-                description=spec.description,
-                capabilities=list(spec.capabilities),
-                last_run_at=stat.get("last_run_at"),
-                success_rate_7d=stat.get("success_rate"),
-                p50_ms=stat.get("p50_ms"),
-                runs_7d=stat.get("runs", 0),
-                enabled=ctx.settings.agent(spec.name).enabled and set(spec.capabilities) <= enabled,
-            )
-        )
-    return out
+    return await agents_of(ctx)
 
 
 @router.get("/dashboard/summary", response_model=m.DashboardSummary, tags=["dashboard"])
@@ -192,20 +162,14 @@ async def _choose_mode(
         if body.mode == "live":
             raise ApiError(422, "validation_error", "A scenario is replayed: use mode 'replay'.")
         return "replay", scenario
-    llm_ok = llm_configured(ctx.settings)
-    caps = await ctx.health.status()
-    down = sorted(n for n, s in caps.items() if s == "down")
-    live_ok = llm_ok and not down
+    reasons, _ = await replay_reasons(ctx)
+    live_ok = not reasons
     if body.mode == "live" and not live_ok:
-        reasons = []
-        if not llm_ok:
-            reasons.append("no LLM configured (" + "; ".join(llm_missing(ctx.settings)) + ")")
-        if down:
-            reasons.append(f"capabilities down: {', '.join(down)}")
         raise ApiError(
             409,
             "live_unavailable",
-            f"Live mode is unavailable: {'; '.join(reasons)}. Use mode 'replay' with a scenario.",
+            f"Live mode is unavailable: {' and '.join(reasons)}. Use mode 'replay' with a "
+            "scenario.",
         )
     if live_ok and body.mode != "replay":
         return "live", None
@@ -213,15 +177,15 @@ async def _choose_mode(
     if scenario is None:
         known = "; ".join(f"{s.id} ({s.service}): {s.question}" for s in ctx.scenarios.scenarios)
         why = (
-            "Replay mode"
+            "Replay mode was requested"
             if body.mode == "replay" or live_ok
-            else ("No LLM configured or a capability is down, so this runs in replay mode")
+            else f"This runs in replay mode because {' and '.join(reasons)}"
         )
         raise ApiError(
             422,
             "no_matching_scenario",
-            f"{why}, which needs a recorded scenario: pass 'scenario' or ask about a scenario's "
-            f"service. Known: {known or 'none'}.",
+            f"{why}; replay needs a recorded scenario: pass 'scenario' or ask about a "
+            f"scenario's service. Known: {known or 'none'}.",
         )
     return "replay", scenario
 
@@ -241,6 +205,10 @@ def _aware(value: datetime | None) -> datetime | None:
 )
 async def create_investigation(ctx: Ctx, body: m.CreateInvestigation) -> m.CreatedInvestigation:
     """Start an investigation in the background; follow it on ``/events``."""
+    return await _start(ctx, body)
+
+
+async def _start(ctx: ApiContext, body: m.CreateInvestigation) -> m.CreatedInvestigation:
     mode, scenario = await _choose_mode(ctx, body)
     request = InvestigationRequest(
         question=body.question,
@@ -408,15 +376,6 @@ async def cancel(ctx: Ctx, investigation_id: str) -> m.InvestigationState:
     return m.InvestigationState(id=investigation_id, status=InvestigationStatus.CANCELLED)
 
 
-def _root_cause_statement(inv: Investigation) -> str | None:
-    """The RCA's root cause (else its summary): the ticket title of a finished investigation."""
-    report = inv.report
-    if report is None:
-        return None
-    top = next((h for h in inv.hypotheses if h.id == report.root_cause_hypothesis_id), None)
-    return top.statement if top else (report.summary or None)
-
-
 @router.post(
     "/investigations/{investigation_id}/tickets/draft",
     status_code=201,
@@ -451,7 +410,7 @@ async def draft_ticket_proposal(
         components=components,
         investigation_id=inv.id,
         issue_type=body.issue_type,
-        headline=_root_cause_statement(inv),
+        headline=root_cause_statement(inv),
     )
     try:
         cap = ctx.settings.capability("tickets")
@@ -489,6 +448,60 @@ async def draft_ticket_proposal(
         )
     return m.TicketDraftResponse(
         approval_id=proposal.id, status=_approval_state(proposal.status), summary=ticket.summary
+    )
+
+
+# --------------------------------------------------------------------------- ask (PR-041)
+
+
+@router.post("/ask", response_model=m.AskResponse, responses=ERRORS, tags=["ask"])
+async def ask(ctx: Ctx, body: m.AskRequest) -> m.AskResponse:
+    """The chat box: a platform question is answered from live platform data (no
+    investigation); an incident question starts one exactly like ``POST /investigations``.
+    In replay mode without a matching scenario, the answer lists the recorded ones."""
+    c = await ctx.classifier().classify(body.question)
+    if c.kind == "platform":
+        return m.AskResponse(
+            kind="platform",
+            intent=c.intent,
+            confidence=c.confidence,
+            source=c.source,
+            answer=await answer(ctx, c, body.question),
+        )
+    create = m.CreateInvestigation(
+        question=body.question,
+        service=body.service,
+        environment=body.environment,
+        since=body.since,
+    )
+    try:
+        created = await _start(ctx, create)
+    except ApiError as exc:
+        if exc.code != "no_matching_scenario":
+            raise
+        reasons, _ = await replay_reasons(ctx)
+        why = " and ".join(reasons) if reasons else "replay mode was requested"
+        return m.AskResponse(
+            kind="incident",
+            intent=c.intent,
+            confidence=c.confidence,
+            source=c.source,
+            answer=m.AskAnswer(
+                title="No recorded incident matches this question",
+                markdown=f"Investigations run in **replay mode** here because {why}. In "
+                "replay mode I can investigate these recorded incidents (click one to run it):",
+                items=list(scenario_suggestions(ctx)),
+                links=[m.AskLink(label="Scenarios", href="/scenarios")],
+            ),
+        )
+    return m.AskResponse(
+        kind="incident",
+        intent=c.intent,
+        confidence=c.confidence,
+        source=c.source,
+        investigation_id=created.id,
+        mode=created.mode,
+        scenario=created.scenario,
     )
 
 

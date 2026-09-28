@@ -6,12 +6,11 @@ import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
 import { useState } from "react";
-import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/status";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Kbd } from "@/components/ui/kbd";
-import { useCreateInvestigation, useInvestigations } from "@/lib/queries";
+import { useInvestigations } from "@/lib/queries";
 
 import { NAV } from "./nav";
 
@@ -33,7 +32,6 @@ export function CommandPalette({
   const { resolvedTheme, setTheme } = useTheme();
   const [search, setSearch] = useState("");
   const recent = useInvestigations({ limit: 8 });
-  const create = useCreateInvestigation();
 
   const go = (href: Route) => {
     onOpenChange(false);
@@ -41,15 +39,11 @@ export function CommandPalette({
     router.push(href);
   };
 
-  const investigate = async () => {
+  /** The chat page asks /ask: incidents open their live view, platform questions get a reply. */
+  const askQuestion = () => {
     const question = search.trim();
     if (question.length < 3) return;
-    try {
-      const res = await create.mutateAsync({ question });
-      go(`/investigations/${res.id}` as Route);
-    } catch (err) {
-      toast.error("Could not start the investigation", { description: (err as Error).message });
-    }
+    go(`/investigations/new?q=${encodeURIComponent(question)}` as Route);
   };
 
   return (
@@ -66,9 +60,7 @@ export function CommandPalette({
               value={search}
               onValueChange={setSearch}
               placeholder={
-                canInvestigate
-                  ? "Ask about an incident or search…"
-                  : "Search pages and investigations…"
+                canInvestigate ? "Ask a question or search…" : "Search pages and investigations…"
               }
               className="h-12 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
             />
@@ -79,15 +71,11 @@ export function CommandPalette({
               No matches.
             </Command.Empty>
             {canInvestigate && search.trim().length >= 3 && (
-              <Command.Group heading="Investigate" className={group}>
-                <Command.Item
-                  value={`investigate ${search}`}
-                  onSelect={investigate}
-                  className={item}
-                >
+              <Command.Group heading="Ask" className={group}>
+                <Command.Item value={`ask ${search}`} onSelect={askQuestion} className={item}>
                   <SparklesIcon aria-hidden className="size-4 text-primary" />
                   <span className="truncate">
-                    Investigate: <span className="font-medium">“{search.trim()}”</span>
+                    Ask: <span className="font-medium">“{search.trim()}”</span>
                   </span>
                 </Command.Item>
               </Command.Group>

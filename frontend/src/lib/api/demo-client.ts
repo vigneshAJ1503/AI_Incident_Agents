@@ -13,6 +13,16 @@ import investigationsJson from "@/demo/investigations.json";
 import metaJson from "@/demo/meta.json";
 import scenariosJson from "@/demo/scenarios.json";
 import servicesJson from "@/demo/services.json";
+import { classify, hasSymptoms } from "@/lib/ask/intent";
+import {
+  catalogAnswer,
+  healthAnswer,
+  helpAnswer,
+  noMatchAnswer,
+  recentAnswer,
+  runningAnswer,
+  runningItem,
+} from "@/lib/demo/ask";
 import { routeQuestion, type DemoScenarioId } from "@/lib/demo/route";
 import {
   scheduleSession,
@@ -41,6 +51,9 @@ import {
   ScenarioList,
   ServiceList,
   type Approval,
+  type AskAnswer,
+  type AskRequest,
+  type AskResponse,
   type CreateInvestigationRequest,
   type InvestigationSummary as Summary,
 } from "./schemas";
@@ -337,6 +350,54 @@ export class DemoClient implements ApiClient {
     this.sessions.set(id, s);
     this.save();
     return this.delay({ id, status: "pending" as const });
+  }
+
+  async ask(req: AskRequest): Promise<AskResponse> {
+    const c = classify(req.question);
+    const base = {
+      intent: c.intent,
+      confidence: c.sure ? 0.9 : 0.5,
+      source: c.sure ? ("rules" as const) : ("default" as const),
+    };
+    if (c.kind === "platform") {
+      let answer: AskAnswer;
+      if (c.intent === "agents_running") {
+        const now = this.now();
+        const running = [];
+        for (const s of this.sessions.values()) {
+          const sc = this.sessionScenario(s);
+          const item = runningItem(
+            s,
+            scheduleSession(s, sc ? await this.recording(sc) : null, this.speed),
+            now,
+          );
+          if (item) running.push(item);
+        }
+        running.sort((a, b) => b.created_at.localeCompare(a.created_at));
+        answer = runningAnswer(running, await this.allSummaries());
+      } else if (c.intent === "agents_catalog") answer = catalogAnswer(await this.agents());
+      else if (c.intent === "health") answer = healthAnswer(await this.health());
+      else if (c.intent === "recent_investigations")
+        answer = recentAnswer(await this.allSummaries(), c.service, req.question);
+      else answer = helpAnswer();
+      return this.delay({ kind: "platform", ...base, answer });
+    }
+    // replay semantics: only a question about a recorded scenario's service/symptoms runs
+    if (!req.service && !c.service && !hasSymptoms(req.question)) {
+      return this.delay({ kind: "incident", ...base, answer: noMatchAnswer() });
+    }
+    const created = await this.createInvestigation({
+      question: req.question,
+      ...(req.service ? { service: req.service } : {}),
+    });
+    const route = this.sessions.get(created.id)?.route;
+    return {
+      kind: "incident",
+      ...base,
+      investigation_id: created.id,
+      mode: "replay",
+      scenario: route && route.scenario !== "clarify" ? route.scenario : null,
+    };
   }
 
   async clarify(id: string, answer: string) {

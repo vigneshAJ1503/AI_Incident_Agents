@@ -130,6 +130,10 @@ class InvestigationRunner:
         handle = self._active.get(investigation_id)
         return handle.snapshot().model_copy(deep=True) if handle else None
 
+    def active_ids(self) -> list[str]:
+        """Investigations this process is running now (``Orchestrator.running()`` has them)."""
+        return list(self._active)
+
     @property
     def running(self) -> int:
         return len(self._active)

@@ -10,25 +10,31 @@ import {
   SparklesIcon,
 } from "lucide-react";
 import type { Route } from "next";
-import { useRouter } from "next/navigation";
-import { useRef, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 
+import { AnswerCard } from "@/components/ask/answer-card";
 import { itemVariants, listVariants } from "@/components/motion";
 import { Button } from "@/components/ui/button";
 import { NativeSelect, Textarea } from "@/components/ui/input";
 import { Kbd } from "@/components/ui/kbd";
-import { useCreateInvestigation, useServices } from "@/lib/queries";
+import type { AskAnswer } from "@/lib/api/schemas";
+import { SCENARIO_QUESTIONS, TRY_ASKING } from "@/lib/ask/examples";
+import { useAsk, useServices } from "@/lib/queries";
 
 /** The scenario questions (scenarios/S1..S5) double as suggestions. */
 const SUGGESTIONS = [
-  { q: "Payment API is returning HTTP 500 in production", hint: "S1 · DB pool" },
-  { q: "Orders are failing intermittently in production", hint: "S2 · OOM" },
-  { q: "Why are orders timing out in production?", hint: "S3 · slow dependency" },
-  { q: "Login and checkout requests are failing in production", hint: "S4 · bad deploy" },
-  { q: "Payments are slow in production", hint: "S5 · cache" },
+  ...SCENARIO_QUESTIONS.map((s) => ({ q: s.q, hint: s.hint })),
   { q: "Something is broken", hint: "asks to clarify" },
 ];
+
+interface Turn {
+  id: number;
+  question: string;
+  answer?: AskAnswer;
+  error?: string;
+}
 
 const RANGES = [
   { v: "15m", label: "Last 15 min" },
@@ -39,30 +45,59 @@ const RANGES = [
 ];
 
 export default function NewInvestigationPage() {
+  return (
+    <Suspense>
+      <AskPage />
+    </Suspense>
+  );
+}
+
+function AskPage() {
   const router = useRouter();
+  const params = useSearchParams();
   const services = useServices();
-  const create = useCreateInvestigation();
+  const ask = useAsk();
   const [question, setQuestion] = useState("");
   const [service, setService] = useState("");
   const [environment, setEnvironment] = useState("");
   const [since, setSince] = useState("");
+  const [turns, setTurns] = useState<Turn[]>([]);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const asked = useRef<string | null>(null);
 
   const submit = async (q = question) => {
     const text = q.trim();
-    if (text.length < 3 || create.isPending) return;
+    if (text.length < 3 || ask.isPending) return;
     try {
-      const res = await create.mutateAsync({
+      const res = await ask.mutateAsync({
         question: text,
         ...(service ? { service } : {}),
         ...(environment ? { environment } : {}),
         ...(since ? { since } : {}),
       });
-      router.push(`/investigations/${res.id}` as Route);
+      if (res.investigation_id) {
+        router.push(`/investigations/${res.investigation_id}` as Route);
+        return;
+      }
+      setQuestion("");
+      setTurns((t) => [{ id: Date.now(), question: text, answer: res.answer ?? undefined }, ...t]);
     } catch (err) {
-      toast.error("Could not start the investigation", { description: (err as Error).message });
+      const message = (err as Error).message;
+      setTurns((t) => [{ id: Date.now(), question: text, error: message }, ...t]);
+      toast.error("Could not answer", { description: message });
     }
   };
+
+  // ⌘K "Ask" hands the question over as ?q=… (asked once per question)
+  const fromPalette = params.get("q");
+  useEffect(() => {
+    if (fromPalette && asked.current !== fromPalette) {
+      asked.current = fromPalette;
+      setQuestion(fromPalette);
+      void submit(fromPalette);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run when the handed-over question changes
+  }, [fromPalette]);
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 pt-4 md:pt-10">
@@ -163,13 +198,61 @@ export default function NewInvestigationPage() {
           <Button
             type="submit"
             size="icon"
-            aria-label="Start investigation"
-            disabled={question.trim().length < 3 || create.isPending}
+            aria-label="Ask"
+            disabled={question.trim().length < 3 || ask.isPending}
           >
-            {create.isPending ? <LoaderCircleIcon className="animate-spin" /> : <ArrowUpIcon />}
+            {ask.isPending ? <LoaderCircleIcon className="animate-spin" /> : <ArrowUpIcon />}
           </Button>
         </div>
       </form>
+
+      <div className="-mt-5 flex flex-wrap items-center gap-2 text-xs" data-testid="try-asking">
+        <span className="text-muted-foreground">Try asking…</span>
+        {TRY_ASKING.map((q) => (
+          <button
+            key={q}
+            type="button"
+            onClick={() => {
+              setQuestion(q);
+              void submit(q);
+            }}
+            className="cursor-pointer rounded-full border bg-card px-2.5 py-1 transition-colors hover:border-primary/40 hover:bg-accent"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      {turns.length > 0 && (
+        <div className="flex flex-col gap-4" aria-live="polite" data-testid="conversation">
+          {turns.map((t) => (
+            <motion.div
+              key={t.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex flex-col gap-2"
+            >
+              <p className="self-end rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm text-primary-foreground">
+                {t.question}
+              </p>
+              {t.answer && (
+                <AnswerCard
+                  answer={t.answer}
+                  onAsk={(q) => {
+                    setQuestion(q);
+                    void submit(q);
+                  }}
+                />
+              )}
+              {t.error && (
+                <p role="alert" className="rounded-xl border border-danger/40 p-3 text-sm">
+                  {t.error}
+                </p>
+              )}
+            </motion.div>
+          ))}
+        </div>
+      )}
 
       <section aria-labelledby="suggestions">
         <h2 id="suggestions" className="mb-3 text-xs font-medium text-muted-foreground">

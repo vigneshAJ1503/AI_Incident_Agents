@@ -69,12 +69,19 @@ export function ModeBanner() {
 }
 
 const CAP_META: Record<
-  CapabilityState,
+  CapabilityState | "offline",
   { icon: typeof CircleCheckIcon; cls: string; label: string }
 > = {
   ok: { icon: CircleCheckIcon, cls: "text-ok", label: "up" },
   down: { icon: CircleXIcon, cls: "text-danger", label: "down" },
   disabled: { icon: CircleMinusIcon, cls: "text-muted-foreground", label: "disabled" },
+  // Replay mode (no LLM key): recorded fixtures stand in for the data sources, so a source that
+  // isn't running (`make demo` starts none) is expected there, not an outage.
+  offline: {
+    icon: CircleMinusIcon,
+    cls: "text-muted-foreground",
+    label: "not running (replays use recorded data)",
+  },
 };
 
 /** Dashboard strip: capabilities up/down, LLM, profile, version (GET /health). */
@@ -114,7 +121,7 @@ export function SystemStatusStrip() {
       <span className="hidden h-4 w-px bg-border sm:block" />
       <ul className="flex flex-wrap items-center gap-x-3 gap-y-1" aria-label="Capabilities">
         {Object.entries(data.capabilities).map(([cap, state]) => {
-          const m = CAP_META[state];
+          const m = CAP_META[state === "down" && !data.llm.configured ? "offline" : state];
           return (
             <li key={cap}>
               <Tooltip content={`${cap}: ${m.label}`}>

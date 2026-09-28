@@ -86,9 +86,18 @@ def shift_result(result: AgentResult, delta: timedelta) -> AgentResult:
     )
 
 
-def shift_investigation(inv: Investigation, delta: timedelta) -> Investigation:
-    """Move a whole investigation in time (demo data: replays re-dated to 'recently')."""
-    if not delta:
+def shift_investigation(
+    inv: Investigation, delta: timedelta, *, run_delta: timedelta | None = None
+) -> Investigation:
+    """Move a whole investigation in time (demo data: replays re-dated to 'recently').
+
+    ``delta`` moves the incident's *data* (time range, evidence, timeline, texts);
+    ``run_delta`` (default ``delta``) moves the *run* itself: when it was created and ran
+    (incident/investigation ``created_at``/``completed_at``, steps, tool calls). A replay
+    reads fixtures recorded long ago while it runs "now", so the two differ.
+    """
+    run = delta if run_delta is None else run_delta
+    if not delta and not run:
         return inv
     context = inv.context
     if context is not None:
@@ -99,8 +108,8 @@ def shift_investigation(inv: Investigation, delta: timedelta) -> Investigation:
     steps = [
         s.model_copy(
             update={
-                "started_at": s.started_at + delta if s.started_at else None,
-                "finished_at": s.finished_at + delta if s.finished_at else None,
+                "started_at": s.started_at + run if s.started_at else None,
+                "finished_at": s.finished_at + run if s.finished_at else None,
             }
         )
         for s in inv.steps
@@ -109,7 +118,7 @@ def shift_investigation(inv: Investigation, delta: timedelta) -> Investigation:
         shift_result(r, delta).model_copy(
             update={
                 "tool_calls": [
-                    c.model_copy(update={"started_at": c.started_at + delta}) for c in r.tool_calls
+                    c.model_copy(update={"started_at": c.started_at + run}) for c in r.tool_calls
                 ]
             }
         )
@@ -136,7 +145,7 @@ def shift_investigation(inv: Investigation, delta: timedelta) -> Investigation:
                 "markdown": shift_text(report.markdown, delta),
             }
         )
-    incident = inv.incident.model_copy(update={"created_at": inv.incident.created_at + delta})
+    incident = inv.incident.model_copy(update={"created_at": inv.incident.created_at + run})
     return inv.model_copy(
         update={
             "incident": incident,
@@ -146,8 +155,8 @@ def shift_investigation(inv: Investigation, delta: timedelta) -> Investigation:
             "timeline": timeline,
             "hypotheses": hypotheses,
             "report": report,
-            "created_at": inv.created_at + delta,
-            "completed_at": inv.completed_at + delta if inv.completed_at else None,
+            "created_at": inv.created_at + run,
+            "completed_at": inv.completed_at + run if inv.completed_at else None,
         }
     )
 
@@ -159,6 +168,8 @@ class ReplaySource:
     scenario: Scenario
     fixtures: Path  # <fixtures>/<agent>/<scenario>/<capability>.json
     anchor_end: datetime = REPLAY_NOW
+    #: Seconds each recorded tool call waits (Web UI replays; 0 = instant).
+    tool_delay_s: float = 0.0
 
     @property
     def anchor_incident_start(self) -> datetime | None:
@@ -201,6 +212,7 @@ class ReplaySource:
             llm=FakeLLMProvider(responder=echo_responder()),
             replay_dir=self.fixture_dir(agent, service),
             replay_lenient=True,
+            replay_delay_s=self.tool_delay_s,
             events=events,
         )
 

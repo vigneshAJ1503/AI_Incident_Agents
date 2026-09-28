@@ -39,5 +39,7 @@ committed files are up to date. The numbers come from the recorded replay fixtur
 (`backend/tests/fixtures/<agent>/S*`) and `scenarios/S*/`: e.g. S1's 44 `Database connection
 timeout` errors, `DB_POOL_SIZE: "20" → "2"` in commit `739d116`, 5xx 0.5% → 24.6%, OPS-12.
 
-**Later:** `aiops demo export` (PR-034) can overwrite these files from real replay runs. Keep the
-layout above; anything else the UI needs is derived at runtime.
+**Same story as the backend (PR-039):** `make demo` serves the real API over `aiops demo seed`
+(real replays), not these files. `backend/tests/unit/test_demo_datasets.py` checks that every
+`scenario-S*.json` here passes the replays' ground truth (`scenarios/*/expected.yaml`) and names
+only release versions found in that scenario's fixtures. See `docs/setup/demo.md`.

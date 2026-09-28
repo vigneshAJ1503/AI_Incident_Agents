@@ -150,6 +150,8 @@ jobs:
         run: npx playwright test
         env:
           CI: "1"
+      - name: Docker build (web image, make demo)
+        run: docker build -t aiops/web:ci .
       - name: Upload Playwright report
         if: failure()
         uses: actions/upload-artifact@v4

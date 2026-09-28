@@ -85,10 +85,17 @@ export function ApprovalPreview({ approval }: { approval: Approval }) {
   );
 }
 
+/** The created ticket: `{key, url}` (demo data) or the tickets MCP's `{issue: {key, browse_url}}`. */
 function resultLink(a: Approval): { key: string; url: string } | null {
   const r = a.result;
   if (r && typeof r.key === "string" && typeof r.url === "string")
     return { key: r.key, url: r.url };
+  const issue = r?.issue;
+  if (issue && typeof issue === "object" && !Array.isArray(issue)) {
+    const { key, browse_url: browse, url } = issue as Record<string, unknown>;
+    const link = typeof browse === "string" ? browse : url;
+    if (typeof key === "string" && typeof link === "string") return { key, url: link };
+  }
   return null;
 }
 

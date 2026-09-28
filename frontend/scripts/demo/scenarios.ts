@@ -913,7 +913,7 @@ function s1(): ScenarioSpec {
       {
         id: "hy-s1-1",
         statement:
-          "Database connection pool misconfiguration introduced in payment-service v1.8.2 (DB_POOL_SIZE 20 → 2) exhausts the pool; requests time out waiting for a connection and return HTTP 500.",
+          "Database connection pool misconfiguration introduced in payment-service v1.8.2 (DB_POOL_SIZE 20 → 2) exhausts the pool; requests hit a connection timeout and return HTTP 500.",
         confidence: 0.91,
         supporting_evidence_ids: [
           "ev-s1-code-1",
@@ -934,13 +934,6 @@ function s1(): ScenarioSpec {
         confidence: 0.12,
         supporting_evidence_ids: ["ev-s1-logs-1"],
         contradicting_evidence_ids: ["ev-s1-logs-3", "ev-s1-metrics-3"],
-      },
-      {
-        id: "hy-s1-3",
-        statement: "A traffic spike saturates payment-service.",
-        confidence: 0.05,
-        supporting_evidence_ids: [],
-        contradicting_evidence_ids: ["ev-s1-metrics-4", "ev-s1-k8s-4"],
       },
     ],
     recommendations: [
@@ -1372,7 +1365,7 @@ function s2(): ScenarioSpec {
               end: we,
               query: "FROM order-prod-* | STATS count BY pattern",
               samples: [
-                "2026-09-25T14:05:40.118Z ERROR [order-service v2.3.1] java.lang.OutOfMemoryError: Java heap space at OrderCache.put(OrderCache.java:42)",
+                "2026-09-25T14:05:40.118Z ERROR [order-service v2.3.0] java.lang.OutOfMemoryError: Java heap space at OrderCache.put(OrderCache.java:42)",
               ],
             },
           ),
@@ -1392,7 +1385,7 @@ function s2(): ScenarioSpec {
               end: we,
               query: 'FROM order-prod-* | WHERE level == "WARN"',
               samples: [
-                "2026-09-25T14:03:10.402Z WARN [order-service v2.3.1] GC overhead limit exceeded (heap used 97%)",
+                "2026-09-25T14:03:10.402Z WARN [order-service v2.3.0] GC overhead limit exceeded (heap used 97%)",
               ],
             },
           ),
@@ -1623,7 +1616,7 @@ function s2(): ScenarioSpec {
         ],
         status: "success",
         summary:
-          "order-service v2.3.1 added an in-process order cache without a size bound (ORDER_CACHE_MAX_ENTRIES 10000 → 0 = unbounded).",
+          "order-service v2.3.0 added an in-process order cache without a size bound (ORDER_CACHE_MAX_ENTRIES 10000 → 0 = unbounded).",
         signals: ["risky_config_change", "recent_deployment_change"],
         evidence: [
           ev(
@@ -1654,7 +1647,7 @@ function s2(): ScenarioSpec {
           {
             type: "risky_config_change",
             kind: "FACT",
-            description: "The order cache became unbounded in v2.3.1 (released 13:50Z).",
+            description: "The order cache became unbounded in v2.3.0 (released 13:50Z).",
             evidence_ids: ["ev-s2-code-1"],
             confidence: 0.9,
           },
@@ -1745,7 +1738,7 @@ function s2(): ScenarioSpec {
       {
         id: "hy-s2-1",
         statement:
-          "Memory leak in order-service v2.3.1 (unbounded in-process order cache) causes OutOfMemoryError and repeated OOMKilled restarts; requests fail with 503 during restarts.",
+          "Memory leak in order-service v2.3.0 (unbounded in-process order cache) causes OutOfMemoryError and repeated OOMKilled restarts; requests fail with 503 during restarts.",
         confidence: 0.88,
         supporting_evidence_ids: [
           "ev-s2-metrics-1",
@@ -1768,7 +1761,7 @@ function s2(): ScenarioSpec {
     recommendations: [
       {
         id: "rec-s2-1",
-        action: "Roll back order-service to v2.3.0",
+        action: "Roll back order-service to v2.2.1",
         rationale: "Removes the unbounded cache.",
         risk: "medium",
         requires_approval: true,
@@ -1786,7 +1779,7 @@ function s2(): ScenarioSpec {
     timeline: [
       {
         timestamp: "2026-09-25T13:50:00Z",
-        description: "order-service v2.3.1 rolled out (unbounded order cache)",
+        description: "order-service v2.3.0 rolled out (unbounded order cache)",
         source: "code",
         evidence_id: "ev-s2-code-1",
       },
@@ -1823,14 +1816,14 @@ function s2(): ScenarioSpec {
     ],
     report: {
       summary:
-        "order-service is restarting every ~4 minutes because it runs out of memory. Release v2.3.1 made the in-process order cache unbounded, so memory grows until the container is OOMKilled; requests fail with 503 during each restart.",
+        "order-service is restarting every ~4 minutes because it runs out of memory. Release v2.3.0 made the in-process order cache unbounded, so memory grows until the container is OOMKilled; requests fail with 503 during each restart.",
       root_cause_hypothesis_id: "hy-s2-1",
       confidence: 0.88,
       impact: "Intermittent 503 on order creation (≈8% of requests during restarts) since 14:02Z.",
       affected_services: ["order-service"],
       severity: "high",
       next_steps: [
-        "Roll back order-service to v2.3.0.",
+        "Roll back order-service to v2.2.1.",
         "Bound the order cache (ORDER_CACHE_MAX_ENTRIES=10000).",
         "Close OPS-21 with this RCA.",
       ],
@@ -3113,13 +3106,6 @@ function s5(): ScenarioSpec {
           "ev-s5-metrics-2",
         ],
         contradicting_evidence_ids: [],
-      },
-      {
-        id: "hy-s5-2",
-        statement: "A code change slowed payment-service.",
-        confidence: 0.04,
-        supporting_evidence_ids: [],
-        contradicting_evidence_ids: ["ev-s5-metrics-2"],
       },
     ],
     recommendations: [

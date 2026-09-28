@@ -1,5 +1,6 @@
-# The aiops API (PR-035) as a container. Opt-in: NOT started by `make infra-up`.
-#   make api-up     (needs make infra-up; the MCP servers for live mode: make mcp-up)
+# The aiops API (PR-035) + the Web UI (PR-039) as containers. Opt-in: NOT started by `make infra-up`.
+#   make demo       (Postgres + seeded demo data + api + web + mock-tickets-mcp: docs/setup/demo.md)
+#   make api-up     (api + web; needs make infra-up; the MCP servers for live mode: make mcp-up)
 #   make api-down
 # Joins the network created by docker-compose.infra.yml; port bound to 127.0.0.1 only.
 # Inside the network, capabilities are reached by container name, not localhost.
@@ -35,6 +36,9 @@ services:
       - LLM_MODEL_AGENT=${LLM_MODEL_AGENT:-}
       - LLM_MODEL_RCA=${LLM_MODEL_RCA:-}
       - AIOPS_API_KEY=${AIOPS_API_KEY:-}
+      # Replays started from the Web UI: seconds per recorded tool call, so the live view
+      # unfolds at a watchable pace (0 = instant). make demo: docs/setup/demo.md
+      - AIOPS_REPLAY_TOOL_DELAY_S=${AIOPS_REPLAY_TOOL_DELAY_S:-0.5}
       - AIOPS_API_CORS_ORIGINS=${AIOPS_API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"
@@ -44,6 +48,35 @@ services:
     read_only: true
     tmpfs:
       - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    restart: unless-stopped
+
+  # The Web UI (PR-039). The browser only talks to it (http://localhost:3100); its /api/* route
+  # proxies REST + SSE to the api service by container name (frontend/src/app/api/[...path]).
+  web:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile
+    image: aiops/web:0.1.0
+    container_name: aiops-web
+    environment:
+      # make demo-live runs the API on the host (fault injection needs kubectl):
+      # AIOPS_API_INTERNAL_URL=http://host.docker.internal:8000
+      - AIOPS_API_INTERNAL_URL=${AIOPS_API_INTERNAL_URL:-http://aiops-api:8000}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # Linux; Docker Desktop provides it already
+    ports:
+      - "127.0.0.1:${WEB_PORT:-3100}:3100"
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 192m   # measured in docs/setup/demo.md
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+      - /app/.next/cache:size=32m,uid=10001,gid=10001
     security_opt:
       - no-new-privileges:true
     cap_drop: [ALL]

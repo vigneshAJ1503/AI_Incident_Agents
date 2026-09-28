@@ -12,6 +12,7 @@ from __future__ import annotations
 import asyncio
 import contextlib
 import logging
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -52,8 +53,25 @@ TERMINAL = {
 }
 
 
+#: Seconds each recorded tool call of a replay waits, so the Web UI's live view unfolds at a
+#: watchable pace (a replay otherwise finishes in milliseconds). 0 = instant (default).
+REPLAY_DELAY_ENV = "AIOPS_REPLAY_TOOL_DELAY_S"
+
+
+def replay_tool_delay_s() -> float:
+    raw = os.environ.get(REPLAY_DELAY_ENV, "").strip()
+    try:
+        value = float(raw) if raw else 0.0
+    except ValueError:
+        log.warning("ignoring %s=%r: not a number of seconds", REPLAY_DELAY_ENV, raw)
+        return 0.0
+    return min(max(value, 0.0), 10.0)
+
+
 def default_orchestrator(settings: Settings, bus: EventBus, scenario: str | None) -> Orchestrator:
     replay = load_replay(settings, scenario) if scenario else None
+    if replay is not None:
+        replay.tool_delay_s = replay_tool_delay_s()
     return Orchestrator(settings, replay=replay, bus=bus)
 
 

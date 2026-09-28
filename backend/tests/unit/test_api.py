@@ -512,6 +512,9 @@ async def test_ticket_draft_approve_and_deny(ctx: ApiContext) -> None:
         inv_id, _ = await run_replay(client, question="x", scenario="S1")
         await wait_until_idle(ctx)
         drafted = await client.post(f"/api/investigations/{inv_id}/tickets/draft")
+        assert drafted.status_code == 201, drafted.text
+        assert "pool" in drafted.json()["summary"].lower()
+        assert "computed for you" not in drafted.json()["summary"]
         second = await client.post(
             f"/api/investigations/{inv_id}/tickets/draft", json={"requested_by": "bob"}
         )

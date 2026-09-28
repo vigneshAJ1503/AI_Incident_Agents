@@ -22,6 +22,7 @@ class MCPRegistry:
         overrides: Mapping[str, ServerTarget] | None = None,
         record_dir: Path | None = None,
         replay_dir: Path | None = None,
+        replay_delay_s: float = 0.0,
         replay_lenient: bool = False,
     ) -> None:
         """
@@ -35,6 +36,7 @@ class MCPRegistry:
         self._overrides = dict(overrides or {})
         self._record_dir = record_dir
         self._replay_dir = replay_dir
+        self._replay_delay_s = replay_delay_s
         self._replay_lenient = replay_lenient
 
     @classmethod
@@ -59,6 +61,7 @@ class MCPRegistry:
                 capability,
                 self._replay_dir / f"{capability}.json",
                 lenient=self._replay_lenient,
+                delay_s=self._replay_delay_s,
             )
         client = (
             MCPClient(capability, self._overrides[capability], timeout_s=config.mcp.timeout_s)

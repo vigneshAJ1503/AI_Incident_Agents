@@ -6,6 +6,7 @@ Replay matches calls by tool name + canonical JSON of the arguments.
 
 from __future__ import annotations
 
+import asyncio
 import json
 import re
 from pathlib import Path
@@ -55,10 +56,14 @@ class RecordingMCPClient(MCPClient):
 class ReplayMCPClient(MCPClient):
     """Serves tools/calls from a fixture file; unknown calls are an error (no silent live calls)."""
 
-    def __init__(self, name: str, path: Path, *, lenient: bool = False) -> None:
+    def __init__(
+        self, name: str, path: Path, *, lenient: bool = False, delay_s: float = 0.0
+    ) -> None:
         """``lenient``: an unrecorded call is served by the most similar recorded call of
         the same tool (word overlap of the arguments). Only for orchestrated replays,
-        where round-2 hints legitimately differ from the standalone recording."""
+        where round-2 hints legitimately differ from the standalone recording.
+        ``delay_s``: wait before answering, so a replay started from the Web UI unfolds at a
+        watchable pace (``AIOPS_REPLAY_TOOL_DELAY_S``); 0 for tests, evals and demo seeds."""
         super().__init__(name, "replay://")
         if not path.is_file():
             raise MCPClientError(f"Fixture not found: {path}")
@@ -73,6 +78,7 @@ class ReplayMCPClient(MCPClient):
             key = _key(c["tool"], c["arguments"])
             self._by_tool.setdefault(c["tool"], []).append((_words(c["arguments"]), key))
         self.lenient = lenient
+        self.delay_s = max(0.0, delay_s)
         self.approximate_calls = 0
         self.path = path
 
@@ -88,6 +94,8 @@ class ReplayMCPClient(MCPClient):
     async def call_tool(
         self, name: str, arguments: dict[str, Any], timeout_s: float | None = None
     ) -> MCPToolResult:
+        if self.delay_s:
+            await asyncio.sleep(self.delay_s)
         try:
             return self._responses[_key(name, arguments)]
         except KeyError:

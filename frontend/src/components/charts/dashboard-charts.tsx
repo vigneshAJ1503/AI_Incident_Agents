@@ -4,6 +4,7 @@ import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   Legend,
   ResponsiveContainer,
   Tooltip,
@@ -84,7 +85,7 @@ export function ByServiceChart({ data }: { data: DashboardSummary["by_service"] 
       <BarChart
         data={data}
         layout="vertical"
-        margin={{ top: 4, right: 16, bottom: 0, left: 8 }}
+        margin={{ top: 4, right: 28, bottom: 0, left: 8 }}
         accessibilityLayer
       >
         <CartesianGrid horizontal={false} stroke="var(--border)" />
@@ -102,7 +103,8 @@ export function ByServiceChart({ data }: { data: DashboardSummary["by_service"] 
           cursor={{ fill: "var(--muted)" }}
           formatter={(v, _n, item) => [
             `${String(v)} investigations`,
-            (item.payload as { top_root_cause?: string | null }).top_root_cause ?? "no root cause",
+            (item.payload as { top_root_cause?: string | null }).top_root_cause ??
+              (Number(v) === 0 ? "none in this window" : "no root cause"),
           ]}
         />
         <Bar
@@ -111,7 +113,16 @@ export function ByServiceChart({ data }: { data: DashboardSummary["by_service"] 
           fill="var(--chart-1)"
           radius={[0, 4, 4, 0]}
           barSize={18}
-        />
+        >
+          {/* A count at the end of every bar, so a service with 0 reads "0", not "missing". */}
+          <LabelList
+            dataKey="investigations"
+            position="right"
+            className="tabular-nums"
+            fill="var(--muted-foreground)"
+            fontSize={11}
+          />
+        </Bar>
       </BarChart>
     </ResponsiveContainer>
   );

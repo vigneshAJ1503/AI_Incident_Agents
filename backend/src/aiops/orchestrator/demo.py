@@ -72,7 +72,9 @@ async def replay_demo(settings: Settings, now: datetime) -> DemoData:
         target = now - timedelta(hours=1 + 3 * (len(data.scenarios) - 1 - index))
         data_delta = target - (inv.context.time_range.end if inv.context else inv.created_at)
         run_delta = target - inv.created_at
-        inv = shift_investigation(inv, data_delta)
+        # The data (recorded fixtures) and the run (wall clock) move separately, so the
+        # run's steps and tool calls stay inside [created_at, completed_at] <= now.
+        inv = shift_investigation(inv, data_delta, run_delta=run_delta)
         inv = inv.model_copy(
             update={
                 "mode": "demo",
@@ -90,8 +92,15 @@ def _clone(
 ) -> Investigation:
     delta = created - template.created_at
     inv = shift_investigation(template, delta)
+    # Agents take a live-like share of the live-like duration (replays run in milliseconds,
+    # which made the Agents page and the dashboard show "p50 2 ms").
+    scale = duration_ms / template.duration_ms if template.duration_ms else 1.0
+    results = [
+        r.model_copy(update={"duration_ms": round(r.duration_ms * scale, 1)}) for r in inv.results
+    ]
     return inv.model_copy(
         update={
+            "results": results,
             "id": new_id("inv"),
             "incident": inv.incident.model_copy(update={"id": f"INC-{rng.randint(1000, 1999)}"}),
             "created_at": created,

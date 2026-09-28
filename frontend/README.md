@@ -15,6 +15,14 @@ make ui-screenshots        # docs/ui/screenshots/*.png (dark + light)
 
 Port 3100 because Grafana owns 3000 locally.
 
+**Container (PR-039):** `frontend/Dockerfile` (Next.js `output: "standalone"` via
+`NEXT_OUTPUT=standalone`, `node:24.19.0-alpine3.23`, UID 10001) is the `web` service of
+`deploy/compose/docker-compose.app.yml`; `make demo` starts it with the API
+([docs/setup/demo.md](../docs/setup/demo.md)). It is built with `NEXT_PUBLIC_API_URL=/api`: the
+browser only talks to `:3100`, and `src/app/api/[...path]/route.ts` proxies REST + SSE to
+`AIOPS_API_INTERNAL_URL` (runtime). `make demo-e2e` runs `playwright.real.config.ts`
+(`e2e/real/`) against it.
+
 ## Layout
 
 | Path                         | What                                                                                       |

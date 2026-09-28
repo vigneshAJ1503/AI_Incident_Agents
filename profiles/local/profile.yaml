@@ -227,6 +227,14 @@ capabilities:
       # Commit deep link, e.g. "https://github.com/acme/{repo}/commit/{sha}". Unset locally.
       ui_link_template: ${CODE_UI_LINK_TEMPLATE:-}
 
+# ------------------------------------------------------------------------------ storage
+# The evidence store (PR-032): investigations + event log in Postgres. All optional.
+storage:
+  # database_url: ${AIOPS_DATABASE_URL}   # default: $AIOPS_DATABASE_URL, else POSTGRES_*
+  db_schema: investigations
+  approvals: file              # file (guardrails.approvals_path) | postgres
+  audit: jsonl                 # jsonl (guardrails.audit_log_path) | postgres (JSONL fallback)
+
 # ------------------------------------------------------------------------------ orchestrator
 # How ONE investigation is planned and run (PR-030/031, ADR-0014). All optional.
 orchestrator:

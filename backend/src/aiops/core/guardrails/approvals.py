@@ -287,9 +287,21 @@ class ApprovalService:
     @classmethod
     def from_settings(cls, settings: Settings, *, clock: Clock = utcnow) -> ApprovalService:
         guardrails = settings.guardrails
+        store: ApprovalStore
+        audit: ApprovalAuditSink
+        if settings.storage.approvals == "postgres":  # PR-032: the evidence store
+            from aiops.store.db import database_url
+            from aiops.store.sync_stores import SqlApprovalAuditSink, SqlApprovalStore
+
+            url, schema = database_url(settings), settings.storage.db_schema
+            store = SqlApprovalStore(url, schema)
+            audit = SqlApprovalAuditSink(url, schema, migrate=False)
+        else:
+            store = JsonFileApprovalStore(settings.repo_path(guardrails.approvals_path))
+            audit = JsonlApprovalAuditSink(settings.repo_path(guardrails.approvals_audit_path))
         return cls(
-            JsonFileApprovalStore(settings.repo_path(guardrails.approvals_path)),
-            JsonlApprovalAuditSink(settings.repo_path(guardrails.approvals_audit_path)),
+            store,
+            audit,
             ApprovalPolicy(settings),
             ttl=timedelta(hours=guardrails.approval_ttl_hours),
             clock=clock,

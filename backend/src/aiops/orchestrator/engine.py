@@ -155,7 +155,8 @@ class Orchestrator:
     async def investigate(
         self, request: InvestigationRequest, *, investigation_id: str | None = None
     ) -> Investigation:
-        incident = Incident(title=request.question.strip()[:200] or "Incident")
+        question = self._plan_request(request).question.strip()
+        incident = Incident(title=question[:200] or "Incident")
         investigation = Investigation(
             incident=incident, status=InvestigationStatus.RUNNING, mode=request.mode
         )
@@ -163,7 +164,7 @@ class Orchestrator:
             investigation.id = investigation_id
         run = InvestigationRun(investigation)
         self._runs[run.id] = run
-        self._publish(run, "investigation_started", question=request.question)
+        self._publish(run, "investigation_started", question=question)
         try:
             await self._investigate(run, request)
         except asyncio.CancelledError:

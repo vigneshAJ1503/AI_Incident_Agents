@@ -20,6 +20,8 @@ from aiops.providers.alerts.alertmanager import AlertmanagerAlerts
 from aiops.providers.code.git import GitCode
 from aiops.providers.logs import LogScope, LogsProvider, LogWindow
 from aiops.providers.logs.elasticsearch import ElasticsearchLogs
+from aiops.providers.metrics import SLIS, MetricScope, MetricsProvider, MetricWindow
+from aiops.providers.metrics.prometheus import PrometheusMetrics, parse_step, regex_alternation
 from aiops.providers.registry import ProviderRegistry
 from aiops.providers.tickets.jira import JiraTickets, MockTickets
 
@@ -147,7 +149,7 @@ def test_elasticsearch_normalizes_columns_and_links() -> None:
 
 
 def test_every_capability_has_an_adapter() -> None:
-    for capability in ("logs", "tickets", "alerts", "code", "k8s", "knowledge"):
+    for capability in ("logs", "metrics", "tickets", "alerts", "code", "k8s", "knowledge"):
         assert PROVIDER_REGISTRY.names(capability), capability
 
 
@@ -193,3 +195,106 @@ def test_git_requests() -> None:
     }
     assert git.diff_of("shop", "abc", ("payment/",)).tool == "get_diff"
     assert git.commits(None) == [] and git.diff_files({"files": [{"path": "a"}]}) == [{"path": "a"}]
+
+
+# -- metrics/prometheus contract -----------------------------------------------------------
+
+M_WINDOW = MetricWindow(START, START + timedelta(minutes=30))
+
+
+def m_scope(workloads: list[str] | None = None) -> MetricScope:
+    return MetricScope(
+        services=["payment-service", "user.svc"],
+        workloads=["payment-service"] if workloads is None else workloads,
+        filters={"namespace": "prod"},
+        service="payment-service",
+        namespace="prod",
+    )
+
+
+def test_metrics_matrix_uses_the_registry() -> None:
+    assert PROVIDER_REGISTRY.find("metrics", "prometheus") is PrometheusMetrics
+    assert PROVIDERS["metrics"]["prometheus"].status == "implemented"
+    assert PROVIDERS["metrics"]["datadog"].status == "planned"
+    assert PROVIDER_REGISTRY.find("metrics", "datadog") is None  # _skeleton.py is inert
+    settings = load_settings("local", CONFIG)
+    assert not [i for i in check_settings(settings).errors if "capability metrics" in i.message]
+    prom = PROVIDER_REGISTRY.for_settings(settings, "metrics", MetricsProvider)
+    assert isinstance(prom, PrometheusMetrics) and prom.label("k8s_app") == "label_app"
+
+
+def test_prometheus_golden_queries_from_settings() -> None:
+    prom = PrometheusMetrics(
+        {
+            "labels": {"service": "app"},
+            "metrics": {"requests": "requests_count"},
+            "rate_window": "5m",
+        }
+    )
+    requests = {sli.key: prom.series_request(sli, m_scope(), M_WINDOW) for sli in SLIS}
+    assert list(requests) == [
+        "rps",
+        "error_rate",
+        "latency_p95",
+        "latency_p99",
+        "db_pool_utilization",
+        "db_pool_pending",
+        "cache_up",
+        "memory_rss",
+        "restarts",
+        "oom_killed",
+    ]
+    rps = requests["rps"]
+    assert rps is not None
+    assert rps.request == ToolRequest(
+        "query_range",
+        {
+            "query": 'sum by (app) (rate(requests_count{app=~"payment-service|user\\\\.svc",namespace="prod"}[5m]))',
+            "start": "2026-09-25T10:00:00Z",
+            "end": "2026-09-25T10:30:00Z",
+            "step": "30s",
+        },
+    )
+    assert rps.query == rps.request.arguments["query"] and rps.group == "app"
+    errors = requests["error_rate"]
+    assert errors is not None and 'status=~"5.."' in errors.query and " * 0) / " in errors.query
+    restarts, oom = requests["restarts"], requests["oom_killed"]
+    assert restarts is not None and restarts.group == "label_app"
+    assert oom is not None and 'reason="OOMKilled"' in oom.query
+    assert regex_alternation(["a+b"]) == '"a\\\\+b"'
+    # no workloads (no k8s identifiers): pod-level SLIs are skipped, not failed
+    no_k8s = [s for s in SLIS if prom.series_request(s, m_scope([]), M_WINDOW) is not None]
+    assert len(no_k8s) == 8
+
+
+def test_prometheus_step_series_and_links() -> None:
+    assert parse_step("1m") == 60 and parse_step("45") == 45 and parse_step("x") == 30
+    day = MetricWindow(START, START + timedelta(days=1))
+    assert PrometheusMetrics().step_seconds(day) == 87  # capped at 1000 points
+    prom = PrometheusMetrics(
+        {
+            "ui_link_template": "http://g/d/x?var-service={service}&viewPanel={panel}&from={from_ms}",
+            "explore_link_template": "http://p/query?g0.expr={query}&g0.range_input={range}",
+            "panels": {"error_rate": 6},
+        }
+    )
+    sli = {s.key: s for s in SLIS}
+    errors = prom.series_request(sli["error_rate"], m_scope(), M_WINDOW)
+    restarts = prom.series_request(sli["restarts"], m_scope(), M_WINDOW)
+    assert errors is not None and restarts is not None
+    assert prom.ui_link(m_scope(), errors, M_WINDOW) == (
+        f"http://g/d/x?var-service=payment-service&viewPanel=6&from={int(START.timestamp() * 1000)}"
+    )
+    # no panel for the SLI: the exact query instead
+    link = prom.ui_link(m_scope(), restarts, M_WINDOW)
+    assert link == prom.query_link(restarts, M_WINDOW)
+    assert link is not None and link.startswith("http://p/query?g0.expr=max%20by")
+    assert link.endswith("g0.range_input=30m")
+    data = {
+        "series": [
+            {"labels": {"label_app": "a"}, "values": [[1, 0.5], [2, None], [3, "x"]]},
+            {"labels": {"other": "b"}, "values": [[1, 1.0]]},
+        ]
+    }
+    assert prom.series(restarts, data) == {"a": [(1.0, 0.5), (2.0, None), (3.0, None)]}
+    assert prom.series(restarts, None) == {}

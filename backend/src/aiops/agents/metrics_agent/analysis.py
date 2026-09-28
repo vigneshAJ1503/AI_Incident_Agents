@@ -17,6 +17,7 @@ from datetime import UTC, datetime
 from typing import Any, Literal
 
 from aiops.core.models import TimeRange
+from aiops.providers.metrics import Values
 
 #: Signal vocabulary (must match config/prompts/metrics/v*.md). All are data-derived.
 SIGNALS = (
@@ -36,7 +37,6 @@ SYMPTOM_NOTE = (
     "correlate them, and keep causal claims as hypotheses."
 )
 
-Values = list[tuple[float, float | None]]
 Direction = Literal["up", "down"]
 
 #: A run must have at least this many anomalous points among the next SUSTAIN_OF points
@@ -112,27 +112,6 @@ def fmt(value: float | None, unit: str) -> str:
     if unit == "bool":
         return "up" if value >= 0.5 else "DOWN"
     return f"{value:g}"
-
-
-def parse_series(data: Any, group_label: str) -> dict[str, Values]:
-    """prometheus-mcp query_range result -> {label value: [(ts, value)]}."""
-    out: dict[str, Values] = {}
-    series = data.get("series", []) if isinstance(data, dict) else []
-    for s in series:
-        if not isinstance(s, dict):
-            continue
-        key = (s.get("labels") or {}).get(group_label)
-        if not key:
-            continue
-        values: Values = []
-        for point in s.get("values") or []:
-            if not isinstance(point, list | tuple) or len(point) != 2:
-                continue
-            ts, raw = point
-            value = float(raw) if isinstance(raw, int | float) and math.isfinite(raw) else None
-            values.append((float(ts), value))
-        out[str(key)] = values
-    return out
 
 
 def downsample(values: Values, points: int = CHART_POINTS) -> list[list[float | None]]:

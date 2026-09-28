@@ -29,6 +29,7 @@ Results are compact and deterministic: series sorted by labels, values rounded t
 |----------|---------|
 | `PROM_URL` | `http://localhost:9090` |
 | `PROM_BEARER_TOKEN` or `PROM_USERNAME`/`PROM_PASSWORD` | (none, for local) |
+| `PROM_ORG_ID` (sent as `X-Scope-OrgID`: multi-tenant Mimir/Cortex) | (none) |
 | `QUERY_TIMEOUT_S` | `20` |
 | `MAX_RANGE_HOURS` | `24` |
 | `MAX_POINTS` | `1100` |

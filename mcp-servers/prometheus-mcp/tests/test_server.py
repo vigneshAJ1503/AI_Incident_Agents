@@ -6,7 +6,7 @@ import httpx2
 from mcp import Client
 
 from prometheus_mcp.config import ServerSettings
-from prometheus_mcp.prom import PrometheusClient
+from prometheus_mcp.prom import PrometheusClient, request_headers
 from prometheus_mcp.server import create_server, number
 
 SETTINGS = ServerSettings(max_range_hours=6, max_points=200, max_series=2, max_results=3)
@@ -222,3 +222,11 @@ async def test_metadata_and_targets() -> None:
 def test_number() -> None:
     assert number("1.23456789") == 1.23457
     assert number("NaN") is None and number("-Inf") is None and number("x") is None
+
+
+def test_request_headers_for_compatible_backends() -> None:
+    assert request_headers(ServerSettings()) == {"Accept": "application/json"}
+    token = "t-" + "x" * 8  # built at runtime: no secret-looking literal
+    headers = request_headers(ServerSettings(prom_bearer_token=token, prom_org_id="tenant-a"))
+    assert headers["Authorization"] == f"Bearer {token}"
+    assert headers["X-Scope-OrgID"] == "tenant-a"

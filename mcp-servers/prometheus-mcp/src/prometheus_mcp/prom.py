@@ -15,13 +15,21 @@ class PrometheusError(Exception):
     pass
 
 
+def request_headers(settings: ServerSettings) -> dict[str, str]:
+    """Headers for every Prometheus API call (bearer auth, multi-tenant org id)."""
+    headers = {"Accept": "application/json"}
+    if settings.prom_bearer_token:
+        headers["Authorization"] = f"Bearer {settings.prom_bearer_token}"
+    if settings.prom_org_id:
+        headers["X-Scope-OrgID"] = settings.prom_org_id
+    return headers
+
+
 class PrometheusClient:
     def __init__(self, settings: ServerSettings, http: httpx2.AsyncClient | None = None) -> None:
-        headers = {"Accept": "application/json"}
+        headers = request_headers(settings)
         auth: tuple[str, str] | None = None
-        if settings.prom_bearer_token:
-            headers["Authorization"] = f"Bearer {settings.prom_bearer_token}"
-        elif settings.prom_username and settings.prom_password:
+        if not settings.prom_bearer_token and settings.prom_username and settings.prom_password:
             auth = (settings.prom_username, settings.prom_password)
         # A little longer than the server-side query timeout, so Prometheus answers first.
         self._http = http or httpx2.AsyncClient(

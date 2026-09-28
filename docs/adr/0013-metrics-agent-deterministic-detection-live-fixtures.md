@@ -11,7 +11,8 @@ label names, another Prometheus-compatible backend). Unlike logs and alerts, rea
 seeded at a fixed time: they only exist while a real fault runs in Minikube.
 
 ## Decision
-- **PromQL library built from `capabilities.metrics.settings`** (`metrics_agent/promql.py`):
+- **PromQL library built from `capabilities.metrics.settings`** (`metrics_agent/promql.py`;
+  since PR-P2c the `metrics/prometheus` provider adapter, ADR-0012):
   metric and label names, error-status regex, rate window, step, baseline length and link
   templates are settings with defaults; label values come from the service catalog. Each query
   groups by the service label and covers the service **and its catalog dependencies** in one

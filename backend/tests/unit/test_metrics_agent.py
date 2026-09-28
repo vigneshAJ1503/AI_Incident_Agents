@@ -126,6 +126,20 @@ def test_s1_detects_the_pool_exhaustion_with_its_start_time() -> None:
     assert "payment-service error rate up" in ev.summary
 
 
+def test_prompt_is_vendor_neutral_with_provider_guidance() -> None:
+    """PromQL and tool names come from the prometheus provider's fragment (ADR-0012)."""
+    llm = FakeLLMProvider(responder=echo_responder("success"))
+    result = run_agent("S1", llm)
+    system = llm.requests[0]["messages"][0].content
+    assert result.prompt_version and result.prompt_version.startswith("metrics/v2@")
+    assert "+providers/metrics/prometheus/v1@" in result.prompt_version
+    assert "# Query language: Prometheus (PromQL)" in system
+    assert "`$provider_guidance`" not in system and "$provider_guidance" not in system
+    agent_prompt = (CONFIG / "prompts" / "metrics" / "v2.md").read_text()
+    for vendor_term in ("PromQL", "query_range", "histogram_quantile", "Prometheus"):
+        assert vendor_term not in agent_prompt
+
+
 def test_s3_cross_service_latency() -> None:
     result = run_agent("S3", FakeLLMProvider(responder=echo_responder("success")))
     assert {"latency_up", "dependency_latency_up"} <= set(result.signals)

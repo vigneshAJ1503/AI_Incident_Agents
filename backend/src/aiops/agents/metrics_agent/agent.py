@@ -1,27 +1,28 @@
 """Metrics Agent (UC-05).
 
 Investigation loop:
-  1. deterministic: one ``query_range`` per metric from the PromQL library (error ratio,
-     p95/p99 latency, throughput, DB pool utilisation and waiters, cache, process memory,
-     container restarts and OOM kills), each covering the service AND its catalog
-     dependencies, over [window start - baseline, window end];
+  1. deterministic: one provider query per SLI (error ratio, p95/p99 latency, throughput,
+     DB pool utilisation and waiters, cache, process memory, container restarts and OOM
+     kills), each covering the service AND its catalog dependencies, over
+     [window start - baseline, window end];
   2. deterministic analysis in Python: baseline median vs the window, sustained change
      point (start time), magnitude (ratio, z-score), signals;
   3. bounded LLM follow-ups + an evidence-cited report;
   4. finalize: signals and status come from the data (an LLM can neither invent nor hide
      an anomaly), "no metric anomaly" is said explicitly, metrics are never a root cause.
 
-Vendor-neutral: label values from the service catalog (``metrics.labels``); metric names,
-label names, windows and link templates from the ``metrics`` capability settings.
+Vendor-neutral: the agent asks the ``metrics`` provider adapter
+(``capabilities.metrics.provider``, ADR-0012) for one series per SLI
+(``aiops.providers.metrics.SLIS``) over services from the service catalog
+(``metrics.labels``); the provider owns the query language (PromQL for ``prometheus``),
+the tool calls and the deep links.
 """
 
 from __future__ import annotations
 
 import json
-import math
 from dataclasses import dataclass
 from datetime import timedelta
-from typing import Any
 
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
 from aiops.agents.metrics_agent.analysis import (
@@ -34,13 +35,10 @@ from aiops.agents.metrics_agent.analysis import (
     fmt,
     iso,
     oom_stats,
-    parse_series,
     restarts_stats,
 )
-from aiops.agents.metrics_agent.promql import MetricQuery, PromQLLibrary
 from aiops.agents.registry import AGENTS
 from aiops.core.config import ConfigError
-from aiops.core.links import format_link, query_link, window_values
 from aiops.core.models import (
     AgentResult,
     AgentStatus,
@@ -50,19 +48,16 @@ from aiops.core.models import (
     TimeRange,
 )
 from aiops.llm.base import ToolSpec
+from aiops.providers.metrics import (
+    SLIS,
+    MetricRequest,
+    MetricScope,
+    MetricsProvider,
+    MetricWindow,
+    Values,
+)
 
-DEFAULT_STEP_S = 30
 DEFAULT_BASELINE_MINUTES = 30.0
-#: Stay well inside prometheus-mcp's points-per-series cap.
-MAX_POINTS = 1000
-
-
-def parse_step(value: Any) -> int:
-    text = str(value or "").strip().lower()
-    units = {"s": 1, "m": 60, "h": 3600}
-    if text and text[-1] in units and text[:-1].isdigit():
-        return int(text[:-1]) * units[text[-1]]
-    return int(text) if text.isdigit() else DEFAULT_STEP_S
 
 
 @dataclass(frozen=True)
@@ -70,17 +65,24 @@ class MetricsScope:
     service: str
     #: catalog service name -> value of the service label in the metrics
     label_values: dict[str, str]
-    #: catalog service name -> value of the kube-state-metrics app label
+    #: catalog service name -> Kubernetes workload/app name (pod-level SLIs)
     k8s_apps: dict[str, str]
     extra: dict[str, str]  # other label filters shared by all queries, e.g. namespace
     namespace: str
     dependencies: list[str]
-    library: PromQLLibrary
-    step_s: int
+    provider: MetricsProvider
     baseline: timedelta
-    link_template: str | None
-    explore_template: str | None
-    panels: dict[str, Any]
+
+    @property
+    def neutral(self) -> MetricScope:
+        """What the provider needs: label values only, no catalog names."""
+        return MetricScope(
+            services=list(self.label_values.values()),
+            workloads=list(self.k8s_apps.values()),
+            filters=self.extra,
+            service=self.label_values[self.service],
+            namespace=self.namespace,
+        )
 
 
 class MetricsAgent(BaseAgent):
@@ -99,10 +101,9 @@ class MetricsAgent(BaseAgent):
         ctx = run.task.context
         if not ctx.service:
             raise LookupError("No service given: the Metrics agent needs a catalog service.")
-        settings = self.deps.settings.capability("metrics").settings
-        library = PromQLLibrary.from_settings(settings)
-        service_label = library.labels["service"]
-        namespace_label = library.labels["namespace"]
+        provider = self.provider("metrics", MetricsProvider)
+        service_label = provider.label("service")
+        namespace_label = provider.label("namespace")
 
         def identifiers(name: str) -> tuple[dict[str, str], str] | None:
             try:
@@ -130,6 +131,7 @@ class MetricsAgent(BaseAgent):
             if found is not None:
                 deps[dep] = found
         extra = {k: v for k, v in labels.items() if k != service_label}
+        minutes = provider.settings.get("baseline_minutes", DEFAULT_BASELINE_MINUTES)
         return MetricsScope(
             service=ctx.service,
             label_values={
@@ -140,33 +142,21 @@ class MetricsAgent(BaseAgent):
             extra=extra,
             namespace=extra.get(namespace_label, ""),
             dependencies=list(deps),
-            library=library,
-            step_s=parse_step(settings.get("step", DEFAULT_STEP_S)),
-            baseline=timedelta(
-                minutes=float(settings.get("baseline_minutes", DEFAULT_BASELINE_MINUTES))
-            ),
-            link_template=settings.get("ui_link_template"),
-            explore_template=settings.get("explore_link_template"),
-            panels=dict(settings.get("panels") or {}),
+            provider=provider,
+            baseline=timedelta(minutes=float(minutes)),
         )
 
     # -- deterministic phase ---------------------------------------------------------------
-
-    def _step(self, scope: MetricsScope, span: timedelta) -> int:
-        return max(scope.step_s, math.ceil(span.total_seconds() / MAX_POINTS))
 
     async def deterministic(
         self, run: AgentRun, scope: MetricsScope
     ) -> tuple[MetricsAnalysis, list[str]]:
         window = run.task.context.time_range
-        full = TimeRange(start=window.start - scope.baseline, end=window.end)
-        baseline = TimeRange(start=full.start, end=window.start)
-        step = self._step(scope, full.duration)
+        span = MetricWindow(start=window.start - scope.baseline, end=window.end)
+        baseline = TimeRange(start=span.start, end=window.start)
+        neutral = scope.neutral
         by_value = {v: name for name, v in scope.label_values.items()}
         by_app = {v: name for name, v in scope.k8s_apps.items()}
-        queries = scope.library.queries(
-            list(scope.label_values.values()), scope.extra, list(scope.k8s_apps.values())
-        )
         analysis = MetricsAnalysis(
             service=scope.service,
             dependencies=scope.dependencies,
@@ -174,53 +164,50 @@ class MetricsAgent(BaseAgent):
             baseline_window=baseline,
         )
         notes: list[str] = []
-        for mq in queries:
+        for sli in SLIS:
+            mr = scope.provider.series_request(sli, neutral, span)
+            if mr is None:  # this provider (or scope) can't answer the SLI
+                continue
             outcome, evidence = await run.call_tool(
-                "query_range",
-                {
-                    "query": mq.query,
-                    "start": iso(full.start),
-                    "end": iso(full.end),
-                    "step": f"{step}s",
-                },
-                summary=mq.title,
+                mr.request.tool, mr.request.arguments, summary=sli.title
             )
             if evidence is None:
-                analysis.missing.append(mq.key)
-                notes.append(f"{mq.key} query failed: {outcome.tool_call.error}")
+                analysis.missing.append(sli.key)
+                notes.append(f"{sli.key} query failed: {outcome.tool_call.error}")
                 continue
-            mapping = by_app if mq.group_label == scope.library.labels["k8s_app"] else by_value
+            mapping = by_app if sli.per_workload else by_value
             series = {
                 mapping[k]: v
-                for k, v in parse_series(outcome.data, mq.group_label).items()
+                for k, v in scope.provider.series(mr, outcome.data).items()
                 if k in mapping
             }
-            stats = [self._stats(mq, name, values, window) for name, values in series.items()]
+            stats = [self._stats(mr, name, values, window) for name, values in series.items()]
             analysis.stats.extend(stats)
-            self._describe(evidence, mq, stats, series, scope, window, full)
-            notes.append(f"[{evidence.id}] {mq.key}")
+            self._describe(evidence, mr, stats, series, scope, window, span)
+            notes.append(f"[{evidence.id}] {sli.key}")
         return analysis, notes
 
     @staticmethod
-    def _stats(mq: MetricQuery, service: str, values: Any, window: TimeRange) -> SeriesStats:
-        if mq.key == "restarts":
+    def _stats(mr: MetricRequest, service: str, values: Values, window: TimeRange) -> SeriesStats:
+        if mr.sli.key == "restarts":
             return restarts_stats(service, values, window)
-        if mq.key == "oom_killed":
+        if mr.sli.key == "oom_killed":
             return oom_stats(service, values, window)
-        return detect(mq.key, service, mq.unit, values, window)
+        return detect(mr.sli.key, service, mr.sli.unit, values, window)
 
     def _describe(
         self,
         evidence: Evidence,
-        mq: MetricQuery,
+        mr: MetricRequest,
         stats: list[SeriesStats],
-        series: dict[str, Any],
+        series: dict[str, Values],
         scope: MetricsScope,
         window: TimeRange,
-        full: TimeRange,
+        span: MetricWindow,
     ) -> None:
         """Replace the raw tool result with {metric, baseline, current, window, start_time},
         per-service stats, chart series and links."""
+        sli = mr.sli
         own = next((s for s in stats if s.service == scope.service), None)
         parts: list[str] = []
         for s in sorted(stats, key=lambda s: (s.service != scope.service, s.service)):
@@ -230,33 +217,21 @@ class MetricsAgent(BaseAgent):
                 parts.append(f"{s.service}: {s.note}")
             else:
                 parts.append(f"{s.service} normal ({fmt(s.current, s.unit)})")
-        evidence.summary = f"{mq.title}: " + ("; ".join(parts) if parts else "no data")
+        evidence.summary = f"{sli.title}: " + ("; ".join(parts) if parts else "no data")
         anomaly = own.anomaly if own else None
         evidence.timestamp = anomaly.start_time if anomaly else None
-        values = window_values(full.start, full.end)
-        panel = scope.panels.get(mq.panel) if mq.panel else None
-        evidence.link = (
-            format_link(
-                scope.link_template,
-                service=scope.label_values[scope.service],
-                namespace=scope.namespace,
-                panel=panel,
-                **values,
-            )
-            if panel is not None
-            else None
-        ) or query_link(scope.explore_template, mq.query, full.start, full.end)
+        evidence.link = scope.provider.ui_link(scope.neutral, mr, span)
         evidence.data = {
-            "metric": mq.key,
-            "unit": mq.unit,
+            "metric": sli.key,
+            "unit": sli.unit,
             "service": scope.service,
             "baseline": own.baseline if own else None,
             "current": own.current if own else None,
             "start_time": iso(anomaly.start_time) if anomaly else None,
             "window": {"start": iso(window.start), "end": iso(window.end)},
-            "baseline_window": {"start": iso(full.start), "end": iso(window.start)},
-            "query": mq.query,
-            "query_link": query_link(scope.explore_template, mq.query, full.start, full.end),
+            "baseline_window": {"start": iso(span.start), "end": iso(window.start)},
+            "query": mr.query,
+            "query_link": scope.provider.query_link(mr, span),
             "services": {s.service: s.as_dict() for s in stats},
             "series": {name: downsample(values) for name, values in series.items()},
         }

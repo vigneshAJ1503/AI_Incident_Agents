@@ -21,6 +21,8 @@ class ServerSettings:
     prom_bearer_token: str | None = field(default=None, repr=False)
     prom_username: str | None = None
     prom_password: str | None = field(default=None, repr=False)
+    #: Tenant for multi-tenant backends (Mimir/Cortex/Thanos receive): X-Scope-OrgID.
+    prom_org_id: str | None = None
     query_timeout_s: float = 20.0  # sent to Prometheus (timeout=) and used for HTTP
     max_range_hours: float = 24.0  # query_range end - start, and any [range] in a query
     max_points: int = 1_100  # points per series in query_range (Prometheus' own cap: 11000)
@@ -38,6 +40,7 @@ class ServerSettings:
             prom_bearer_token=os.environ.get("PROM_BEARER_TOKEN") or None,
             prom_username=os.environ.get("PROM_USERNAME") or None,
             prom_password=os.environ.get("PROM_PASSWORD") or None,
+            prom_org_id=os.environ.get("PROM_ORG_ID") or None,
             query_timeout_s=float(_env("QUERY_TIMEOUT_S", "20")),
             max_range_hours=float(_env("MAX_RANGE_HOURS", "24")),
             max_points=int(_env("MAX_POINTS", "1100")),

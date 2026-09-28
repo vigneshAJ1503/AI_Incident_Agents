@@ -1046,7 +1046,7 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - vendor-coupling audit (file:line table in docs/portability.md)
 - ✅ Existing tests, fixtures and evals pass unchanged; `_template` validates; `init` → `validate` works.
 
-#### PR-P2 · Provider adapters ✅ (metrics pending)
+#### PR-P2 · Provider adapters ✅
 - **Scope:** move the audited couplings (ES|QL/KQL in the Log agent, JQL in the Tickets agent,
   Alertmanager matchers, tool names) behind per-capability adapters selected by `provider`;
   per-provider prompt fragments; `anthropic` / `bedrock` LLM providers.
@@ -1063,9 +1063,20 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   (git-mcp tools), thin `k8s/kubernetes` and `knowledge/postgres_fts` (contract only). Prompts
   `tickets/v2`, `alerts/v2`, `code/v2` vendor-neutral with fragments. The static matrix keeps
   only planned rows (+ metrics). Again 39/39 replay runs byte-identical, evals 6/6.
-- **Deviation:** split into P2a (framework + logs) and P2b (tickets, alerts, code, k8s,
-  knowledge). `metrics` is adapted in a later wave (PR-022 in progress); the
-  `anthropic`/`bedrock` LLM providers move to PR-P4.
+- **Delivered (P2c):** `metrics/prometheus` extracted from the Metrics agent (after PR-022):
+  neutral interface `providers/metrics` (`SLIS` = the questions: rps, error_rate,
+  latency_p95/p99, db_pool_*, cache_up, memory_rss, restarts, oom_killed; `MetricScope`,
+  `MetricWindow`, `MetricRequest`, neutral series `{key: [(ts, value)]}`); the adapter owns
+  PromQL, `query_range`, the step/points cap, result parsing and Grafana/Prometheus links.
+  `metrics/_skeleton.py` (Datadog-shaped, not registered; `datadog` stays planned). Prompt
+  `metrics/v2` vendor-neutral + `providers/metrics/prometheus/v1`. The static `prometheus`
+  matrix row is gone (the registry supplies it). prometheus-mcp gained `PROM_ORG_ID`
+  (`X-Scope-OrgID`, multi-tenant Mimir/Cortex) and compose now passes the
+  `METRICS_PROM_*` auth variables. All 12 metrics replay runs (S0–S5 × success/no_signal,
+  120 tool calls) byte-identical before/after (only the prompt ref differs); eval 6/6, 0 FP.
+- **Deviation:** split into P2a (framework + logs), P2b (tickets, alerts, code, k8s,
+  knowledge) and P2c (metrics, after PR-022 merged); the `anthropic`/`bedrock` LLM
+  providers move to PR-P4.
 
 #### PR-P3 · `aiops doctor` + catalog import ✅
 - **Branch:** `feat/p3-doctor-catalog-import` · docs/portability.md (day-1 checklist)
@@ -1122,7 +1133,7 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 #### PR-022 · Metrics Agent
 - **Branch:** `feat/022-metrics-agent`
 - **Scope:**
-  - a PromQL library built from capability settings (`agents/metrics_agent/promql.py`, summarised in the prompt): RPS, 5xx ratio, p95/p99, DB pool utilisation/waiters, cache up, process RSS, restarts and OOM kills (kube-state-metrics). Each query covers the service **and its catalog dependencies**
+  - a PromQL library built from capability settings (`agents/metrics_agent/promql.py`, summarised in the prompt; moved to `providers/metrics/prometheus.py` in PR-P2c): RPS, 5xx ratio, p95/p99, DB pool utilisation/waiters, cache up, process RSS, restarts and OOM kills (kube-state-metrics). Each query covers the service **and its catalog dependencies**
   - deterministic anomaly detection in Python: baseline median vs the window, sustained change point (start time), ratio and z-score
   - signals `error_rate_up, latency_up, traffic_drop, traffic_spike, db_pool_saturated, memory_pressure, cache_down, dependency_latency_up, no_anomaly`
   - evidence `{metric, baseline, current, window, start_time}` plus the series for charts and Grafana panel / Prometheus query links

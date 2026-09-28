@@ -71,7 +71,7 @@ server. "Implemented" = works today by configuration only. "Planned" = named in 
 | Capability | Implemented ✓ | Planned | MCP server (implemented) |
 |------------|---------------|---------|--------------------------|
 | logs | `elasticsearch` ✓ (self-managed or Elastic Cloud, ES\|QL) | `opensearch`, `loki`, `splunk`, `datadog` | `mcp-servers/elasticsearch-mcp` |
-| metrics | `prometheus` ✓ (adapter in a later wave) (any Prometheus-compatible API: Prometheus, Thanos, Mimir, VictoriaMetrics, AMP, GMP) | `datadog` | `mcp-servers/prometheus-mcp` |
+| metrics | `prometheus` ✓ (PromQL; any Prometheus-compatible API: Prometheus, Thanos, Mimir, Grafana Cloud, VictoriaMetrics, AMP, GMP) | `datadog` (skeleton: `providers/metrics/_skeleton.py`) | `mcp-servers/prometheus-mcp` |
 | alerts | `alertmanager` ✓ | `pagerduty`, `opsgenie` | `mcp-servers/alertmanager-mcp` |
 | k8s | `kubernetes` ✓ (EKS, GKE, AKS, OpenShift, Minikube) | – | `mcp-servers/kubernetes-mcp` |
 | code | `git` ✓ (read-only clones of GitHub/GitLab/Bitbucket repos) | `github`, `gitlab` (API) | `mcp-servers/git-mcp` |
@@ -257,10 +257,13 @@ backend/src/aiops/providers/
   logs/__init__.py         the logs interface (LogsProvider) + neutral shapes (LogScope, LogWindow, LogTable)
   logs/elasticsearch.py    ES|QL + Kibana KQL links            (registered)
   logs/_skeleton.py        copy-me template                   (NOT registered: leading "_")
+  metrics/__init__.py      the metrics interface (MetricsProvider) + SLIS, MetricScope, MetricWindow, MetricRequest
+  metrics/prometheus.py    PromQL + Grafana/Prometheus links  (registered)
+  metrics/_skeleton.py     Datadog-shaped copy-me template    (NOT registered)
 config/prompts/providers/<capability>/<provider>/v1.md       query guidance for the LLM
 ```
 
-1. **Implement the interface.** Copy `providers/<capability>/_skeleton.py` (logs has one) to
+1. **Implement the interface.** Copy `providers/<capability>/_skeleton.py` (logs and metrics have one) to
    `providers/<capability>/<provider>.py`. Each method is one question the agent asks and
    returns a `ToolRequest(tool, arguments, columns=...)`: the MCP tool to call and its
    arguments in the vendor's language. Results must come back in the capability's
@@ -268,7 +271,11 @@ config/prompts/providers/<capability>/<provider>/v1.md       query guidance for 
    `providers/logs/__init__.py` (`window`, `level`, `count`, `msg`, `first_seen`, ...).
    Alias columns in the query, or map vendor names with `ToolRequest.columns`, or override
    `table()`. Also implement the neutral deep link (`ui_link`) and, if useful,
-   `scope_note` (extra prompt text, e.g. how to filter a shared index).
+   `scope_note` (extra prompt text, e.g. how to filter a shared index). For metrics:
+   one `series_request(sli, scope, window)` per SLI in `providers/metrics.SLIS` (return
+   `None` for SLIs the vendor can't answer: they're skipped, never anomalies) and
+   `series()`, which normalizes results into `{service label value: [(epoch s, value)]}`
+   in the SLI's unit.
 2. **Describe it** with class attributes: `capability`, `name` (the value of
    `capabilities.<cap>.provider`), `mcp` (the MCP server), `required` (dotted settings keys
    `validate` insists on), `agent_tools` (tools the agent calls itself; `validate` warns if
@@ -316,9 +323,12 @@ change.
 | ~~`agents/alert_agent/agent.py:56` (`matcher_filter`), `:117` (`list_alerts` args)~~ | Alertmanager matcher syntax and tool arguments | ✅ **P2:** `providers/alerts/alertmanager.py` (`alerts_for`, `silences_for`, `ui_link`) |
 | ~~`agents/alert_agent/analysis.py:30`~~ | "Alertmanager keeps no history" caveat text | ✅ **P2:** `AlertsProvider.has_history` / `history_note` |
 | ~~`agents/code_agent/agent.py:160`, `:176`, `:246`~~ | git-mcp tool names (`list_releases`, `search_commits`, `get_diff`) | ✅ **P2:** `providers/code/git.py` (`releases_of`, `commits_touching`, `diff_of`) |
+| ~~`agents/metrics_agent/promql.py` (`PromQLLibrary`, `DEFAULT_LABELS`, `DEFAULT_METRICS`, `regex_alternation`)~~ | the Metrics agent writes **PromQL** itself | ✅ **P2c:** `providers/metrics/prometheus.py` (`series_request` per SLI in `providers/metrics.SLIS`) |
+| ~~`agents/metrics_agent/agent.py:179` (`query_range`), `:57` (`MAX_POINTS`), `:60-65` (`parse_step`), `analysis.py:117` (`parse_series`)~~ | prometheus-mcp tool name, step/points cap and result format | ✅ **P2c:** the adapter's `MetricRequest` names the tool; `series()` normalizes to neutral series |
+| ~~`agents/metrics_agent/agent.py:236-248`~~ | Grafana panel / Prometheus graph links | ✅ **P2c:** `PrometheusMetrics.ui_link` / `query_link` |
 | `agents/k8s_agent/agent.py:160-180` | kubernetes-mcp tool names | kept: one Kubernetes API everywhere. `providers/k8s/kubernetes.py` is thin (describes the contract for the registry/`validate`); `knowledge/postgres_fts` likewise |
 | `core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`) | only OpenAI-compatible LLMs | `anthropic`, `bedrock` providers (moved to PR-P4) |
-| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager) | prompts teach one query language | ✅ **P2:** `logs/v3`, `tickets/v2`, `alerts/v2`, `code/v2` are vendor-neutral; guidance in `config/prompts/providers/{logs/elasticsearch,tickets/jira,alerts/alertmanager,code/git}/v1.md` via `$provider_guidance` |
+| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager), `metrics/v1.md:20-26` (PromQL) | prompts teach one query language | ✅ **P2:** `logs/v3`, `tickets/v2`, `alerts/v2`, `code/v2`, `metrics/v2` are vendor-neutral; guidance in `config/prompts/providers/{logs/elasticsearch,tickets/jira,alerts/alertmanager,code/git,metrics/prometheus}/v1.md` via `$provider_guidance` |
 | `evals/runner.py:308`, `:349` | local seeding defaults `http://localhost:9093` / `:9200` (env-overridable) | test harness only; fine |
 
 Not couplings (already configuration): field names, index patterns, label and metric names,

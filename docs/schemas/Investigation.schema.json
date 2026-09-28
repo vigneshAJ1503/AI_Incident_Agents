@@ -780,6 +780,13 @@
           "title": "Status",
           "type": "string"
         },
+        "suspected_injection": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Suspected Injection",
+          "type": "array"
+        },
         "tool": {
           "title": "Tool",
           "type": "string"

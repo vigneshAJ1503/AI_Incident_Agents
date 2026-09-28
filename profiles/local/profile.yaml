@@ -42,7 +42,10 @@ limits:
 
 guardrails:
   read_only: true
-  redact: [emails, ip_addresses, jwt, bearer_tokens, api_keys, credit_cards]
+  # `secrets` = private_keys, connection_strings, cloud_credentials, saas_tokens, jwt,
+  # bearer_tokens, api_keys; `pii` = emails, credit_cards, ip_addresses (drop it if the
+  # investigation needs e-mails/IPs to correlate). See core/guardrails/redaction.py.
+  redact: [secrets, pii]
   max_tool_output_chars: 8000
   audit_log_path: .data/audit.jsonl
   # Write actions need a human approval (aiops approvals ...). Agents are always read-only.

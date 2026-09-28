@@ -36,6 +36,8 @@ from pydantic import (
     model_validator,
 )
 
+from aiops.core.guardrails.redaction import PII_KINDS, SECRET_KINDS, SUPPORTED_KINDS
+
 _log = logging.getLogger(__name__)
 
 PROFILE_VAR = "AIOPS_PROFILE"
@@ -239,13 +241,32 @@ class AgentConfig(_Strict):
 
 class GuardrailsConfig(_Strict):
     read_only: bool = True
-    redact: list[str] = Field(default_factory=list)
+    #: Redaction kinds (core/guardrails/redaction.py). Groups: ``secrets`` = every secret
+    #: kind, ``pii`` = emails + credit cards + IPs. Default: every secret kind, no PII.
+    redact: list[str] = Field(default_factory=lambda: list(SECRET_KINDS))
     max_tool_output_chars: int = Field(default=8_000, gt=0)
     audit_log_path: str = ".data/audit.jsonl"
     #: Human approvals for write actions (PR-014). JSON file store until Postgres (PR-032).
     approvals_path: str = ".data/approvals.json"
     approvals_audit_path: str = ".data/approvals-audit.jsonl"
     approval_ttl_hours: float = Field(default=24.0, gt=0)
+
+    @field_validator("redact", mode="before")
+    @classmethod
+    def _expand_groups(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            value = [v.strip() for v in value.split(",") if v.strip()]
+        if not isinstance(value, list):
+            return value
+        groups = {"secrets": SECRET_KINDS, "pii": PII_KINDS}
+        expanded = [k for v in value for k in groups.get(str(v), (str(v),))]
+        unknown = sorted(set(expanded) - SUPPORTED_KINDS)
+        if unknown:
+            raise ValueError(
+                f"unknown redaction kinds {unknown}; supported: {sorted(SUPPORTED_KINDS)} "
+                "(groups: secrets, pii)"
+            )
+        return list(dict.fromkeys(expanded))
 
 
 class FollowupRule(_Strict):

@@ -21,6 +21,8 @@ llm:
   # Optional extra keys, used in turn when one is rate-limited (free-tier TPM caps).
   fallback_api_keys:
     - ${OPENAI_COMPAT_API_KEY_2:-}
+  # Free tiers cap tokens per minute: at most 2 LLM requests in flight (0 = unlimited).
+  max_concurrent_requests: 2
   models:
     fast: ${LLM_MODEL_FAST:-}
     agent: ${LLM_MODEL_AGENT:-}

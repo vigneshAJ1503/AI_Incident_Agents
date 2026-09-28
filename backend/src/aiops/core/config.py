@@ -146,6 +146,9 @@ class LLMConfig(_Strict):
     api_version: str | None = None
     #: Extra keys for the same provider; used in turn when one is rate-limited (free tiers).
     fallback_api_keys: list[SecretStr] = Field(default_factory=list)
+    #: Max LLM requests in flight at once (0 = unlimited). Free tiers cap tokens per
+    #: minute, so a small number (e.g. 2) smooths bursts from agents running in parallel.
+    max_concurrent_requests: int = Field(default=0, ge=0)
     models: dict[ModelRole, str] = Field(default_factory=dict)
     timeout_s: float = Field(default=60.0, gt=0)
     max_retries: int = Field(default=4, ge=0)
@@ -204,6 +207,7 @@ class LLMConfig(_Strict):
         """``{"fast": ..., "agent": ..., "rca": ...}`` after the ``agent`` fallback."""
         agent = self.models.get("agent") or "-"
         return {role: self.models.get(role) or agent for role in ("fast", "agent", "rca")}
+
     #: Provider-specific request parameters passed through as-is,
     #: e.g. {"reasoning_effort": "low"} for reasoning models on Groq.
     extra: dict[str, Any] = Field(default_factory=dict)

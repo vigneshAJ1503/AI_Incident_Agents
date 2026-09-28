@@ -344,6 +344,28 @@ class BaseAgent(ABC):
 
     # -- the loop -----------------------------------------------------------------------
 
+    async def _deterministic_fallback(
+        self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str, exc: LLMError
+    ) -> AgentResult:
+        """Finish from the evidence already gathered, as in zero-LLM (replay) mode."""
+        from aiops.evals.replay import echo_responder  # local: avoids an import cycle
+        from aiops.llm.fake import FakeLLMProvider
+
+        log.warning("Agent %s: LLM failed (%s); using the deterministic analysis", self.name, exc)
+        self.emit("llm_called", run.task, step=0, tool_calls=0, fallback=type(exc).__name__)
+        original = self.deps.llm
+        self.deps.llm = FakeLLMProvider(responder=echo_responder())
+        usage_before = run.usage
+        try:
+            result = await self.llm_loop(run, tool_specs, system, user)
+        finally:
+            self.deps.llm = original
+            run.usage = usage_before  # the stand-in spends no real tokens
+        note = f"LLM unavailable ({type(exc).__name__}): finished with the deterministic analysis."
+        return result.model_copy(
+            update={"suggested_followups": [*result.suggested_followups, note]}
+        )
+
     async def llm_loop(
         self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str
     ) -> AgentResult:
@@ -381,6 +403,10 @@ class BaseAgent(ABC):
                     )
                 )
                 continue
+            except LLMError as exc:
+                # Rate limit / outage / unusable output: never let the LLM make the result
+                # WORSE than no LLM. Finish with the deterministic analysis instead.
+                return await self._deterministic_fallback(run, tool_specs, system, user, exc)
             run.usage = run.usage + response.usage
             run.model = response.model or run.model
             self.emit("llm_called", run.task, step=step, tool_calls=len(response.tool_calls))

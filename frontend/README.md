@@ -36,6 +36,25 @@ browser only talks to `:3100`, and `src/app/api/[...path]/route.ts` proxies REST
 | `src/components/`            | layout (sidebar, ⌘K palette, shortcuts), status badges, charts                             |
 | `e2e/`                       | Playwright specs (demo mode)                                                               |
 
+## Visual design (glass)
+
+Tokens live in `src/app/globals.css` (light + dark):
+
+- **Surfaces:** `glass` (cards: a _tinted_ translucent fill + 1px border + inner highlight +
+  `--elev-2`) and `glass-chrome` (topbar, dialogs, drawers, ⌘K, the sticky chat composer and report
+  tab bar: `backdrop-filter` blur). Only floating chrome blurs, and only small areas: cards sit on
+  the already-soft aurora, so a blur there would cost paint time for no visual gain. Without
+  `backdrop-filter` support, `glass-chrome` falls back to an opaque tinted fill.
+- **Elevation:** `--elev-1..4` (`shadow-elev-*`); `lift` = hover lift + glow for interactive cards.
+- **Aurora:** one fixed, composited layer (`.aurora`) animating `transform` only; frozen under
+  `prefers-reduced-motion`.
+- **Density:** `html[data-density=compact]` (topbar toggle, per browser) sets `--pad`/`--row-y`.
+- Text on glass keeps WCAG AA (axe runs in every e2e spec).
+
+Visual regression: `e2e/visual.spec.ts` (`toHaveScreenshot`, dashboard/report/chat × light/dark,
+1.5% tolerance). Baselines are Linux-only (CI); `make ui-visual-update` regenerates them in the
+pinned Playwright container.
+
 ## Configuration
 
 See [`.env.example`](.env.example). `NEXT_PUBLIC_*` values are inlined at build time.

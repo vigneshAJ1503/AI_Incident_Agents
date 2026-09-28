@@ -70,9 +70,10 @@ test.describe("report view (S1)", () => {
     await expect(page.getByText("Query copied")).toBeVisible();
     expect((await page.evaluate(() => navigator.clipboard.readText())).length).toBeGreaterThan(0);
     await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
 
     // the tab bar sticks under the top bar while the evidence scrolls
-    await page.mouse.wheel(0, 1500);
+    await page.evaluate(() => window.scrollTo(0, 1500));
     await expect
       .poll(async () => (await page.getByTestId("report-tabs").boundingBox())?.y ?? -1)
       .toBeLessThan(80);

@@ -399,7 +399,7 @@ PLAYWRIGHT_IMAGE := mcr.microsoft.com/playwright:v1.63.0-noble
 ui-visual-update: ## Regenerate frontend/e2e/__screenshots__ (visual baselines) in the Playwright container
 	docker run --rm --memory 2g --ipc=host -v "$(CURDIR)/$(UI):/work" -v /work/node_modules \
 	  -v /work/.next -w /work -e CI=1 -e NEXT_TELEMETRY_DISABLED=1 $(PLAYWRIGHT_IMAGE) \
-	  sh -c 'npm ci --no-audit --no-fund && NEXT_PUBLIC_DEMO=1 NEXT_PUBLIC_DEMO_SPEED=12 npm run build && npx playwright test visual --update-snapshots'
+	  sh -c 'npm ci --no-audit --no-fund && NEXT_PUBLIC_DEMO=1 NEXT_PUBLIC_DEMO_SPEED=12 npm run build && npx playwright test visual --update-snapshots=all'
 
 # --- Orchestrator demo data (PR-034) -------------------------------------------------
 .PHONY: demo-seed

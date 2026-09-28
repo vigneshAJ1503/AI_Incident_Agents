@@ -4,7 +4,7 @@ import { MenuIcon, SearchIcon } from "lucide-react";
 import type { Route } from "next";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 
 import { ModeBanner } from "@/components/system-status";
@@ -28,18 +28,68 @@ import { ThemeToggle } from "./theme-toggle";
 
 const NEW_ROUTE = NAV.find((n) => n.href === ("/investigations/new" as Route))?.href ?? null;
 
-// cmdk + the recent-investigations query load on first use (⌘K or the search box), not on every page
+// cmdk + the recent-investigations query stay out of the critical path: the palette mounts (closed)
+// once the browser is idle after load, or at once on first use (⌘K or the search box).
 const CommandPalette = dynamic(() => import("./command-palette").then((m) => m.CommandPalette), {
   ssr: false,
 });
 
+function useWhenIdle(): [boolean, () => void] {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    // not the first idle gap (that can come while the page still waits for its data, before
+    // LCP): give the page a head start, then wait for an idle moment
+    let id: number | undefined;
+    // the first sign of a user also fetches the chunk, so a quick ⌘K opens it without a wait
+    const preload = () => void import("./command-palette");
+    const events = ["pointermove", "keydown", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, preload, { once: true, passive: true }));
+    const t = setTimeout(() => {
+      if (w.requestIdleCallback)
+        id = w.requestIdleCallback(() => setReady(true), { timeout: 2000 });
+      else setReady(true);
+    }, 2500);
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, preload));
+      clearTimeout(t);
+      if (id !== undefined) w.cancelIdleCallback?.(id);
+    };
+  }, []);
+  return [ready, useCallback(() => setReady(true), [])];
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [paletteOpen, setPaletteOpenState] = useState(false);
-  const [paletteUsed, setPaletteUsed] = useState(false);
-  const setPaletteOpen = useCallback((o: boolean | ((prev: boolean) => boolean)) => {
-    setPaletteUsed(true);
-    setPaletteOpenState(o);
+  const [paletteUsed, markPaletteUsed] = useWhenIdle();
+  // keys typed after ⌘K until the palette input has focus (it may still be loading) are buffered
+  // and handed to it, so a fast "⌘K + type" never loses characters
+  const paletteFocused = useRef(false);
+  const typedAhead = useRef("");
+  // mirrors paletteOpen synchronously: keys typed right after ⌘K (before a re-render) must
+  // already count as palette input, not as g-shortcuts
+  const openRef = useRef(false);
+  const setPaletteOpen = useCallback(
+    (o: boolean | ((prev: boolean) => boolean)) => {
+      markPaletteUsed();
+      const next = typeof o === "function" ? o(openRef.current) : o;
+      openRef.current = next;
+      if (next) paletteFocused.current = false;
+      setPaletteOpenState(next);
+    },
+    [markPaletteUsed],
+  );
+  const takeTypedAhead = useCallback(() => {
+    const s = typedAhead.current;
+    typedAhead.current = "";
+    return s;
+  }, []);
+  const onPaletteFocused = useCallback(() => {
+    paletteFocused.current = true;
   }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -67,7 +117,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setPaletteOpen((o) => !o);
         return;
       }
-      if (paletteOpen || helpOpen) return;
+      if (openRef.current && !paletteFocused.current) {
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault();
+          typedAhead.current += e.key;
+        } else if (e.key === "Backspace") typedAhead.current = typedAhead.current.slice(0, -1);
+        return;
+      }
+      if (openRef.current || helpOpen) return;
       const hit = seq(e);
       if (!hit) return;
       e.preventDefault();
@@ -79,7 +136,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shortcuts, router, paletteOpen, helpOpen, setPaletteOpen]);
+  }, [shortcuts, router, helpOpen, setPaletteOpen]);
 
   const badges = { "/approvals": pending };
   return (
@@ -140,6 +197,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           open={paletteOpen}
           onOpenChange={setPaletteOpen}
           canInvestigate={NEW_ROUTE !== null}
+          takeTypedAhead={takeTypedAhead}
+          onFocused={onPaletteFocused}
         />
       )}
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>

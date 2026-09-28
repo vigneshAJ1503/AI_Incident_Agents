@@ -3,9 +3,9 @@
 # replay fixtures), e.g. via deploy/compose/docker-compose.app.yml or:
 #   docker build -f backend/Dockerfile -t aiops/backend:0.1.0 .
 # backend/Dockerfile.dockerignore keeps the context to what's copied below.
-FROM ghcr.io/astral-sh/uv:0.11.21 AS uv
+FROM ghcr.io/astral-sh/uv:0.12.19 AS uv
 
-FROM python:3.12.13-slim-trixie AS build
+FROM python:3.14.7-slim-trixie AS build
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app/backend
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
@@ -14,7 +14,7 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY backend/src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-FROM python:3.12.13-slim-trixie
+FROM python:3.14.7-slim-trixie
 # Security (PR-042, Trivy): the pinned base image + today's Debian security fixes.
 RUN apt-get update && apt-get upgrade -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*

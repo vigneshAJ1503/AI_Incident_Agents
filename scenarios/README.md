@@ -64,3 +64,16 @@ MASTER_PLAN PR-011 lists seven evaluation datasets. The seeded scenarios cover t
 | no-root-cause | S0; S4 for the Log agent | S0 is healthy. In S4 the root cause (ImagePullBackOff) isn't in the logs: the Log agent reports only symptoms (`capacity_degraded`) |
 
 **Deferred: an auth-failure spike that is not an incident (S6).** Today the Log agent treats any WARN or ERROR pattern at ≥5× its baseline as anomalous, so a burst of failed logins would be reported as `success`, which counts as a false positive. That scenario needs agent-side support first (for example, treating client errors such as 401 separately from service errors), so it isn't seeded yet.
+
+### Questions without data: `planner-cases.yaml` (PR-040)
+
+Negative and ambiguous questions are scored at the planner level by `aiops evaluate`
+([docs/evals.md](../docs/evals.md)). These cases need no fixtures:
+
+- a vague question ("Something is broken") must get a clarification, not a guess;
+- an unknown service (`checkout-gateway`, `billing-service`) must never be invented;
+- two unrelated services must come back as candidates;
+- aliases and paraphrases ("checkout" → order-service) must still resolve.
+
+Every scenario question above is also planned from the question alone. S4's question
+("Login and checkout ...") names two services, so the planner asks for clarification.

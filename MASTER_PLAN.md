@@ -1384,6 +1384,8 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - LLM-judge plus rule-based scorers
 - ✅ ≥ 4/5 correct RCAs on S1–S5, 0 false positives on S0.
 
+> **As built (PR-040) ✅:** `aiops evaluate` / `make evaluate` ([docs/evals.md](docs/evals.md), ADR-0018) writes ONE scorecard (`evals/reports/<date>-system-<mode>.md` + JSON). It covers per-agent evals for all 7 agents (pass rate, FP rate, citation validity, tool calls, tokens, latency, cost), **planner** service identification (every scenario question + negative/ambiguous cases in `scenarios/planner-cases.yaml`: vague question → clarification, unknown service never invented, two unrelated services → candidates), and S0–S5 **end to end** (rule-based root-cause accuracy, optional LLM judge `judge/v1` that is skipped with a note when there is no key, Brier calibration, claim citations, severity, time to report, tokens, cost from the `evals.pricing` table, default 0). The header records the profile, provider, models, prompt refs incl. provider fragments, agent/RCA versions and the commit SHA. **Regression gate:** CI job `evals` (replay, zero tokens) fails when a pass rate or an accuracy drops or an FP rate rises versus `evals/baselines/replay.json` (`make evaluate-baseline` accepts new numbers). Replay result: 5/5 root causes, 0/1 FP, 100 % valid citations, 7/7 agents at 100 %, planner 11/12. **Deviations:** "tool versions" are recorded as prompt/provider-fragment refs and agent versions (MCP servers are unversioned); the ≥ 4/5 target is met in replay, while a live scorecard needs a key (`make evaluate-live`, not run here); the planner asks for clarification on S4's two-service question (recorded in the baseline).
+
 #### PR-041 · AI observability + cost controls
 - **Branch:** `feat/041-ai-observability`
 - **Scope:**
@@ -1488,7 +1490,7 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 | Integration | Agents against the live local stack with scenarios injected | pytest `-m integration` | Local, before merging agent PRs |
 | API | Endpoints, SSE | httpx + pytest | CI |
 | E2E UI | Ask → progress → report → approve | Playwright | Local / nightly |
-| **Evals** | Scenario accuracy, hallucination, cost, latency | `evals/` | Local, before each tag |
+| **Evals** | Scenario accuracy, hallucination, cost, latency | `aiops evaluate` ([docs/evals.md](docs/evals.md)) | CI (replay + regression gate); live locally before each tag |
 
 **Eval scorecard targets for v1.0.0:**
 

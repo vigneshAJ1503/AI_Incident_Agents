@@ -544,7 +544,7 @@ class Orchestrator:
                 inv.status = InvestigationStatus.FAILED
         inv.completed_at = utcnow()
         inv.duration_ms = round((time.perf_counter() - run.started) * 1000, 2)
-        inv.versions = self._versions(inv)
+        inv.versions = {**inv.versions, **self._versions(inv)}  # keeps the RCA version
         self._publish(
             run, "investigation_finished", status=inv.status.value, duration_ms=inv.duration_ms
         )

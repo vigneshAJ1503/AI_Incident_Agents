@@ -11,6 +11,7 @@ from aiops.cli import (
     demo_cmd,
     doctor_cmd,
     eval_cmd,
+    evaluate_cmd,
     fault_cmd,
     history_cmd,
     investigate_cmd,
@@ -48,6 +49,7 @@ app.add_typer(fault_cmd.app, name="fault")
 app.add_typer(demo_cmd.app, name="demo")
 app.add_typer(history_cmd.app, name="db")
 app.command("doctor")(doctor_cmd.doctor)
+app.command("evaluate")(evaluate_cmd.evaluate)
 app.command("plan")(investigate_cmd.plan)
 app.command("investigate")(investigate_cmd.investigate)
 app.command("history")(history_cmd.history)

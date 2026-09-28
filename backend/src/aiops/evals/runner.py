@@ -85,6 +85,8 @@ class ScenarioEval(BaseModel):
     tool_calls: int = 0
     llm_calls: int = 0
     tokens: int = 0
+    input_tokens: int = 0
+    output_tokens: int = 0
     latency_ms: float = 0.0
     model: str | None = None
     prompt_version: str | None = None
@@ -215,6 +217,8 @@ def evaluate_result(scenario: Scenario, agent: str, result: AgentResult) -> Scen
         tool_calls=len(result.tool_calls),
         llm_calls=result.usage.calls,
         tokens=result.usage.total_tokens,
+        input_tokens=result.usage.input_tokens,
+        output_tokens=result.usage.output_tokens,
         latency_ms=round(result.duration_ms, 2),
         model=result.model,
         prompt_version=result.prompt_version,

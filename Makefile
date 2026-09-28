@@ -369,6 +369,19 @@ demo-export: ## Export contract-shaped demo JSON from real replays (default demo
 eval-investigations: ## Replay S0-S5 end to end and score the RCA against ground truth
 	cd $(BACKEND) && uv run aiops eval investigations
 
+# --- System evaluation (PR-040): docs/evals.md ------------------------------------------
+.PHONY: evaluate
+evaluate: venv-fix ## ONE scorecard: every agent + planner + S0-S5 end to end (replay, zero tokens) + regression gate [SCENARIO=S1] [EVALUATE_ARGS=...]
+	cd $(BACKEND) && uv run --no-sync aiops evaluate --mode replay $(if $(SCENARIO),--scenario $(SCENARIO),) $(EVALUATE_ARGS)
+
+.PHONY: evaluate-live
+evaluate-live: venv-fix ## Same on the live stack with the configured hosted LLM (spends tokens) [JUDGE=1] [EVALUATE_ARGS=...]
+	cd $(BACKEND) && uv run --no-sync aiops evaluate --mode live $(if $(JUDGE),--judge,) $(EVALUATE_ARGS)
+
+.PHONY: evaluate-baseline
+evaluate-baseline: venv-fix ## Accept the current replay numbers as the new baseline (evals/baselines/replay.json)
+	cd $(BACKEND) && uv run --no-sync aiops evaluate --mode replay --update-baseline
+
 # --- REST + SSE API (PR-035): `aiops serve`, docs/api/README.md ----------------------------
 APP_COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f deploy/compose/docker-compose.app.yml
 API_PORT ?= 8000

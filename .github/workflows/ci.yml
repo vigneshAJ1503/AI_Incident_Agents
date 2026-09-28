@@ -37,6 +37,33 @@ jobs:
         working-directory: .
         run: docker build -f backend/Dockerfile -t aiops/backend:ci .
 
+  evals:
+    name: evals (replay · zero tokens · regression gate)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: backend/uv.lock
+      - name: Install
+        run: uv sync --locked
+      # Agents + planner cases + S0-S5 end to end, scored against scenarios/*/expected.yaml;
+      # exit 1 when pass rate / root-cause accuracy drops or the false-positive rate rises
+      # versus evals/baselines/replay.json (docs/evals.md).
+      - name: System scorecard + regression gate
+        run: uv run aiops evaluate --mode replay --profile local --out "$RUNNER_TEMP/scorecard"
+      - name: Upload scorecard
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: system-scorecard-replay
+          path: ${{ runner.temp }}/scorecard
+          retention-days: 14
+
   discover-mcp-servers:
     name: discover MCP servers
     runs-on: ubuntu-latest

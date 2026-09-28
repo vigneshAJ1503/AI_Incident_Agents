@@ -324,3 +324,34 @@ PROFILE ?= local
 .PHONY: doctor
 doctor: venv-fix ## Check a profile end to end: make doctor PROFILE=local-k8s [ARGS="--skip-llm --json"]
 	cd $(BACKEND) && uv run --no-sync aiops doctor --profile $(PROFILE) $(ARGS)
+
+# --- Web UI (PR-036..038): frontend/ (Next.js). DEMO=1 serves the static demo dataset ------
+UI := frontend
+UI_PORT ?= 3100
+.PHONY: ui-install
+ui-install: ## Install the Web UI's pinned dependencies (npm ci)
+	cd $(UI) && npm ci
+
+.PHONY: ui-dev
+ui-dev: ## Web UI dev server on http://localhost:3100 (DEMO=1: no backend needed)
+	cd $(UI) && NEXT_PUBLIC_DEMO=$(if $(DEMO),1,0) npx next dev --port $(UI_PORT)
+
+.PHONY: ui-build
+ui-build: ## Production build of the Web UI (DEMO=1 bakes in demo mode)
+	cd $(UI) && NEXT_PUBLIC_DEMO=$(if $(DEMO),1,0) npm run build
+
+.PHONY: ui-test
+ui-test: ## Web UI lint (ESLint + Prettier), typecheck and unit tests (Vitest)
+	cd $(UI) && npm run lint && npm run typecheck && npm test
+
+.PHONY: ui-e2e
+ui-e2e: ## Web UI Playwright e2e (chromium) against a demo-mode production build
+	cd $(UI) && NEXT_PUBLIC_DEMO=1 NEXT_PUBLIC_DEMO_SPEED=12 npm run build && npx playwright test
+
+.PHONY: ui-demo-data
+ui-demo-data: ## Regenerate the Web UI demo dataset (frontend/src/demo/*.json, deterministic)
+	cd $(UI) && npm run demo:generate
+
+.PHONY: ui-screenshots
+ui-screenshots: ## Capture docs/ui/screenshots (dark + light) from a demo build
+	cd $(UI) && NEXT_PUBLIC_DEMO=1 npm run build && SCREENSHOTS=1 npx playwright test screenshots

@@ -1,0 +1,1 @@
+{"status":"ok","version":"0.6.0-demo","profile":"demo","llm":{"provider":"fake","configured":false},"capabilities":{"logs":"ok","metrics":"ok","alerts":"ok","k8s":"ok","code":"ok","tickets":"ok","knowledge":"ok"},"faults_enabled":false}

@@ -272,10 +272,10 @@ Each use case has an ID that PRs, tests and eval scenarios refer to.
 
 ### UC-12 — Switch environment by configuration
 - **Flow:**
-  1. Copy `config/environments/local.yaml` to `acme-prod.yaml`.
+  1. `aiops profile init acme-prod` (copies `profiles/_template`; PR-P1, ADR-0011).
   2. Change the connector URLs, field mappings and service catalog.
   3. Set the secrets.
-  4. Run `AIOPS_ENV=acme-prod`.
+  4. Run with `AIOPS_PROFILE=acme-prod` (`AIOPS_ENV` is a deprecated alias).
 - **Acceptance:** PR-043 proves this by swapping the logs backend (e.g. Elasticsearch → OpenSearch or Loki) with **no code change in any agent**
 
 ### UC-13 — Clarify ambiguous questions
@@ -327,15 +327,17 @@ AI_Incident_Agents/
 │   ├── adr/                           # 0001-python-fastapi.md, 0002-custom-orchestrator.md ...
 │   ├── use-cases/                     # UC-01.md ... UC-13.md (detail + acceptance tests)
 │   ├── setup/                         # prerequisites.md, troubleshooting.md
-│   └── onboarding-new-environment.md  # SaaS portability playbook (PR-043)
+│   └── portability.md                 # Onboarding a company by config only (PR-P1, §17)
+│
+├── profiles/                          # One folder per company, AIOPS_PROFILE=<name> (ADR-0011)
+│   ├── local/                         # profile.yaml services.yaml .env.example (synthetic demo)
+│   ├── local-k8s/                     # extends local: real Minikube logs
+│   ├── _template/                     # heavily commented starting point + README
+│   └── <company>/                     # `aiops profile init <company>` (gitignored; private repo)
+│       └── prompts/<agent>/vN.md      # optional prompt overrides
 │
 ├── config/
-│   ├── environments/
-│   │   ├── local.yaml                 # Connectors, models, limits for local
-│   │   └── example-saas.yaml          # Template for a company environment
-│   ├── service-catalog/
-│   │   └── local.yaml                 # service → namespace, labels, index, repo, runbooks, owners
-│   └── prompts/<agent>/v1.md          # Versioned prompts; version recorded per investigation
+│   └── prompts/<agent>/v1.md          # Shared versioned prompts; version recorded per investigation
 │
 ├── backend/
 │   ├── pyproject.toml  uv.lock  Dockerfile
@@ -521,7 +523,15 @@ Pin exact versions in `.env` (`ES_VERSION=…`, etc.) during PR-007, using the l
 
 These contracts are the backbone. Get them right in PR-002/003 and every later PR plugs into them.
 
-### 10.1 Environment config — `config/environments/local.yaml`
+> **Deviation (PR-P1, ADR-0011):** environments became **company profiles**.
+> `config/environments/<env>.yaml` → `profiles/<name>/profile.yaml` (+ `metadata`, `extends`),
+> `config/service-catalog/<env>.yaml` → `profiles/<name>/services.yaml`, plus a per-profile
+> `.env.example` and optional `prompts/` overrides. Selected by `AIOPS_PROFILE`
+> (`AIOPS_ENV` = deprecated alias; legacy files still load). The sketches below are the
+> original design; the real, commented format is `profiles/_template/`, and
+> docs/portability.md has the provider matrix and which settings to change.
+
+### 10.1 Environment config — now `profiles/<name>/profile.yaml`
 
 ```yaml
 environment: local
@@ -568,7 +578,7 @@ guardrails:
   read_only: true
 ```
 
-### 10.2 Service catalog — `config/service-catalog/local.yaml`
+### 10.2 Service catalog — now `profiles/<name>/services.yaml`
 
 ```yaml
 services:
@@ -1020,6 +1030,38 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
   with a `meta.json` window that replays reuse (`aiops.evals.replay.replay_task`, now used
   by the eval runner). Replay eval 6/6, S0 no false positive.
 
+### Portability (moved earlier, EPIC-015 SaaS Readiness)
+
+The human's top goal: **moving to a new company = configuration only, never code.** The
+portability parts of PR-043 moved ahead of the RCA phases and are split into four PRs:
+
+#### PR-P1 · Company profile pack ✅
+- **Branch:** `feat/p1-profile-pack` · ADR-0011 · docs/portability.md
+- **Scope:**
+  - `profiles/<name>/{profile.yaml, services.yaml, .env.example, prompts/}` selected by
+    `AIOPS_PROFILE` / `--profile`; `local`, `local-k8s`, a commented `_template`
+  - back-compat: `AIOPS_ENV` alias, legacy `config/environments/*.yaml` still load
+  - `aiops profile list | show [--resolved] | validate | init | diff`
+  - provider matrix (implemented vs planned) with readable validation errors
+  - vendor-coupling audit (file:line table in docs/portability.md)
+- ✅ Existing tests, fixtures and evals pass unchanged; `_template` validates; `init` → `validate` works.
+
+#### PR-P2 · Provider adapters
+- **Scope:** move the audited couplings (ES|QL/KQL in the Log agent, JQL in the Tickets agent,
+  Alertmanager matchers, tool names) behind per-capability adapters selected by `provider`;
+  per-provider prompt fragments; `anthropic` / `bedrock` LLM providers.
+- ✅ No vendor query language or tool name left in `agents/`.
+
+#### PR-P3 · `aiops doctor` + catalog import
+- **Scope:** `aiops doctor [--profile]` checks every capability's connectivity, auth,
+  read-only permissions and allowlisted tools; `aiops catalog import --from backstage|k8s`.
+- ✅ A misconfigured profile yields one actionable line per problem.
+
+#### PR-P4 · Second logs provider proof
+- **Scope:** a second logs backend (OpenSearch or Loki) through a P2 adapter and an example
+  profile.
+- 🎯 UC-12 ✅ The Log agent evals pass on the second backend with **zero agent code change**.
+
 ### Phase 5 — Metrics slice (EPIC-007)
 
 #### PR-020 · Prometheus + Grafana + kube-state-metrics
@@ -1252,11 +1294,10 @@ Legend: 🎯 use cases · ✅ Definition of Done · 🏷 tag after merge
 #### PR-043 · Portability proof + onboarding + enterprise LLM providers
 - **Branch:** `feat/043-portability`
 - **Scope:**
-  - a second logs backend (OpenSearch or Loki) via config
-  - `example-saas.yaml`
-  - `docs/onboarding-new-environment.md` (§17)
-  - `aiops doctor` checks connectivity and permissions for every capability
-  - optional `anthropic` (Claude), Bedrock and Vertex providers for companies that have keys
+  - *(moved earlier: see "Portability (moved earlier)", PR-P1..P4. The profile pack,
+    template and docs/portability.md shipped in PR-P1; the second logs backend, `aiops doctor`
+    and the anthropic/Bedrock providers are PR-P2..P4.)*
+  - optional Vertex provider for companies that have keys
 - 🎯 UC-12
 - ✅ The Log agent evals pass on the second backend with **zero agent code change**.
 
@@ -1384,7 +1425,11 @@ When you join a company, onboarding means configuration only:
    | knowledge | Confluence, Notion, Git docs |
 
 2. **Pick or deploy an MCP server** for each capability (most vendors now ship official ones). If one is missing, write a thin FastMCP adapter in `mcp-servers/`, exposing the same tool names as the one we use locally.
-3. **Create `config/environments/<company>.yaml`**, covering:
+3. **Create the company profile**: `aiops profile init <company>` → `profiles/<company>/`
+   (`profile.yaml`, `services.yaml`, `.env.example`, optional `prompts/`), then
+   `aiops profile validate <company>` and `AIOPS_PROFILE=<company>`. The practical guide
+   (provider matrix, settings to change, read-only credentials, secrets, day-1 checklist)
+   is **docs/portability.md**. The profile covers:
    - endpoints
    - field mappings (e.g. Datadog's `service` vs `kubernetes.labels.app`)
    - allowlists

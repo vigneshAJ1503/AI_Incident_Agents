@@ -112,7 +112,7 @@ def test_only_the_prod_namespace_is_shipped() -> None:
 
 
 def test_log_agent_runs_on_real_logs_with_config_only() -> None:
-    """AIOPS_ENV=local-k8s: the unchanged Log agent queries logs-k8s-*, filtered by service."""
+    """AIOPS_PROFILE=local-k8s: the unchanged Log agent queries logs-k8s-*, filtered by service."""
     settings = load_settings("local-k8s", CONFIG)
     deps = build_deps(settings, llm=FakeLLMProvider(responder=echo_responder("no_signal")))
     context = IncidentContext(

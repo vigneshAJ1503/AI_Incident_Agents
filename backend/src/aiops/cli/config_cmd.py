@@ -20,7 +20,7 @@ def validate(env: str | None = EnvOption) -> None:
     """Validate the environment config and its service catalog."""
     settings = load_settings(env)
     catalog = ServiceCatalog.from_settings(settings)
-    table = Table(title=f"Environment '{settings.environment}' is valid", show_header=True)
+    table = Table(title=f"Profile '{settings.profile}' is valid", show_header=True)
     table.add_column("Capability")
     table.add_column("Provider")
     table.add_column("MCP")

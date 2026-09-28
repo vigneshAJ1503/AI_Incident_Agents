@@ -27,7 +27,9 @@ def build_deps(
         settings=settings,
         llm=llm or create_provider(settings.llm),
         mcp=mcp or MCPRegistry(settings, record_dir=record_dir, replay_dir=replay_dir),
-        prompts=PromptLoader(settings.config_dir / "prompts"),
+        prompts=PromptLoader(
+            settings.config_dir / "prompts", overrides=settings.prompt_override_dirs()
+        ),
         catalog=ServiceCatalog.from_settings(settings),
         events=events or NullEventSink(),
     )

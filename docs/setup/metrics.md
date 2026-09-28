@@ -63,7 +63,7 @@ Agents read metrics only through `mcp-servers/prometheus-mcp` (127.0.0.1:8103, A
 make prometheus-mcp-up        # or make mcp-up (all MCP servers)
 ```
 
-Portability lives in `config/environments/local.yaml` → `capabilities.metrics.settings`: metric names (`metrics.requests`, `metrics.latency_histogram`, …) and label names (`labels.service`, `labels.namespace`, …). Label *values* per service come from the service catalog (`metrics: {labels: {service: payment-service, namespace: prod}}`).
+Portability lives in `profiles/local/profile.yaml` → `capabilities.metrics.settings` (per company: `profiles/<company>/`, docs/portability.md): metric names (`metrics.requests`, `metrics.latency_histogram`, …) and label names (`labels.service`, `labels.namespace`, …). Label *values* per service come from the service catalog (`metrics: {labels: {service: payment-service, namespace: prod}}`).
 
 There is no Grafana MCP. Evidence links are built from two templates:
 - `ui_link_template`: a Grafana dashboard panel (`/d/aiops-service-overview/...&viewPanel=6`), which opens once `make grafana-up` runs;

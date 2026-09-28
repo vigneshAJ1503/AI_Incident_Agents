@@ -17,7 +17,7 @@ Minikube node "aiops"                                           Docker network "
 │   tail (CRI) -> kubernetes -> parser -> modify -> es ─┼────►│                          │
 └───────────────────────────────────────────────────────┘     └────────────▲─────────────┘
                                                                            │ ES|QL (read-only,
-             AIOPS_ENV=local-k8s  aiops agent run logs ...  ── elasticsearch-mcp ─┘ allowlist logs-k8s-*)
+             AIOPS_PROFILE=local-k8s aiops agent run logs ...  ── elasticsearch-mcp ─┘ allowlist logs-k8s-*)
 ```
 
 Pipeline (`deploy/k8s/logging/fluent-bit.conf`):
@@ -79,20 +79,18 @@ Investigate on real logs (no LLM key needed to see the deterministic phase: `LLM
 
 ```bash
 cd backend
-AIOPS_ENV=local-k8s uv run aiops agent run logs "Payment API is returning HTTP 500" -s payment --since 30m
+AIOPS_PROFILE=local-k8s uv run aiops agent run logs "Payment API is returning HTTP 500" -s payment --since 30m
 ```
 
 ## How the config switch works (zero agent code change)
 
-`config/environments/local-k8s.yaml` **extends** `local` and overrides only the `logs`
-capability; `config/service-catalog/local-k8s.yaml` **extends** the `local` catalog and
+`profiles/local-k8s/profile.yaml` **extends** `local` and overrides only the `logs`
+capability; `profiles/local-k8s/services.yaml` **extends** the `local` catalog and
 overrides only each service's production log index:
 
 ```yaml
-# config/environments/local-k8s.yaml
-extends: local
-environment: local-k8s
-service_catalog: local-k8s
+# profiles/local-k8s/profile.yaml
+extends: local            # the folder name is the profile (and catalog) name
 capabilities:
   logs:
     settings:
@@ -100,7 +98,7 @@ capabilities:
       service_filter: true                         # one index for all services
       baseline_hours: 0.25                         # short-lived, shared cluster
 
-# config/service-catalog/local-k8s.yaml
+# profiles/local-k8s/services.yaml
 extends: local
 services:
   - name: payment-service
@@ -108,9 +106,9 @@ services:
   # ... same for order/user/inventory
 ```
 
-- `extends:` (environments and catalogs) is a generic loader feature: mappings are merged
-  deeply, catalog services by `name`, and the child never inherits the parent's
-  `environment` name. Anything added to `local.yaml` later is inherited automatically.
+- `extends:` (profiles and catalogs, ADR-0011) is a generic loader feature: mappings are
+  merged deeply, catalog services by `name`, and the child never inherits the parent's
+  name or `metadata`. Anything added to `profiles/local/profile.yaml` later is inherited automatically.
 - **Shared index → service filter.** Synthetic logs have one index per service; real
   Kubernetes logs share one. With `service_filter: true`, every Log-agent query starts
   with `FROM <index> | WHERE <fields.service> == "<catalog logs.service_value>"`, the UI

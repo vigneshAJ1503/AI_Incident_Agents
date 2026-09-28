@@ -18,6 +18,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
     for var in [
         "AIOPS_ENV",
         "AIOPS_CONFIG_DIR",
+        "AIOPS_PROFILE",
+        "AIOPS_PROFILES_DIR",
         "LLM_PROVIDER",
         "OPENAI_COMPAT_BASE_URL",
         "OPENAI_COMPAT_API_KEY",

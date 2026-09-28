@@ -1,12 +1,23 @@
-"""Environment configuration: YAML + ${ENV} interpolation, validated with Pydantic.
+"""Company profiles: YAML + ${ENV} interpolation, validated with Pydantic.
 
 Agents never talk to a vendor directly. They ask for a *capability* (``logs``,
-``metrics``, ...) and the environment file binds that capability to a provider
-and an MCP server. Onboarding a new company = a new ``config/environments/*.yaml``.
+``metrics``, ...) and the profile binds that capability to a provider and an MCP
+server. Onboarding a new company = a new ``profiles/<company>/`` folder, selected with
+``AIOPS_PROFILE`` (ADR-0011, docs/portability.md)::
+
+    profiles/<name>/profile.yaml    llm, capabilities, limits, guardrails, agents, metadata
+    profiles/<name>/services.yaml   the service catalog (optional when ``extends:`` gives one)
+    profiles/<name>/prompts/        optional prompt overrides (fall back to config/prompts/)
+    profiles/<name>/.env.example    the ${VAR} names the profile needs (secrets live in .env)
+
+Back-compat: ``AIOPS_ENV`` is a deprecated alias of ``AIOPS_PROFILE``, and a legacy
+``config/environments/<name>.yaml`` (+ ``config/service-catalog/``) still loads when no
+profile of that name exists.
 """
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 from functools import lru_cache
@@ -17,9 +28,18 @@ import yaml
 from dotenv import load_dotenv
 from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
 
+_log = logging.getLogger(__name__)
+
+PROFILE_VAR = "AIOPS_PROFILE"
+#: Deprecated alias of AIOPS_PROFILE (kept so existing shells, docs and scripts keep working).
 ENV_VAR = "AIOPS_ENV"
 CONFIG_DIR_VAR = "AIOPS_CONFIG_DIR"
+#: Where profiles live (default: <repo>/profiles). Point it at a private repo/folder so a
+#: company's profile never has to be committed to this public repository.
+PROFILES_DIR_VAR = "AIOPS_PROFILES_DIR"
 DEFAULT_ENV = "local"
+PROFILE_FILE = "profile.yaml"
+CATALOG_FILE = "services.yaml"
 
 # ${VAR} (required) or ${VAR:-default} (optional, default may be empty)
 _INTERPOLATION = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
@@ -126,8 +146,17 @@ class GuardrailsConfig(_Strict):
     approval_ttl_hours: float = Field(default=24.0, gt=0)
 
 
+class ProfileMetadata(_Strict):
+    """Who this profile is for. Informational; never inherited through ``extends``."""
+
+    company: str = ""
+    description: str = ""
+    owners: list[str] = Field(default_factory=list)
+
+
 class Settings(_Strict):
-    environment: str
+    environment: str  # the profile name (legacy: the environment file name)
+    metadata: ProfileMetadata = Field(default_factory=ProfileMetadata)
     llm: LLMConfig
     capabilities: dict[str, CapabilityConfig] = Field(default_factory=dict)
     limits: AgentLimits = Field(default_factory=AgentLimits)
@@ -137,6 +166,28 @@ class Settings(_Strict):
 
     # Set by the loader, not by YAML.
     config_dir: Path = Field(default=Path("config"), exclude=True)
+    #: Profile folders, the selected one first, then its ``extends`` ancestors. Empty for a
+    #: legacy ``config/environments/*.yaml`` environment.
+    profile_chain: tuple[Path, ...] = Field(default=(), exclude=True)
+
+    @property
+    def profile(self) -> str:
+        return self.environment
+
+    @property
+    def profile_dir(self) -> Path | None:
+        return self.profile_chain[0] if self.profile_chain else None
+
+    def catalog_path(self) -> Path:
+        """The service catalog: ``profiles/<service_catalog>/services.yaml`` (legacy:
+        ``config/service-catalog/<service_catalog>.yaml``)."""
+        if self.profile_chain:
+            return self.profile_chain[0].parent / self.service_catalog / CATALOG_FILE
+        return self.config_dir / "service-catalog" / f"{self.service_catalog}.yaml"
+
+    def prompt_override_dirs(self) -> list[Path]:
+        """``prompts/`` folders of the profile chain (most specific first) that exist."""
+        return [d / "prompts" for d in self.profile_chain if (d / "prompts").is_dir()]
 
     def capability(self, name: str) -> CapabilityConfig:
         cap = self.capabilities.get(name)
@@ -167,26 +218,73 @@ class Settings(_Strict):
 # --------------------------------------------------------------------------- loading
 
 
+def _is_config_dir(path: Path) -> bool:
+    """The shared ``config/`` dir: prompts (current layout) or environments (legacy)."""
+    return (path / "prompts").is_dir() or (path / "environments").is_dir()
+
+
 def find_config_dir(start: Path | None = None) -> Path:
     """Locate the repo ``config/`` directory (env override, else walk upwards)."""
     override = os.environ.get(CONFIG_DIR_VAR)
     if override:
         path = Path(override).expanduser().resolve()
-        if not (path / "environments").is_dir():
-            raise ConfigError(f"{CONFIG_DIR_VAR}={override} has no 'environments/' directory.")
+        if not _is_config_dir(path):
+            raise ConfigError(
+                f"{CONFIG_DIR_VAR}={override} has neither 'prompts/' nor 'environments/'."
+            )
         return path
     candidates = [start or Path.cwd(), Path(__file__).resolve()]
     for origin in candidates:
         for parent in [origin, *origin.parents]:
-            if (parent / "config" / "environments").is_dir():
+            if _is_config_dir(parent / "config"):
                 return parent / "config"
     raise ConfigError(
-        f"Could not find 'config/environments/'. Run from the repository or set {CONFIG_DIR_VAR}."
+        "Could not find the repository 'config/' directory. Run from the repository or set "
+        f"{CONFIG_DIR_VAR}."
     )
 
 
-def interpolate(value: Any, missing: list[str]) -> Any:
-    """Recursively replace ${VAR} / ${VAR:-default} in strings; collect missing vars."""
+def find_profiles_dir(config_dir: Path) -> Path:
+    """``$AIOPS_PROFILES_DIR``, else ``profiles/`` next to ``config/``."""
+    override = os.environ.get(PROFILES_DIR_VAR)
+    return Path(override).expanduser().resolve() if override else config_dir.parent / "profiles"
+
+
+def list_profile_names(profiles_dir: Path) -> list[str]:
+    if not profiles_dir.is_dir():
+        return []
+    return sorted(p.name for p in profiles_dir.iterdir() if (p / PROFILE_FILE).is_file())
+
+
+_warned_env_alias = False
+
+
+def selected_profile(explicit: str | None = None) -> str:
+    """``explicit`` > ``$AIOPS_PROFILE`` > ``$AIOPS_ENV`` (deprecated) > ``local``."""
+    global _warned_env_alias
+    if explicit:
+        return explicit
+    profile, legacy = os.environ.get(PROFILE_VAR), os.environ.get(ENV_VAR)
+    if profile:
+        return profile
+    if legacy:
+        if not _warned_env_alias:
+            _warned_env_alias = True
+            _log.warning(
+                "%s is deprecated; use %s=%s (same meaning, docs/portability.md).",
+                ENV_VAR,
+                PROFILE_VAR,
+                legacy,
+            )
+        return legacy
+    return DEFAULT_ENV
+
+
+def interpolate(value: Any, missing: list[str], *, keep_missing: bool = False) -> Any:
+    """Recursively replace ${VAR} / ${VAR:-default} in strings; collect missing vars.
+
+    ``keep_missing`` leaves an unset required ``${VAR}`` in place (for display/diff).
+    """
     if isinstance(value, str):
 
         def _sub(match: re.Match[str]) -> str:
@@ -197,14 +295,31 @@ def interpolate(value: Any, missing: list[str]) -> Any:
             if default is not None:
                 return default
             missing.append(name)
-            return ""
+            return match.group(0) if keep_missing else ""
 
         return _INTERPOLATION.sub(_sub, value)
     if isinstance(value, dict):
-        return {k: interpolate(v, missing) for k, v in value.items()}
+        return {k: interpolate(v, missing, keep_missing=keep_missing) for k, v in value.items()}
     if isinstance(value, list):
-        return [interpolate(v, missing) for v in value]
+        return [interpolate(v, missing, keep_missing=keep_missing) for v in value]
     return value
+
+
+def referenced_env_vars(value: Any) -> dict[str, bool]:
+    """``{VAR: required}`` for every ${VAR} / ${VAR:-default} referenced in ``value``."""
+    found: dict[str, bool] = {}
+
+    def _add(name: str, required: bool) -> None:
+        found[name] = found.get(name, False) or required
+
+    if isinstance(value, str):
+        for match in _INTERPOLATION.finditer(value):
+            _add(match.group(1), match.group(2) is None)
+    elif isinstance(value, dict | list):
+        for item in value.values() if isinstance(value, dict) else value:
+            for name, required in referenced_env_vars(item).items():
+                _add(name, required)
+    return found
 
 
 def _drop_empty(value: Any) -> Any:
@@ -247,6 +362,19 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
     return merged
 
 
+def _config_name(path: Path) -> str:
+    """'profiles/acme/profile.yaml' -> 'acme'; 'environments/local.yaml' -> 'local'."""
+    return path.parent.name if path.name in (PROFILE_FILE, CATALOG_FILE) else path.stem
+
+
+def extends_path(path: Path, parent_name: str) -> Path:
+    """Where ``extends: <parent_name>`` points: the same file of profile ``<parent_name>``
+    (``profiles/<parent>/profile.yaml``), or a sibling file in the legacy layout."""
+    if path.name in (PROFILE_FILE, CATALOG_FILE):
+        return path.parent.parent / parent_name / path.name
+    return path.parent / f"{parent_name}.yaml"
+
+
 def load_extending_yaml(
     path: Path,
     merge: Any = deep_merge,
@@ -254,20 +382,21 @@ def load_extending_yaml(
     drop: tuple[str, ...] = (),
     _seen: tuple[Path, ...] = (),
 ) -> dict[str, Any]:
-    """Load ``path``; ``extends: <name>`` = a sibling file it overrides (chains allowed).
+    """Load ``path``; ``extends: <name>`` = another profile (or sibling file) it overrides.
 
-    ``drop`` = keys of the parent that a child never inherits (e.g. ``environment``).
+    Chains are allowed. ``drop`` = keys of the parent that a child never inherits
+    (e.g. ``environment``).
     """
     if path in _seen:
-        chain = " -> ".join(p.stem for p in (*_seen, path))
+        chain = " -> ".join(_config_name(p) for p in (*_seen, path))
         raise ConfigError(f"Circular 'extends' in {path.parent}: {chain}")
     data = load_yaml(path)
     parent_name = data.pop("extends", None)
     if parent_name is None:
         return data
     if not isinstance(parent_name, str) or not parent_name.strip():
-        raise ConfigError(f"{path}: 'extends' must be the name of a sibling file")
-    parent_path = path.parent / f"{parent_name.strip()}.yaml"
+        raise ConfigError(f"{path}: 'extends' must be the name of another profile")
+    parent_path = extends_path(path, parent_name.strip())
     parent = load_extending_yaml(parent_path, merge, drop=drop, _seen=(*_seen, path))
     for key in drop:
         parent.pop(key, None)
@@ -275,28 +404,86 @@ def load_extending_yaml(
     return result
 
 
-def load_settings(env: str | None = None, config_dir: Path | None = None) -> Settings:
-    """Load and validate ``config/environments/<env>.yaml``. Fails fast with readable errors.
+def profile_chain(profile_dir: Path) -> tuple[Path, ...]:
+    """``profile_dir`` followed by its ``extends`` ancestors."""
+    chain: list[Path] = []
+    current: Path | None = profile_dir
+    while current is not None:
+        if current in chain:
+            names = " -> ".join(p.name for p in (*chain, current))
+            raise ConfigError(f"Circular 'extends' in {current.parent}: {names}")
+        chain.append(current)
+        parent = load_yaml(current / PROFILE_FILE).get("extends")
+        current = current.parent / str(parent).strip() if parent else None
+    return tuple(chain)
 
-    An environment may start from another one with ``extends: <env>`` and override only
-    what differs (e.g. ``local-k8s`` = ``local`` with real Kubernetes logs).
+
+def _profile_not_found(name: str, profiles_dir: Path, config_dir: Path) -> ConfigError:
+    available = list_profile_names(profiles_dir)
+    legacy = sorted(p.stem for p in (config_dir / "environments").glob("*.yaml"))
+    known = ", ".join([*available, *(f"{n} (legacy)" for n in legacy)]) or "none"
+    return ConfigError(
+        f"Profile '{name}' not found: no {profiles_dir / name / PROFILE_FILE} "
+        f"(nor legacy {config_dir / 'environments' / f'{name}.yaml'}). Available: {known}. "
+        f"Create one with: aiops profile init {name}"
+    )
+
+
+def load_settings_lenient(
+    env: str | None = None, config_dir: Path | None = None, *, keep_missing: bool = False
+) -> tuple[Settings, list[str]]:
+    """Load a profile; returns ``(settings, missing required env vars)``.
+
+    With ``keep_missing`` an unset required ``${VAR}`` stays literally in the value instead
+    of failing (``aiops profile show/diff`` of a profile whose secrets aren't set here).
     """
     config_dir = config_dir or find_config_dir()
+    name = selected_profile(env)
+    profiles_dir = find_profiles_dir(config_dir)
+    profile_dir = profiles_dir / name
+    chain: tuple[Path, ...] = ()
+    if (profile_dir / PROFILE_FILE).is_file():
+        path = profile_dir / PROFILE_FILE
+        chain = profile_chain(profile_dir)
+        # The profile's own secrets file (gitignored), then the repo .env; the shell wins.
+        load_dotenv(profile_dir / ".env", override=False)
+    else:
+        path = config_dir / "environments" / f"{name}.yaml"
+        if not path.is_file():
+            raise _profile_not_found(name, profiles_dir, config_dir)
     load_dotenv(config_dir.parent / ".env", override=False)
-    env = env or os.environ.get(ENV_VAR) or DEFAULT_ENV
-    path = config_dir / "environments" / f"{env}.yaml"
 
     missing: list[str] = []
-    raw = _drop_empty(interpolate(load_extending_yaml(path, drop=("environment",)), missing))
-    if missing:
-        names = ", ".join(sorted(set(missing)))
-        raise ConfigError(f"Missing required environment variables for {path.name}: {names}")
-    raw.setdefault("environment", env)
+    merged = load_extending_yaml(path, drop=("environment", "metadata"))
+    raw = _drop_empty(interpolate(merged, missing, keep_missing=keep_missing))
+    missing = sorted(set(missing))
+    label = f"profile '{name}'" if chain else path.name
+    if missing and not keep_missing:
+        where = f"profiles/{name}/.env, the repo .env or the shell" if chain else ".env"
+        raise ConfigError(
+            f"Missing required environment variables for {label}: {', '.join(missing)} "
+            f"(set them in {where}; see the profile's .env.example)"
+        )
+    raw.setdefault("environment", name)
+    if chain and "service_catalog" not in raw:
+        # The nearest profile in the chain that has a services.yaml.
+        owner = next((d for d in chain if (d / CATALOG_FILE).is_file()), chain[0])
+        raw["service_catalog"] = owner.name
     try:
         settings = Settings.model_validate(raw)
     except ValidationError as err:
         raise ConfigError(format_validation_error(err, path)) from err
-    return settings.model_copy(update={"config_dir": config_dir})
+    return settings.model_copy(update={"config_dir": config_dir, "profile_chain": chain}), missing
+
+
+def load_settings(env: str | None = None, config_dir: Path | None = None) -> Settings:
+    """Load and validate profile ``env`` (default: ``$AIOPS_PROFILE``, then the deprecated
+    ``$AIOPS_ENV``, then ``local``). Fails fast with readable errors.
+
+    A profile may start from another one with ``extends: <profile>`` and override only
+    what differs (e.g. ``local-k8s`` = ``local`` with real Kubernetes logs).
+    """
+    return load_settings_lenient(env, config_dir)[0]
 
 
 @lru_cache(maxsize=4)

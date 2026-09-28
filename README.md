@@ -17,6 +17,7 @@ Finally, an RCA agent returns an **evidence-backed** root-cause hypothesis with 
 - 🏗️ **Architecture:** [HLD](docs/architecture/HLD.png) · [Local deployment](docs/architecture/local-deployment.png)
 - 🧭 **Decisions:** [docs/adr](docs/adr)
 - 💸 **Runs for $0:** [docs/setup/zero-cost.md](docs/setup/zero-cost.md)
+- 🏢 **New company = config only:** [docs/portability.md](docs/portability.md) (`profiles/<company>/`, `AIOPS_PROFILE`, `aiops profile init`)
 
 ## Quick start
 

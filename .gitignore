@@ -38,3 +38,10 @@ evals/reports/*.tmp
 
 # Claude Code local state (sub-agent worktrees, settings)
 /.claude/
+
+# Company profiles stay private (this repo is public): only the shipped ones are tracked.
+# Keep a company's profile in a private repo and set AIOPS_PROFILES_DIR (docs/portability.md).
+/profiles/*
+!/profiles/local/
+!/profiles/local-k8s/
+!/profiles/_template/

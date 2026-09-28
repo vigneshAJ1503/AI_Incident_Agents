@@ -1,7 +1,8 @@
-# Service catalog for `AIOPS_ENV=local-k8s` (PR-016): the `local` catalog, except that
+# Service catalog of profile `local-k8s` (PR-016): the `local` catalog, except that
 # production logs come from the real cluster, where every service shares `logs-k8s-*`
-# (the Log agent filters on `logs.service_value`, see config/environments/local-k8s.yaml).
-# Services merge by name with the parent catalog; only the differences are listed.
+# (the Log agent filters on `logs.service_value`, see profiles/local-k8s/profile.yaml).
+# `extends: <profile>` = that profile's services.yaml; services merge by name, so only the
+# differences are listed.
 extends: local
 
 services:

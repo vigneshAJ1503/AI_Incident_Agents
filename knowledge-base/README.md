@@ -27,6 +27,6 @@ last_reviewed: 2026-09-01
 - Use the section names `Summary`, `Symptoms`, `Known issues`, `Diagnosis`, `Mitigation`, `Rollback`, `Escalation`. The Knowledge agent extracts these by name.
 - Quote log messages and alert names **exactly** (for example `could not acquire a connection from the pool`). Search matches on words, and the agent matches log patterns against `Symptoms` and `Known issues`.
 - Keep each section self-contained: search results are sections, shown with their heading path (for example "Database connection pool exhaustion > Diagnosis > 1. Confirm the pool is the bottleneck").
-- File names are stable identifiers. Alert `runbook_url`s and the service catalog (`config/service-catalog/*.yaml`, `runbooks:`) refer to them.
+- File names are stable identifiers. Alert `runbook_url`s and the service catalog (`profiles/*/services.yaml`, `runbooks:`) refer to them.
 
 After editing, run `make ingest-knowledge`. Ingestion is idempotent: unchanged files are skipped, changed files are re-chunked, and deleted files are removed from the index.

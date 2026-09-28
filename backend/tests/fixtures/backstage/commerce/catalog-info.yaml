@@ -1,0 +1,28 @@
+# Two Components in one file; `checkout-service` is not in the local catalog (a new service).
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: order-service
+  description: Creates and tracks customer orders.
+  annotations:
+    backstage.io/kubernetes-label-selector: app=order-service
+    gitlab.com/project-slug: acme/commerce/order-service
+spec:
+  type: service
+  lifecycle: production
+  owner: commerce
+  dependsOn:
+    - component:payment-service
+    - component:inventory-service
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: checkout-service
+  title: Checkout
+  annotations:
+    backstage.io/kubernetes-id: checkout
+spec:
+  type: website
+  lifecycle: experimental
+  owner: user:jane.doe

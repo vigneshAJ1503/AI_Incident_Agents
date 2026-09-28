@@ -14,7 +14,6 @@ from aiops.core.config import (
     CATALOG_FILE,
     PROFILE_FILE,
     PROFILE_VAR,
-    ConfigError,
     find_config_dir,
     find_profiles_dir,
     list_profile_names,
@@ -26,12 +25,11 @@ from aiops.core.profiles import (
     PROVIDERS,
     ValidationReport,
     catalog_summary,
-    check_env_example,
-    check_settings,
     diff_dumps,
     init_profile,
     profile_env_vars,
     resolved_dump,
+    validate_profile,
 )
 
 app = typer.Typer(help="Company profiles: one folder per company.", no_args_is_help=True)
@@ -117,26 +115,7 @@ def show(
 
 
 def _validate_one(name: str) -> ValidationReport:
-    try:
-        settings, missing = load_settings_lenient(name, keep_missing=True)
-    except ConfigError as exc:
-        report = ValidationReport(name)
-        report.error(str(exc))
-        return report
-    report = ValidationReport(settings.profile)
-    for var in missing:
-        report.error(
-            f"required variable {var} is not set (put it in profiles/{name}/.env, the repo "
-            ".env or the shell)"
-        )
-    try:
-        catalog = ServiceCatalog.from_settings(settings)
-    except ConfigError as exc:
-        report.error(f"services.yaml: {exc}")
-        catalog = None
-    report.issues.extend(check_settings(settings, catalog).issues)
-    check_env_example(settings.profile_chain, report)
-    return report
+    return validate_profile(name)
 
 
 @app.command("validate")
@@ -189,12 +168,14 @@ def init(
     console.print(
         "\n[bold]Next steps[/bold] (docs/portability.md, day-1 checklist):\n"
         f"  1. Edit {target / PROFILE_FILE}: providers, MCP URLs, field/label mappings, links.\n"
-        f"  2. Edit {target / CATALOG_FILE}: your services, aliases, owners, identifiers.\n"
+        f"  2. {target / CATALOG_FILE}: generate it with  aiops catalog import --profile {name} "
+        "--from kubernetes|backstage --dry-run  (then review and hand-edit).\n"
         f"  3. cp {target / '.env.example'} {target / '.env'}  and fill in the secrets "
         "(.env is gitignored; read-only credentials only).\n"
         f"  4. uv run aiops profile validate {name}\n"
         f"  5. export {PROFILE_VAR}={name}   (or pass --profile {name})\n"
-        "  6. uv run aiops mcp tools <capability>   to check each connection.\n"
+        f"  6. uv run aiops doctor --profile {name}   checks every connection, tool and catalog "
+        "identifier.\n"
         "\n[yellow]This repository is public:[/yellow] company profiles are gitignored by "
         "default. Keep yours in a private repo and point AIOPS_PROFILES_DIR at it."
     )

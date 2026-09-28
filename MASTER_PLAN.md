@@ -1067,9 +1067,29 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   knowledge). `metrics` is adapted in a later wave (PR-022 in progress); the
   `anthropic`/`bedrock` LLM providers move to PR-P4.
 
-#### PR-P3 · `aiops doctor` + catalog import
+#### PR-P3 · `aiops doctor` + catalog import ✅
+- **Branch:** `feat/p3-doctor-catalog-import` · docs/portability.md (day-1 checklist)
 - **Scope:** `aiops doctor [--profile]` checks every capability's connectivity, auth,
   read-only permissions and allowlisted tools; `aiops catalog import --from backstage|k8s`.
+- **Delivered:**
+  - `aiops doctor [--profile] [--capability] [--service] [--json] [--skip-llm] [--strict]`
+    (`make doctor PROFILE=...`): per capability config (validate issues, required `${VAR}`
+    names) → reachability (latency) → contract (allowlist ⊆ server tools; write-looking
+    server tools WARN; write tools in `tool_allowlist` FAIL) → one tiny read-only smoke call
+    through the guarded toolset → catalog identifiers of a small sample resolve (index
+    pattern has docs, deployment exists, repo exists, metric labels have series, runbooks
+    indexed) → one-token LLM ping. Exit 0 / 1 (`--strict` warnings) / 2 (FAIL).
+  - `aiops catalog import --from kubernetes|backstage [--namespace] [--selector] [--path|--url]
+    [--dry-run] [--merge|--replace] [--output]`: kubernetes via the k8s capability
+    (label/annotation rules in `capabilities.k8s.settings.catalog_import`), Backstage
+    `catalog-info.yaml` or the read-only REST API. `--merge` only adds and prints a diff;
+    comments preserved (ruamel.yaml 0.19.1, pinned); the result is validated before writing.
+  - kubernetes-mcp `get_deployment` returns ownership annotations only (`*/team`, `*/owner`,
+    ...; allowlisted keys, never arbitrary annotations).
+  - Fluent Bit `k8s-fallback.lua`: namespace/pod/container from the tag when the pod was
+    deleted before its metadata was read (the null `kubernetes.namespace_name` documents).
+  - *Deviation:* "auth"/"read-only permissions" are checked through the MCP servers' tool
+    contracts and smoke calls; doctor never attempts a write to prove it is denied.
 - ✅ A misconfigured profile yields one actionable line per problem.
 
 #### PR-P4 · Second logs provider proof

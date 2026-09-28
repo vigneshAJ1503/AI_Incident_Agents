@@ -108,7 +108,32 @@ def test_fresh_cluster_logs_reach_elasticsearch_within_30s() -> None:
 
 def test_only_the_prod_namespace_is_shipped() -> None:
     rows = esql("FROM logs-k8s-* | STATS n = COUNT(*) BY ns = kubernetes.namespace_name")
-    assert {row[1] for row in rows} == {"prod"}
+    counts = {row[1]: row[0] for row in rows}
+    assert set(counts) - {None} == {"prod"}
+    # A null namespace = lines of a pod deleted before the kubernetes filter could read its
+    # metadata (e.g. a rollout right after a restart). Since PR-P3 k8s-fallback.lua fills the
+    # namespace from the tag; older documents stay until ILM deletes them (2 days), so only
+    # require them to be rare instead of absent (docs/setup/logging.md).
+    assert counts.get(None, 0) <= 0.01 * sum(counts.values()), counts
+
+
+def test_records_of_deleted_pods_get_their_namespace_from_the_tag() -> None:
+    """Every document enriched by k8s-fallback.lua is still attributed to namespace prod."""
+    # _count, not ES|QL: the field only exists once a pod was deleted after `logging-up`.
+    response = httpx2.post(
+        f"{ES_URL}/logs-k8s-*/_count",
+        json={
+            "query": {
+                "bool": {
+                    "filter": [{"term": {"kubernetes.metadata_source": "tag"}}],
+                    "must_not": [{"term": {"kubernetes.namespace_name": "prod"}}],
+                }
+            }
+        },
+        timeout=30,
+    )
+    response.raise_for_status()
+    assert response.json()["count"] == 0
 
 
 def test_log_agent_runs_on_real_logs_with_config_only() -> None:

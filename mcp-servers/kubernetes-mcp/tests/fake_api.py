@@ -101,6 +101,8 @@ def deployment(name: str, revision: str, cause: str, desired: int, ready: int) -
                 "deployment.kubernetes.io/revision": revision,
                 "kubernetes.io/change-cause": cause,
                 LAST_APPLIED: "{}",
+                "example.com/team": "identity",
+                "example.com/db-password": "not-exposed",
             },
             "creationTimestamp": "2026-09-24T08:00:00Z",
         },

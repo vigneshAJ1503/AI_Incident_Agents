@@ -13,3 +13,4 @@ configMapGenerator:
     files:
       - fluent-bit.conf
       - parsers.conf
+      - k8s-fallback.lua

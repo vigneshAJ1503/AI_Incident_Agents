@@ -1,0 +1,34 @@
+# Backstage catalog-info.yaml fixture (PR-P3, `aiops catalog import --from backstage`).
+# A Component with the annotations the importer maps, plus a non-Component entity
+# (ignored) in the same multi-document file.
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: payment-service
+  title: Payments API
+  description: >-
+    Processes card payments
+    for orders.
+  annotations:
+    backstage.io/kubernetes-id: payment-service
+    backstage.io/kubernetes-namespace: prod
+    github.com/project-slug: acme/payment-service
+    jira/project-key: PAY
+    jira/component: payments
+    pagerduty.com/service-id: PXXXXXX
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/payments
+  dependsOn:
+    - component:default/user-service
+    - resource:default/postgres
+    - resource:default/redis
+---
+apiVersion: backstage.io/v1alpha1
+kind: Group
+metadata:
+  name: payments
+spec:
+  type: team
+  children: []

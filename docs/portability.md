@@ -20,11 +20,11 @@ config/prompts/ shared prompts; profiles/<company>/prompts/<agent>/vN.md overrid
 cd backend
 uv run aiops profile init acme --company "Acme Corp"      # copies profiles/_template
 $EDITOR ../profiles/acme/profile.yaml                     # providers, URLs, field mappings
-$EDITOR ../profiles/acme/services.yaml                    # your services
 cp ../profiles/acme/.env.example ../profiles/acme/.env    # secrets (gitignored)
-uv run aiops profile validate acme                        # readable errors, exit 1 if invalid
 export AIOPS_PROFILE=acme                                 # or --profile acme on any command
-uv run aiops mcp tools logs                               # check each capability's connection
+uv run aiops catalog import --from kubernetes -n shop --dry-run   # services.yaml from labels
+uv run aiops catalog import --from kubernetes -n shop             # (or --from backstage --path ...)
+uv run aiops doctor                                       # config, MCP, tools, catalog, LLM
 uv run aiops agent run logs "checkout is returning 500s" -s checkout --since 30m
 ```
 
@@ -36,6 +36,8 @@ uv run aiops agent run logs "checkout is returning 500s" -s checkout --since 30m
 | `aiops profile validate [name] [--all] [--strict]` | schema + providers + required settings + variables + catalog + `.env.example` coverage |
 | `aiops profile init <name> [--from _template\|local] [--company ...]` | new profile folder with metadata, never copies `.env` |
 | `aiops profile diff <a> <b>` | every resolved setting and catalog identifier that differs |
+| `aiops catalog import --from kubernetes\|backstage [--dry-run] [--merge\|--replace]` | generate/update `services.yaml` from what the company has (below) |
+| `aiops doctor [--capability c] [--service s] [--json] [--skip-llm] [--strict]` | is the profile ready? one row per check, a fix hint per problem (below) |
 
 Selection order: `--profile` (alias `--env`) > `AIOPS_PROFILE` > `AIOPS_ENV` (deprecated alias,
 logs a one-line notice) > `local`. A legacy `config/environments/<name>.yaml` (+
@@ -130,9 +132,53 @@ question. See `profiles/_template/services.yaml` for a fully commented entry.
 | `capabilities.<cap>` | per-service identifiers: `logs: {service_value, index_pattern}`, `metrics/alerts: {labels}`, `k8s: {deployment, label_selector, container, namespace}`, `code: {repo, paths}`, `tickets: {components, labels}` |
 | `environments.<env>.capabilities.<cap>` | per-environment overrides (index patterns, namespaces, label values) |
 
-Generate it rather than typing it: from Backstage `catalog-info.yaml`, a CMDB export, or
-Kubernetes labels (`aiops catalog import` is planned in PR-P3). Start with the 5–10 services
+Generate it rather than typing it (below), then review it. Start with the 5–10 services
 that page most.
+
+### `aiops catalog import`
+
+```bash
+aiops catalog import --from kubernetes --namespace shop --namespace payments --selector 'tier!=infra' --dry-run
+aiops catalog import --from backstage --path ../backstage-catalog/          # catalog-info.yaml files
+aiops catalog import --from backstage --url https://backstage.acme.com      # API, token in $BACKSTAGE_TOKEN
+```
+
+| Source | What becomes what |
+|--------|-------------------|
+| Kubernetes (through the profile's `k8s` capability: kubernetes-mcp, read-only) | a Deployment → a service. `name` = label `app` / `app.kubernetes.io/name` / deployment name; `owners.team` = label `team` / `app.kubernetes.io/part-of` / `owner`, else a `*/team` or `*/owner` annotation; `k8s: {deployment, label_selector (the selector's matchLabels), container}`; per-environment `k8s.namespace` (namespace → environment through the catalog's aliases: `prod` → `production`); `logs.service_value`, `metrics/alerts.labels.<service label>` (label **names** from `profile.yaml`); `aliases` from the name (`payment-service` → `payment`). The label keys are configurable: `capabilities.k8s.settings.catalog_import`. |
+| Backstage `kind: Component` | `metadata.name`/`title`/`description`; `spec.owner` → `owners.team`; `spec.dependsOn` → `depends_on`; `backstage.io/kubernetes-id` (+ `-label-selector`, `-namespace`) → `k8s`; `github.com/project-slug` / `gitlab.com/project-slug` → `code.repo`; `jira/project-key`, `jira/component` → `tickets`; `pagerduty.com/service-id` → `alerts.pagerduty_service_id`. |
+
+- **`--merge` (default) never overwrites.** It adds new services, new identifiers and new list
+  items; a value that differs from the catalog is **kept** and shown as `= key: kept X
+  (import: Y)`. `--dry-run` prints only the diff. `--replace` rewrites the file's own services.
+- It writes the profile's own `services.yaml` (created with `extends:` if the catalog is
+  inherited), or `--output FILE`. Comments and key order survive (ruamel.yaml); flow maps are
+  re-spaced (`{ a: 1 }` → `{a: 1}`). The result is validated before it is written.
+- Skip infrastructure with `--selector` (e.g. `team!=platform`) or `--exclude redis`.
+- Live check on the lab: `--from kubernetes -n prod --selector 'team!=platform'` proposes the
+  4 sample services, identical to the hand-written catalog (`4 unchanged, 0 kept`).
+
+## `aiops doctor`
+
+```bash
+aiops doctor --profile acme                 # every enabled capability + LLM ping
+aiops doctor -c logs -c k8s --service checkout --json
+make doctor PROFILE=local-k8s ARGS=--skip-llm
+```
+
+For each enabled capability, in order (every call goes through the capability's allowlist,
+timeout, redaction and audit; nothing is written; secret **values** are never printed):
+
+| Check | FAIL / WARN when |
+|-------|------------------|
+| config | `profile validate` errors (FAIL) / warnings (WARN) for the capability; unset required `${VAR}` (names only) |
+| reachability | the MCP server doesn't connect or list its tools within `--timeout` (default 10 s); latency shown |
+| contract | an allowlisted tool is missing on the server (FAIL); a write-looking tool (`create/update/delete/patch/exec/scale/...`) is **in** `tool_allowlist` (FAIL); the server exposes write tools that aren't approval-gated `write_allowlist` entries (WARN: "keep them out of the allowlist and prefer a read-only credential") |
+| smoke | one tiny read-only call fails: logs `list_indices` + a 1-hour count (size 1), metrics `count(up)`, alerts `list_alerts` (limit 1), k8s `list_deployments` in the catalog namespace, code `list_repositories`, tickets `jira_search` (max 1), knowledge `list_docs` |
+| catalog | for a **sample** of services (`--sample 3`, or `--service`): index pattern matches no index (FAIL) or has no recent docs (WARN), deployment not found, repo not served, no metric series in the last hour for the catalog labels, runbook not indexed (WARN) |
+| llm | no key: WARN "agents will fail until an LLM key is set"; a one-token ping otherwise (`--skip-llm` skips it) |
+
+Exit code: `0` all OK, `1` warnings with `--strict`, `2` any FAIL. `--json` for CI.
 
 ## Read-only credentials checklist
 
@@ -183,12 +229,15 @@ credentials). Ask for **read-only** access only:
 4. [ ] **Run the MCP servers** next to the stack (compose/Helm), each with its server-side
        guardrails (allowed indices/namespaces/projects, limits).
 5. [ ] **Map fields and labels** in `profile.yaml` (logs fields, metric/label names, alert
-       labels, tag scheme, link templates).
-6. [ ] **Write `services.yaml`** for the top services (aliases, owners, depends_on,
-       identifiers per capability and environment).
-7. [ ] Fill `profiles/<company>/.env`; `aiops profile validate <company> --strict`.
-8. [ ] `aiops mcp tools <cap>` for every capability; then one real question per agent
-       (`aiops agent run <agent> ...`) on a recent incident.
+       labels, tag scheme, link templates). Fill `profiles/<company>/.env`.
+6. [ ] **Generate `services.yaml`**: `aiops catalog import --from kubernetes -n <ns> --dry-run`
+       (or `--from backstage --path|--url`), review the diff, run it without `--dry-run`,
+       then hand-edit aliases, `depends_on`, runbooks and per-environment identifiers
+       (re-imports never overwrite them).
+7. [ ] `aiops doctor --profile <company> --strict` until it exits 0: it runs
+       `profile validate`, checks every MCP server, its tools, one smoke query and a few
+       catalog identifiers per capability, and pings the LLM. Fix each row's hint.
+8. [ ] One real question per agent (`aiops agent run <agent> ...`) on a recent incident.
 9. [ ] **Add runbooks** to the knowledge capability; optional prompt overrides in
        `profiles/<company>/prompts/` (e.g. company vocabulary).
 10. [ ] **Write 3–5 eval scenarios from past postmortems** and run `make eval`: this is the

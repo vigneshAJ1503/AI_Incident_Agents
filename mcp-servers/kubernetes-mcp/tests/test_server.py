@@ -171,6 +171,8 @@ async def test_get_deployment_with_rollout_history() -> None:
     assert (dep["revision"], dep["change_cause"]) == ("3", "v3.2.0: bump image")
     assert dep["images"] == [{"container": "app", "image": "aiops/sample-service:v3.2.0"}]
     assert dep["restarted_at"] == "2026-09-25T10:02:00Z"
+    # Ownership annotations only (for `aiops catalog import`), never arbitrary ones.
+    assert dep["owner_annotations"] == {"example.com/team": "identity"}
     assert data["revisions_total"] == 3  # the ReplicaSet of another deployment is excluded
     history = data["rollout_history"]
     assert [(h["revision"], h["current"]) for h in history] == [(3, True), (2, False)]

@@ -310,3 +310,9 @@ record-k8s-fixtures: venv-fix ## Re-record K8s agent fixtures LIVE: S1-S5 via ai
 		uv run --no-sync aiops fault run $$s -- uv run --no-sync python -m tests.fixtures.record_k8s || exit 1; \
 	done
 	cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_k8s --scenario S0
+
+# --- Day-1 onboarding (PR-P3): aiops doctor + aiops catalog import ----------------------
+PROFILE ?= local
+.PHONY: doctor
+doctor: venv-fix ## Check a profile end to end: make doctor PROFILE=local-k8s [ARGS="--skip-llm --json"]
+	cd $(BACKEND) && uv run --no-sync aiops doctor --profile $(PROFILE) $(ARGS)

@@ -3,7 +3,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getClient, type Decision, type InvestigationFilters } from "@/lib/api";
-import type { Approval, CreateInvestigationRequest } from "@/lib/api/schemas";
+import type { Approval, AskRequest, CreateInvestigationRequest } from "@/lib/api/schemas";
 
 export const qk = {
   health: ["health"] as const,
@@ -59,6 +59,17 @@ export function useCreateInvestigation() {
   return useMutation({
     mutationFn: (req: CreateInvestigationRequest) => getClient().createInvestigation(req),
     onSuccess: () => void qc.invalidateQueries({ queryKey: ["investigations"] }),
+  });
+}
+
+/** The chat box (PR-041): a platform answer, or a started investigation. */
+export function useAsk() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (req: AskRequest) => getClient().ask(req),
+    onSuccess: (res) => {
+      if (res.investigation_id) void qc.invalidateQueries({ queryKey: ["investigations"] });
+    },
   });
 }
 

@@ -155,6 +155,49 @@ Every response was checked against the Web UI's zod schemas (`frontend/src/lib/a
   wins). With an API key configured, `/events` also accepts `?api_key=`.
 - `approval_requested` is only published while the investigation is still running.
 
+## Ask: platform questions vs incidents (PR-041)
+Additive. The chat box and ⌘K call `POST /ask` instead of `POST /investigations` (which is
+unchanged).
+
+`POST /ask` body `{question, service?, environment?, since?}` → `200`:
+
+```jsonc
+{
+  "kind": "platform | incident",
+  "intent": "agents_running | agents_catalog | health | recent_investigations | help | incident",
+  "confidence": 0.9, "source": "rules | llm | default",
+  "answer": {                       // platform answer; or the "no matching scenario" answer
+    "title": "1 investigation running",
+    "markdown": "- **Payment API …** (payment-service): agents working: logs, metrics, round 1, 12 s so far",
+    "items": [ /* typed by "type", below */ ],
+    "links": [ { "label": "Open live view", "href": "/investigations/inv-…" } ]   // Web UI paths
+  },
+  "investigation_id": "inv-… | null",   // kind incident: started exactly like POST /investigations
+  "mode": "live | replay | null", "scenario": "S1 | null"
+}
+```
+
+Items (`type` discriminates): `running_investigation {id, question, service, status, mode,
+created_at, elapsed_s, round, agents: [{agent, round, status, tool}], href}` (from the runner's
+`Orchestrator.running()` + the event log, and the store's pending/running ones);
+`investigation {id, title, service, status, severity, root_cause, confidence, created_at, href}`;
+`agent {name, description, capabilities, providers, enabled, success_rate_7d, p50_ms, runs_7d}`
+(providers come from the profile); `check {name, status: ok|down|disabled|info, detail}` (the
+`/health` data); `suggestion {question, hint, scenario}`.
+
+- **Classification** (`aiops/orchestrator/intent.py`): deterministic rules first (patterns +
+  catalog service detection); when unsure and an LLM is configured, the `fast` role with a
+  structured `{intent, service, confidence}`; otherwise `incident`. A clear platform question
+  never starts an investigation; a service + a symptom is always an incident ("agents are
+  failing on payment-service", "is payment-service down?").
+- **No matching scenario** (replay mode): instead of the `422`, `/ask` answers `kind:
+  "incident"`, `investigation_id: null` and an `answer` whose `suggestion` items are the
+  recorded scenarios (the UI shows them as clickable chips).
+- Other `POST /investigations` errors (`409 live_unavailable`, `429`) pass through unchanged.
+- **Precise replay reasons:** the `no_matching_scenario` / `live_unavailable` messages now say
+  exactly why live mode is off: `no LLM is configured (<missing setting>)` and/or `the
+  capabilities are unreachable: <names>` (was "No LLM configured or a capability is down").
+
 ## Demo data
 
 **As built (PR-034):** `aiops demo seed` stores 46 investigations (6 replays + 40 synthetic, seeded RNG,

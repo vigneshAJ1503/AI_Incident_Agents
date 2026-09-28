@@ -369,6 +369,96 @@ export const CreateInvestigationResponse = z.object({
 });
 export type CreateInvestigationResponse = z.infer<typeof CreateInvestigationResponse>;
 
+// ---- Ask (PR-041): platform questions vs incidents ---------------------------------------------
+
+export const AskRequest = z.object({
+  question: z.string().min(1),
+  service: z.string().optional(),
+  environment: z.string().optional(),
+  since: z.string().optional(),
+});
+export type AskRequest = z.infer<typeof AskRequest>;
+
+export const RunningAgent = z.object({
+  agent: z.string(),
+  round: z.number().int().default(1),
+  status: z.string(),
+  tool: z.string().nullable().optional(),
+});
+export type RunningAgent = z.infer<typeof RunningAgent>;
+
+export const AskItem = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("running_investigation"),
+    id: z.string(),
+    question: z.string(),
+    service: nullableStr,
+    status: InvestigationStatus,
+    mode: Mode.default("live"),
+    created_at: isoDate,
+    elapsed_s: z.number(),
+    round: z.number().int().nullable().optional(),
+    agents: z.array(RunningAgent).default([]),
+    href: z.string(),
+  }),
+  z.object({
+    type: z.literal("investigation"),
+    id: z.string(),
+    title: z.string(),
+    service: nullableStr,
+    status: InvestigationStatus,
+    severity: Severity.nullable().optional(),
+    root_cause: nullableStr,
+    confidence: z.number().nullable().optional(),
+    created_at: isoDate,
+    href: z.string(),
+  }),
+  z.object({
+    type: z.literal("agent"),
+    name: z.string(),
+    description: z.string().default(""),
+    capabilities: z.array(z.string()).default([]),
+    providers: z.array(z.string()).default([]),
+    enabled: z.boolean().default(true),
+    success_rate_7d: z.number().nullable().optional(),
+    p50_ms: z.number().nullable().optional(),
+    runs_7d: z.number().int().default(0),
+  }),
+  z.object({
+    type: z.literal("check"),
+    name: z.string(),
+    status: z.enum(["ok", "down", "disabled", "info"]),
+    detail: z.string().default(""),
+  }),
+  z.object({
+    type: z.literal("suggestion"),
+    question: z.string(),
+    hint: z.string().default(""),
+    scenario: nullableStr,
+  }),
+]);
+export type AskItem = z.infer<typeof AskItem>;
+
+export const AskAnswer = z.object({
+  title: z.string(),
+  markdown: z.string().default(""),
+  items: z.array(AskItem).default([]),
+  links: z.array(z.object({ label: z.string(), href: z.string() })).default([]),
+});
+export type AskAnswer = z.infer<typeof AskAnswer>;
+
+export const AskResponse = z.object({
+  kind: z.enum(["platform", "incident"]),
+  intent: z.string(),
+  confidence: z.number().default(1),
+  source: z.enum(["rules", "llm", "default"]).default("rules"),
+  answer: AskAnswer.nullable().optional(),
+  investigation_id: nullableStr,
+  mode: z.enum(["live", "replay"]).nullable().optional(),
+  scenario: nullableStr,
+});
+export type AskResponse = z.infer<typeof AskResponse>;
+
 export const ApiErrorBody = z.object({
   error: z.object({ code: z.string(), message: z.string() }),
 });

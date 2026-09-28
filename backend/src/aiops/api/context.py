@@ -7,14 +7,16 @@ import logging
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
-from aiops.api.health import CapabilityHealth
+from aiops.api.health import CapabilityHealth, llm_configured
 from aiops.api.runner import InvestigationRunner, OrchestratorFactory, default_orchestrator
 from aiops.api.scenarios import FaultController, KubectlFaultController, ScenarioCatalog
 from aiops.core.catalog import ServiceCatalog
-from aiops.core.config import Settings, load_settings
+from aiops.core.config import ConfigError, Settings, load_settings
 from aiops.core.events import EventBus
 from aiops.core.guardrails.approvals import ApprovalExecutor, ApprovalService
+from aiops.llm.factory import create_provider
 from aiops.mcp.registry import MCPRegistry
+from aiops.orchestrator.intent import IntentClassifier
 from aiops.store.db import StoreError
 from aiops.store.repository import InvestigationStore
 
@@ -46,6 +48,21 @@ class ApiContext:
     executor_factory: ExecutorFactory
     store_ok: bool = True
     background: set[asyncio.Task[None]] = field(default_factory=set)
+    #: The chat box's intent classifier (PR-041); built on first use.
+    intent: IntentClassifier | None = None
+
+    def classifier(self) -> IntentClassifier:
+        """Rules + the ``fast`` LLM role as a fallback when a hosted LLM is configured."""
+        if self.intent is None:
+            llm = None
+            if llm_configured(self.settings):
+                try:
+                    llm = create_provider(self.settings.llm)
+                except ConfigError as exc:  # configured but unusable: rules only
+                    log.warning("intent classifier without LLM: %s", exc)
+            caps = [(n, c.provider) for n, c in self.settings.capabilities.items()]
+            self.intent = IntentClassifier.for_profile(self.catalog, caps, llm=llm)
+        return self.intent
 
     async def startup(self) -> None:
         """Create/upgrade the store's tables. An unreachable store doesn't stop the API:

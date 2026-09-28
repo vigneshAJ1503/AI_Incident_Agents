@@ -13,6 +13,7 @@ import {
   ApiErrorBody,
   Approval,
   ApprovalList,
+  AskResponse,
   CreateInvestigationResponse,
   DashboardSummary,
   Health,
@@ -21,6 +22,7 @@ import {
   LiveEvent,
   ScenarioList,
   ServiceList,
+  type AskRequest,
   type CreateInvestigationRequest,
 } from "./schemas";
 
@@ -124,6 +126,10 @@ export class HttpClient implements ApiClient {
   async createInvestigation(req: CreateInvestigationRequest) {
     const res = await this.post("/investigations", req);
     return parseOrThrow(CreateInvestigationResponse, await res.json(), "POST /investigations");
+  }
+  async ask(req: AskRequest) {
+    const res = await this.post("/ask", req);
+    return parseOrThrow(AskResponse, await res.json(), "POST /ask");
   }
   async clarify(id: string, answer: string) {
     await this.post(`/investigations/${encodeURIComponent(id)}/clarify`, { answer });

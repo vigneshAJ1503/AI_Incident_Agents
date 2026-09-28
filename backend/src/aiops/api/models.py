@@ -8,7 +8,7 @@ these add the API-only shapes. Fields marked "additive" are extensions of the co
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -250,3 +250,105 @@ class FaultResult(_Out):
     scenario: str | None
     status: Literal["injected", "reverting", "reverted"]
     message: str
+
+
+# --------------------------------------------------------------------------- ask (PR-041)
+
+
+class AskRequest(_In):
+    question: str = Field(min_length=1, max_length=2000)
+    service: str | None = None
+    environment: str | None = None
+    since: str | None = Field(default=None, max_length=20)
+
+
+class AskLink(_Out):
+    label: str
+    href: str  # a Web UI path, e.g. /investigations/inv-..., /agents
+
+
+class RunningAgent(_Out):
+    agent: str
+    round: int
+    status: str  # queued | running | done | failed | skipped
+    tool: str | None = None  # the last tool it called (from the event log)
+
+
+class RunningInvestigationItem(_Out):
+    type: Literal["running_investigation"] = "running_investigation"
+    id: str
+    question: str
+    service: str | None = None
+    status: InvestigationStatus
+    mode: InvestigationMode
+    created_at: datetime
+    elapsed_s: float
+    round: int | None = None
+    agents: list[RunningAgent] = Field(default_factory=list)
+    href: str
+
+
+class InvestigationItem(_Out):
+    type: Literal["investigation"] = "investigation"
+    id: str
+    title: str
+    service: str | None = None
+    status: InvestigationStatus
+    severity: Severity | None = None
+    root_cause: str | None = None
+    confidence: float | None = None
+    created_at: datetime
+    href: str
+
+
+class AgentItem(_Out):
+    type: Literal["agent"] = "agent"
+    name: str
+    description: str
+    capabilities: list[str]
+    providers: list[str]  # the profile's provider per capability (e.g. prometheus)
+    enabled: bool
+    success_rate_7d: float | None = None
+    p50_ms: float | None = None
+    runs_7d: int = 0
+
+
+class CheckItem(_Out):
+    type: Literal["check"] = "check"
+    name: str
+    status: Literal["ok", "down", "disabled", "info"]
+    detail: str = ""
+
+
+class SuggestionItem(_Out):
+    type: Literal["suggestion"] = "suggestion"
+    question: str
+    hint: str = ""
+    scenario: str | None = None  # the recorded scenario this question replays
+
+
+AskItem = Annotated[
+    RunningInvestigationItem | InvestigationItem | AgentItem | CheckItem | SuggestionItem,
+    Field(discriminator="type"),
+]
+
+
+class AskAnswer(_Out):
+    title: str
+    markdown: str
+    items: list[AskItem] = Field(default_factory=list)
+    links: list[AskLink] = Field(default_factory=list)
+
+
+class AskResponse(_Out):
+    """``kind: platform`` -> ``answer``; ``kind: incident`` -> ``investigation_id`` (started),
+    or ``answer`` with scenario suggestions when replay mode has no matching scenario."""
+
+    kind: Literal["platform", "incident"]
+    intent: str
+    confidence: float
+    source: Literal["rules", "llm", "default"]
+    answer: AskAnswer | None = None
+    investigation_id: str | None = None
+    mode: Literal["live", "replay"] | None = None
+    scenario: str | None = None

@@ -1,6 +1,8 @@
 import type {
   Agent,
   Approval,
+  AskRequest,
+  AskResponse,
   CreateInvestigationRequest,
   CreateInvestigationResponse,
   DashboardSummary,
@@ -43,6 +45,8 @@ export interface ApiClient {
   listInvestigations(filters?: InvestigationFilters): Promise<InvestigationPage>;
   getInvestigation(id: string): Promise<Investigation>;
   createInvestigation(req: CreateInvestigationRequest): Promise<CreateInvestigationResponse>;
+  /** The chat box (PR-041): answers a platform question, or starts an investigation. */
+  ask(req: AskRequest): Promise<AskResponse>;
   clarify(id: string, answer: string): Promise<void>;
   cancel(id: string): Promise<void>;
   reportMarkdown(id: string): Promise<string>;

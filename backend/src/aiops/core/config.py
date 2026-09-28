@@ -259,6 +259,50 @@ class FollowupRule(_Strict):
     keywords: list[str] = Field(default_factory=list)  # extra search terms (knowledge)
 
 
+class SeverityRules(_Strict):
+    """How the response builder rates an investigation's severity (the ONE place).
+
+    First match wins:
+
+    * ``none``: no problem signal at all;
+    * ``critical``: users get errors on a service whose catalog ``tier`` is in
+      ``critical_tiers``, with a root cause at least ``critical_min_confidence`` confident.
+      "Users get errors" = the measured peak error ratio of the service (metric evidence
+      ``error_rate``) is at least ``critical_error_rate``; without that measurement, an
+      error signal;
+    * ``high``: user-facing impact anywhere, or a critical alert firing;
+    * ``medium``: latency only;
+    * ``low``: anything else (e.g. a risky change without symptoms).
+    """
+
+    critical_tiers: list[int] = Field(default_factory=lambda: [1])
+    #: Tier of catalog services that set none.
+    default_tier: int = Field(default=2, ge=1)
+    critical_min_confidence: float = Field(default=0.7, ge=0, le=1)
+    critical_error_rate: float = Field(default=0.05, ge=0, le=1)
+    error_signals: list[str] = Field(
+        default_factory=lambda: [
+            "error_rate_up",
+            "db_timeout_errors_up",
+            "new_error_pattern",
+            "oom_errors",
+        ]
+    )
+    availability_signals: list[str] = Field(
+        default_factory=lambda: [
+            "image_pull_error",
+            "replicas_unavailable",
+            "cache_down",
+            "oom_killed",
+            "crash_loop",
+        ]
+    )
+    latency_signals: list[str] = Field(
+        default_factory=lambda: ["latency_up", "dependency_latency_up", "dependency_timeouts"]
+    )
+    critical_alert_signal: str = "critical_alert_firing"
+
+
 class OrchestratorConfig(_Strict):
     """How investigations are planned and executed (defaults suit the local stack)."""
 
@@ -278,6 +322,8 @@ class OrchestratorConfig(_Strict):
     llm_planner_fallback: bool = True
     #: Let the LLM ("rca" role) rank and phrase the deterministic hypotheses.
     llm_rca: bool = True
+    #: Report severity rules (response builder).
+    severity: SeverityRules = Field(default_factory=SeverityRules)
 
 
 class StorageConfig(_Strict):

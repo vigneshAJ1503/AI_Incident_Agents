@@ -13,4 +13,5 @@ root_cause: user-service deployment with a nonexistent image tag (ImagePullBackO
 investigation:
   root_cause_keywords: [[image], [user-service], [imagepullbackoff, pull]]
   min_confidence: 0.7
+  severity: high  # report severity (orchestrator.severity rules)
 # Per-agent expectations live in agents/<agent>.yaml

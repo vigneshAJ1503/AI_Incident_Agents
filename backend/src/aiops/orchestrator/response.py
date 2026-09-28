@@ -11,8 +11,8 @@ from collections.abc import Sequence
 from datetime import timedelta
 
 from aiops.agents.rca_agent import RCAOutcome
+from aiops.core.config import SeverityRules
 from aiops.core.models import (
-    AgentResult,
     AgentStatus,
     ClaimKind,
     EvidenceKind,
@@ -25,13 +25,6 @@ from aiops.core.signals import BENIGN_SIGNALS
 
 TIMELINE_LOOKBACK = timedelta(hours=24)
 MAX_TIMELINE = 25
-ERROR_SIGNALS = frozenset(
-    {"error_rate_up", "db_timeout_errors_up", "new_error_pattern", "oom_errors"}
-)
-LATENCY_SIGNALS = frozenset({"latency_up", "dependency_latency_up", "dependency_timeouts"})
-AVAILABILITY_SIGNALS = frozenset(
-    {"image_pull_error", "replicas_unavailable", "cache_down", "oom_killed", "crash_loop"}
-)
 IMPACT_KINDS = (EvidenceKind.METRIC, EvidenceKind.LOG)
 SECTIONS: dict[str, tuple[EvidenceKind, ...]] = {
     "Logs": (EvidenceKind.LOG,),
@@ -66,16 +59,54 @@ def build_timeline(inv: Investigation) -> list[TimelineEvent]:
     return events[:MAX_TIMELINE]
 
 
-def severity(outcome: RCAOutcome, results: Sequence[AgentResult]) -> Severity:
+def peak_error_rate(inv: Investigation) -> float | None:
+    """The highest measured error ratio of the investigated service (metric evidence of
+    the vendor-neutral ``error_rate`` SLI), or None when nothing measured it."""
+    service = inv.context.service if inv.context else None
+    peaks: list[float] = []
+    for result in inv.results:
+        if result.status is AgentStatus.FAILED:
+            continue
+        for evidence in result.evidence:
+            data = evidence.data or {}
+            if evidence.kind is not EvidenceKind.METRIC or data.get("metric") != "error_rate":
+                continue
+            per_service = (data.get("services") or {}).get(service) or {}
+            for key in ("peak", "current"):
+                value = per_service.get(key)
+                if isinstance(value, int | float):
+                    peaks.append(float(value))
+    return max(peaks) if peaks else None
+
+
+def severity(
+    outcome: RCAOutcome,
+    rules: SeverityRules | None = None,
+    tier: int | None = None,
+    error_rate: float | None = None,
+) -> Severity:
+    """The report severity: ``orchestrator.severity`` rules (see ``SeverityRules``) applied
+    to the problem signals, the root cause's confidence, the service's catalog tier and
+    its measured peak error ratio."""
+    rules = rules or SeverityRules()
     signals = set(outcome.correlation.problem_signals)
     if not signals:
         return "none"
-    confident = outcome.root_cause is not None and outcome.root_cause.confidence >= 0.7
-    if "critical_alert_firing" in signals or (signals & AVAILABILITY_SIGNALS and confident):
+    error_signal = bool(signals & set(rules.error_signals))
+    user_impact = error_signal or bool(signals & set(rules.availability_signals))
+    users_get_errors = (
+        error_rate >= rules.critical_error_rate if error_rate is not None else error_signal
+    )
+    confident = (
+        outcome.root_cause is not None
+        and outcome.root_cause.confidence >= rules.critical_min_confidence
+    )
+    tier_critical = (tier or rules.default_tier) in rules.critical_tiers
+    if users_get_errors and confident and tier_critical:
         return "critical"
-    if signals & ERROR_SIGNALS or signals & AVAILABILITY_SIGNALS:
+    if user_impact or rules.critical_alert_signal in signals:
         return "high"
-    if signals & LATENCY_SIGNALS:
+    if signals & set(rules.latency_signals):
         return "medium"
     return "low"
 
@@ -126,7 +157,12 @@ def open_questions(inv: Investigation, outcome: RCAOutcome, missing: Sequence[st
 
 
 def build_report(
-    inv: Investigation, outcome: RCAOutcome, missing: Sequence[str]
+    inv: Investigation,
+    outcome: RCAOutcome,
+    missing: Sequence[str],
+    *,
+    rules: SeverityRules | None = None,
+    tier: int | None = None,
 ) -> InvestigationReport:
     ctx = inv.context
     service = (ctx.service if ctx else None) or "the service"
@@ -166,7 +202,7 @@ def build_report(
         confidence=root.confidence if root else 0.0,
         impact=impact(inv) if not outcome.no_incident else "No user impact detected.",
         affected_services=affected_services(inv, outcome),
-        severity=severity(outcome, inv.results),
+        severity=severity(outcome, rules, tier, peak_error_rate(inv)),
         next_steps=next_steps,
         open_questions=open_questions(inv, outcome, missing),
     )

@@ -59,6 +59,13 @@ offset).
 3. **New investigation** → "Payment API is returning HTTP 500 in production". The API
    replays S1 and streams it over SSE: the agent lanes animate for ~10 s
    (`AIOPS_REPLAY_TOOL_DELAY_S=0.5` s per recorded tool call; `0` = instant), then the report.
+   The replay is reported on **today's clock**: its window ends now and every timestamp of
+   the recorded data (evidence summaries, findings, timeline, report text, dates like
+   "created 2026-09-22") moves by the same offset, so no recording date shows up. The
+   agents still query the recorded window (fixtures match on it). Two things keep the
+   recording time on purpose: evidence **deep links** (they open the source system where
+   the data really is) and the raw evidence `data` payload (the recorded tool output).
+   Evals and tests keep the recording clock (deterministic).
 4. **Create Jira ticket** on the report → review the draft → **Approve**: the approval
    framework executes it through mock-tickets-mcp and the toast shows `Created OPS-n`
    (browse it at `http://localhost:8109/browse/OPS-n`).
@@ -127,10 +134,17 @@ release tag.
 They keep their own layouts (the static one is hand-tuned for a backend-less UI; the seed is
 real pipeline output), and `backend/tests/unit/test_demo_datasets.py` keeps them telling the
 **same story**: every static scenario S0–S5 must pass the replays' ground truth
-(`scenarios/*/expected.yaml`: service, root-cause keywords, minimum confidence, no false
-positive on S0) and may only name release versions that exist in that scenario's fixtures
+(`scenarios/*/expected.yaml`: service, root-cause keywords, minimum confidence, **severity**,
+no false positive on S0) and may only name release versions that exist in that scenario's fixtures
 (this caught S2's `v2.3.1`; the fixtures say `v2.3.0`). `aiops demo export` stays the
 backend's contract-shaped export for other consumers.
+
+**Severity** is rated in ONE place: the response builder, from `orchestrator.severity` in
+the profile (`aiops.core.config.SeverityRules`): `critical` = users get errors (measured
+peak 5xx ratio >= `critical_error_rate`, 5%) on a service whose catalog `tier` is in
+`critical_tiers` (payment-service is `tier: 1`) with a confident root cause; `high` = other
+user-facing impact or a critical alert; `medium` = latency only; `low` = the rest. So S1 is
+`critical` and S2–S5 `high` in both datasets (each scenario's `investigation.severity`).
 
 ## Troubleshooting
 

@@ -15,6 +15,7 @@ services:
     owners: { team: payments, slack: "#payments-oncall" }
     depends_on: [postgres, redis, user-service]
     runbooks: [database-connection-pool.md, payment-service.md]
+    tier: 1  # revenue path: user-facing errors here are `critical` (orchestrator.severity)
     capabilities:
       logs: { service_value: payment-service }
       tickets: { components: [payments], labels: [payment-service] }

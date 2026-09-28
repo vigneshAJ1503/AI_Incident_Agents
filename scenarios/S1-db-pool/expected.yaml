@@ -15,4 +15,5 @@ root_cause: >
 investigation:
   root_cause_keywords: [[pool], [v1.8.2], [timeout]]
   min_confidence: 0.8
+  severity: critical  # report severity (orchestrator.severity rules)
 # Per-agent expectations live in agents/<agent>.yaml

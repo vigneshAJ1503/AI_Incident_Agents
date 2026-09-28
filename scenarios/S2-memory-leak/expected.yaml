@@ -11,4 +11,5 @@ root_cause: Memory leak in order-service causes OutOfMemoryError and repeated co
 investigation:
   root_cause_keywords: [[memory], [oom, outofmemory], [order-service]]
   min_confidence: 0.7
+  severity: high  # report severity (orchestrator.severity rules)
 # Per-agent expectations live in agents/<agent>.yaml

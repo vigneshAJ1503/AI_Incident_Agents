@@ -161,6 +161,7 @@ export function buildScenario(
     report: { ...s.report, markdown: "" },
     clarification_question: null,
     clarification_candidates: [],
+    claims: [],
     versions: { model: "fake-llm (replay)", prompts: "v1", dataset: "demo-1" },
     usage: { input_tokens: 0, output_tokens: 0, calls: results.length + 1 },
     duration_ms,

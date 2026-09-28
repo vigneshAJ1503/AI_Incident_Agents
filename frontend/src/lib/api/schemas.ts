@@ -203,6 +203,8 @@ export const Investigation = z.object({
   clarification_question: nullableStr,
   /** PR-030: catalog services to pick from when the planner needs a clarification. */
   clarification_candidates: z.array(z.string()).default([]),
+  /** PR-033: the report's typed claims (RCA agent); falls back to agent findings when empty. */
+  claims: z.array(Finding).default([]),
   versions: z.record(z.string(), z.string()).default({}),
   usage: TokenUsage.default({ input_tokens: 0, output_tokens: 0, calls: 0 }),
   duration_ms: z.number().nullable().optional(),

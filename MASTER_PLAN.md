@@ -1307,6 +1307,8 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - Create Jira ticket → approval dialog
 - ✅ Matches the HLD's Product UI; approvals work end to end.
 
+> **As built (PR-036–038):** `frontend/` is Next.js 16 + TS strict + Tailwind v4 + shadcn/Radix + Framer Motion + Recharts + TanStack Query + zod. It builds against `docs/api/contract.md` and ships a static demo dataset with simulated live SSE (`NEXT_PUBLIC_DEMO=1`, `make ui-dev DEMO=1`). It adds Approvals, Services, Agents and Scenarios pages beyond the original scope. The sidebar is Dashboard / Investigations / Approvals / … instead of "History / Settings". The dev port is 3100 because Grafana uses 3000. Contract additions: `faults_enabled`, `cancelled`, `?last_event_id=`. Screenshots are in `docs/ui/screenshots/`.
+
 #### PR-039 · Containers + `make demo` golden scenario
 - **Branch:** `feat/039-golden-demo`
 - **Scope:**

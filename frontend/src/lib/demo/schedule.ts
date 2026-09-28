@@ -145,6 +145,7 @@ export function sessionInvestigation(
       s.route.scenario === "clarify" && !s.clarifiedAt ? clarificationQuestion() : null,
     clarification_candidates:
       s.route.scenario === "clarify" && !s.clarifiedAt ? s.route.candidates : [],
+    claims: [],
     versions: {},
     usage: { input_tokens: 0, output_tokens: 0, calls: 0 },
     duration_ms: null,

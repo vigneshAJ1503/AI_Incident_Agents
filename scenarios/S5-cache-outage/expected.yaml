@@ -6,4 +6,9 @@ service: payment-service
 environment: production
 window: 30m
 root_cause: Redis outage forces cache fallback to the database, increasing latency across services.
+# Whole investigation (PR-034 evals): the root-cause hypothesis mentions one word of
+# every group, with at least min_confidence.
+investigation:
+  root_cause_keywords: [[cache, redis], [latency]]
+  min_confidence: 0.7
 # Per-agent expectations live in agents/<agent>.yaml

@@ -26,7 +26,7 @@ from typing import Any
 from aiops.core.catalog import ServiceCatalog
 from aiops.core.config import FollowupRule
 from aiops.core.models import AgentResult, AgentStatus
-from aiops.evals.runner import BENIGN_SIGNALS
+from aiops.core.signals import BENIGN_SIGNALS
 
 DEFAULT_FOLLOWUPS: dict[str, list[FollowupRule]] = {
     "db_timeout_errors_up": [

@@ -8,6 +8,7 @@ from aiops.cli import (
     approvals_cmd,
     catalog_cmd,
     config_cmd,
+    demo_cmd,
     doctor_cmd,
     eval_cmd,
     fault_cmd,
@@ -43,6 +44,7 @@ app.add_typer(knowledge_cmd.app, name="knowledge")
 app.add_typer(approvals_cmd.app, name="approvals")
 app.add_typer(tickets_cmd.app, name="tickets")
 app.add_typer(fault_cmd.app, name="fault")
+app.add_typer(demo_cmd.app, name="demo")
 app.add_typer(history_cmd.app, name="db")
 app.command("doctor")(doctor_cmd.doctor)
 app.command("plan")(investigate_cmd.plan)

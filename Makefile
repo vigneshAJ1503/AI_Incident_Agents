@@ -355,3 +355,16 @@ ui-demo-data: ## Regenerate the Web UI demo dataset (frontend/src/demo/*.json, d
 .PHONY: ui-screenshots
 ui-screenshots: ## Capture docs/ui/screenshots (dark + light) from a demo build
 	cd $(UI) && NEXT_PUBLIC_DEMO=1 npm run build && SCREENSHOTS=1 npx playwright test screenshots
+
+# --- Orchestrator demo data (PR-034) -------------------------------------------------
+.PHONY: demo-seed
+demo-seed: ## Store S0-S5 replay investigations + a 14-day synthetic history (zero tokens)
+	cd $(BACKEND) && uv run aiops demo seed
+
+.PHONY: demo-export
+demo-export: ## Export contract-shaped demo JSON from real replays (default demo/export)
+	cd $(BACKEND) && uv run aiops demo export --out $(abspath $(or $(OUT),demo/export))
+
+.PHONY: eval-investigations
+eval-investigations: ## Replay S0-S5 end to end and score the RCA against ground truth
+	cd $(BACKEND) && uv run aiops eval investigations

@@ -25,6 +25,16 @@ class AgentExpectation(BaseModel):
     hints: dict[str, Any] = Field(default_factory=dict)
 
 
+class InvestigationExpectation(BaseModel):
+    """Whole-investigation ground truth (PR-034 evals)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    #: Groups of alternatives: the root-cause hypothesis mentions one word of every group.
+    root_cause_keywords: list[list[str]] = Field(default_factory=list)
+    min_confidence: float = Field(default=0.7, ge=0, le=1)
+
+
 class Scenario(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
@@ -37,6 +47,7 @@ class Scenario(BaseModel):
     window: str = "30m"
     root_cause: str | None = None  # None = healthy / no incident
     agents: dict[str, AgentExpectation] = Field(default_factory=dict)
+    investigation: InvestigationExpectation = Field(default_factory=InvestigationExpectation)
 
     @property
     def healthy(self) -> bool:

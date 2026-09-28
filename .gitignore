@@ -45,3 +45,6 @@ evals/reports/*.tmp
 !/profiles/local/
 !/profiles/local-k8s/
 !/profiles/_template/
+
+# Demo dataset export (aiops demo export; ~9 MB, regenerate instead of committing)
+/demo/export/

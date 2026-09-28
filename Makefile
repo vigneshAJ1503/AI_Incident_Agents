@@ -56,6 +56,11 @@ check-mcp: ## Lint, typecheck and test every MCP server
 		uv run --no-sync mypy && uv run --no-sync pytest -q) || exit 1; \
 	done
 
+.PHONY: audit
+audit: ## Dependency audits like security.yml: pip-audit every Python project + npm audit (PR-042)
+	@for d in backend sample-services mcp-servers/*/; do ./scripts/pip-audit.sh "$${d%/}" || exit 1; done
+	cd $(UI) && npm audit --omit=dev --audit-level=high
+
 .PHONY: check
 check: lint typecheck test check-mcp check-sample ## Everything CI runs
 

@@ -1,0 +1,3 @@
+# Accepted Python dependency vulnerabilities (scripts/pip-audit.sh, security.yml).
+# One id per line (PYSEC-/GHSA-/CVE-), then "# reason; owner; review-by YYYY-MM-DD".
+# Empty on purpose: every Python project audited clean on 2026-09-29 (PR-042).

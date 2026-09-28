@@ -1,7 +1,7 @@
 # Read-only Prometheus MCP server. Multi-stage, non-root, locked dependencies.
 FROM ghcr.io/astral-sh/uv:0.11.21 AS uv
 
-FROM python:3.12-slim AS build
+FROM python:3.12.13-slim-trixie AS build
 COPY --from=uv /uv /usr/local/bin/uv
 WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy UV_PYTHON_DOWNLOADS=never
@@ -10,7 +10,10 @@ RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable
 
-FROM python:3.12-slim
+FROM python:3.12.13-slim-trixie
+# Security (PR-042, Trivy): the pinned base image + today's Debian security fixes.
+RUN apt-get update && apt-get upgrade -y --no-install-recommends \
+    && rm -rf /var/lib/apt/lists/*
 RUN useradd --create-home --uid 10001 mcp
 COPY --from=build --chown=mcp:mcp /app/.venv /app/.venv
 ENV PATH="/app/.venv/bin:$PATH" PYTHONUNBUFFERED=1

@@ -1,0 +1,48 @@
+# Profile `local-loki` (PR-P4a): the PORTABILITY PROOF. Same stack and cluster as
+# `local-k8s`; only the `logs` capability differs: the same Fluent Bit ships the same `prod`
+# pod logs to Grafana Loki too (docs/setup/loki.md), and the Log agent reads them through
+# the `loki` provider adapter + loki-mcp. No agent or orchestrator code knows about Loki.
+#
+#   make loki-up                                     # Loki 127.0.0.1:3101 + loki-mcp :8110
+#   AIOPS_PROFILE=local-loki uv run aiops agent run logs "Payment API is returning HTTP 500" ...
+#
+# Switching vendor = this file (+ the stream selector in services.yaml). Compare:
+#   uv run aiops profile diff local-k8s local-loki
+extends: local-k8s
+
+metadata:
+  company: AI Incident Agents (local demo)
+  description: The local-k8s profile with Grafana Loki (LogQL) as the logs backend.
+  owners: [vigneshAJ1503]
+
+capabilities:
+  logs:
+    provider: loki
+    mcp:
+      transport: http
+      url: ${LOKI_MCP_URL:-http://localhost:8110/mcp}
+      timeout_s: 30
+    # Read-only: loki-mcp has no write tools at all.
+    tool_allowlist: [query, query_range, list_labels, label_values]
+    limits:
+      max_results: 500
+      max_time_range_hours: 48
+      query_timeout_s: 30
+    settings:
+      # Loki stream labels set by Fluent Bit (low cardinality). A field role whose name is
+      # listed here is matched in the stream selector; any other is a key of the JSON line,
+      # extracted at query time (`| json`).
+      stream_labels: [namespace, app, level]
+      fields:
+        timestamp: __timestamp__      # Loki's entry timestamp (the app's @timestamp)
+        level: level                  # stream label
+        service: app                  # stream label (the Kubernetes `app` label)
+        message: message              # JSON keys below
+        message_keyword: message
+        trace_id: trace_id
+        version: version
+      # Grafana Explore (`make grafana-up`, datasource uid `loki`). {panes} = the Explore
+      # state (LogQL + time range); also {query} {from_ms} {to_ms} {start} {end}.
+      grafana_datasource_uid: loki
+      ui_link_template: "${GRAFANA_URL:-http://localhost:3000}/explore?schemaVersion=1&orgId=1&panes={panes}"
+      # service_filter, baseline_hours, levels and startup_pattern: inherited from local-k8s.

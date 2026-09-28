@@ -245,6 +245,67 @@ async def _smoke_elasticsearch(ctx: SmokeContext) -> list[Check]:
     return checks
 
 
+def _loki_selector(base: str, extra: str | None) -> str:
+    """``{namespace="prod"}`` + ``app="x"`` -> ``{namespace="prod", app="x"}``."""
+    inner = base.strip()
+    if inner.startswith("{") and inner.endswith("}"):
+        inner = inner[1:-1].strip()
+    return "{" + ", ".join(m for m in (inner, extra) if m) + "}"
+
+
+async def _smoke_loki(ctx: SmokeContext) -> list[Check]:
+    outcome = await ctx.call("list_labels", {})
+    if isinstance(outcome, Check):
+        return [outcome]
+    checks = [ctx.result(outcome, "list_labels")]
+    if not outcome.ok:
+        return checks
+    labels = (outcome.data or {}).get("labels") or []
+    checks[0].detail = f"list_labels: {len(labels)} stream labels in the last hour"
+    if not labels:
+        checks[0].status = Status.WARN
+        checks[0].hint = "no streams in the last hour: is the log shipper sending to Loki?"
+    settings = ctx.config.settings
+    service_label = str((settings.get("fields") or {}).get("service", "app"))
+    filtered = bool(settings.get("service_filter")) and service_label in (
+        settings.get("stream_labels") or []
+    )
+    for service in ctx.services:
+        ids = ctx.ids(service)
+        base = ids.get("index_pattern") or settings.get("index_pattern")
+        if not base:
+            checks.append(
+                ctx.catalog(
+                    Status.WARN,
+                    f"{service.name}: no logs.index_pattern (stream selector)",
+                    "set logs.index_pattern per service, e.g. '{namespace=\"prod\"}'",
+                )
+            )
+            continue
+        value = str(ids.get("service_value") or service.name)
+        matcher = f'{service_label}="{value}"' if filtered else None
+        query = f"sum(count_over_time({_loki_selector(str(base), matcher)} [1h]))"
+        count = await ctx.call("query", {"query": query})
+        if isinstance(count, Check):
+            break
+        if not count.ok:
+            checks.append(ctx.result(count, f"{service.name}: {query}"))
+            continue
+        found = (count.data or {}).get("series") or []
+        n = int(found[0].get("value") or 0) if found else 0
+        checks.append(
+            ctx.catalog(
+                Status.OK if n else Status.WARN,
+                f"{service.name}: {query} = {n}",
+                ""
+                if n
+                else "no lines in the last hour: check the stream selector / service label "
+                "or the log shipper",
+            )
+        )
+    return checks
+
+
 async def _smoke_prometheus(ctx: SmokeContext) -> list[Check]:
     outcome = await ctx.call("query", {"query": "count(up)"})
     if isinstance(outcome, Check):
@@ -433,6 +494,7 @@ async def _smoke_postgres_fts(ctx: SmokeContext) -> list[Check]:
 #: part of the provider's tool contract (a new provider adds its own entry here).
 SMOKE_TESTS: dict[tuple[str, str], SmokeTest] = {
     ("logs", "elasticsearch"): _smoke_elasticsearch,
+    ("logs", "loki"): _smoke_loki,
     ("metrics", "prometheus"): _smoke_prometheus,
     ("alerts", "alertmanager"): _smoke_alertmanager,
     ("k8s", "kubernetes"): _smoke_kubernetes,

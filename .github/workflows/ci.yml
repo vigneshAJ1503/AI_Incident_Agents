@@ -21,6 +21,10 @@ jobs:
         working-directory: backend
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history: test_portability_proof checks that the commit/PR which added the
+          # Loki logs provider changed no agent or orchestrator code (PR-P4a).
+          fetch-depth: 0
       - uses: astral-sh/setup-uv@v6
         with:
           enable-cache: true

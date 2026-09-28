@@ -27,7 +27,7 @@ settings to change, read-only credentials, secrets, and the day-1 checklist.
 
 | Capability | Implemented (config only) | Planned (PR-P2..P4) |
 |------------|---------------------------|---------------------|
-| logs | `elasticsearch` (incl. Elastic Cloud) | `opensearch`, `loki`, `splunk`, `datadog` |
+| logs | `elasticsearch` (incl. Elastic Cloud), `loki` (incl. Grafana Cloud Logs; see `profiles/local-loki`) | `opensearch`, `splunk`, `datadog` |
 | metrics | `prometheus` (any Prometheus-compatible API: Thanos, Mimir, VictoriaMetrics, AMP, GMP) | `datadog` |
 | alerts | `alertmanager` | `pagerduty`, `opsgenie` |
 | k8s | `kubernetes` (EKS, GKE, AKS, ...) | – |
@@ -37,7 +37,7 @@ settings to change, read-only credentials, secrets, and the day-1 checklist.
 | LLM | `openai_compat` (Groq, Gemini, OpenAI, Azure OpenAI, LiteLLM) | `anthropic`, `bedrock` |
 
 `aiops profile validate` reports a planned provider as an error, and names any setting a
-provider needs, e.g. `capability logs: provider 'loki' needs setting 'labels.service'`.
+provider needs, e.g. `capability logs: provider 'loki' needs setting 'stream_labels'`.
 
 ## Keeping it private
 

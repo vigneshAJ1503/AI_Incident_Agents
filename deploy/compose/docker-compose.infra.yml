@@ -170,7 +170,33 @@ services:
       retries: 40
       start_period: 20s
 
+  # PR-P4a. The second logs backend (docs/setup/loki.md): Fluent Bit ships the same `prod`
+  # pod logs to Elasticsearch AND Loki. Opt-in (`make loki-up`, profile "loki") so the
+  # default stack stays lean. Single binary, filesystem storage, 2 days of retention.
+  # Host port 3101: 3100 is the Web UI. Pods reach it as http://aiops-loki:3100.
+  loki:
+    image: grafana/loki:${LOKI_VERSION:-3.7.8}
+    container_name: aiops-loki
+    profiles: ["loki"]
+    user: "10001:10001"   # the image's loki user (numeric)
+    command: ["-config.file=/etc/loki/loki.yaml", "-target=all"]
+    ports:
+      - "127.0.0.1:${LOKI_PORT:-3101}:3100"
+    volumes:
+      - ./config/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    environment:
+      - GOMEMLIMIT=${LOKI_GOMEMLIMIT:-180MiB}
+    mem_limit: ${LOKI_MEM_LIMIT:-256m}
+    healthcheck:
+      test: ["CMD", "/usr/bin/loki", "-health"]   # distroless image: no shell/wget
+      interval: 5s
+      timeout: 3s
+      retries: 40
+      start_period: 15s
+
 volumes:
+  loki-data:
   es-data:
   pg-data:
   am-data:

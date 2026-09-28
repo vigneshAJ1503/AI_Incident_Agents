@@ -413,3 +413,66 @@ def test_cli_json_and_exit_code(tmp_path: Path, monkeypatch: pytest.MonkeyPatch)
     statuses = {(c["capability"], c["check"]): c["status"] for c in data["checks"]}
     assert statuses[("logs", "reachability")] == "FAIL"
     assert statuses[("llm", "llm")] == "SKIP"
+
+
+LOKI_PROFILE = """
+llm: {provider: fake}
+capabilities:
+  logs:
+    provider: loki
+    mcp: {transport: http, url: "http://127.0.0.1:9/mcp", timeout_s: 1}
+    tool_allowlist: [query, query_range, list_labels]
+    settings:
+      stream_labels: [namespace, app, level]
+      fields: {service: app}
+      service_filter: true
+"""
+
+LOKI_CATALOG = """
+environments:
+  production: {aliases: [prod]}
+services:
+  - name: payment-service
+    environments:
+      production: {capabilities: {logs: {index_pattern: '{namespace="prod"}'}}}
+  - name: order-service
+    environments:
+      production: {capabilities: {logs: {index_pattern: '{namespace="prod"}'}}}
+"""
+
+
+def loki_server(seen: list[str]) -> MCPServer:
+    server = MCPServer("fake-loki")
+
+    @server.tool()
+    def list_labels(start: str | None = None, end: str | None = None) -> dict[str, Any]:
+        """Labels."""
+        return {"labels": ["app", "level", "namespace"]}
+
+    @server.tool()
+    def query(query: str, time: str | None = None) -> dict[str, Any]:
+        """Instant metric query."""
+        seen.append(query)
+        if "order-service" in query:
+            return {"series": []}
+        return {"series": [{"labels": {}, "value": 42}]}
+
+    @server.tool()
+    def query_range(query: str, start: str, end: str, limit: int = 100) -> dict[str, Any]:
+        """Range query."""
+        return {"lines": []}
+
+    return server
+
+
+async def test_loki_smoke_and_catalog(tmp_path: Path) -> None:
+    settings, _ = settings_for(tmp_path, LOKI_PROFILE, LOKI_CATALOG)
+    seen: list[str] = []
+    report = await run_doctor(settings, {"logs": loki_server(seen)}, capabilities=("logs",))
+    (smoke,) = find(report, "logs", "smoke")
+    assert smoke.status is Status.OK and "3 stream labels" in smoke.detail
+    catalog = {c.detail.split(":")[0]: c for c in find(report, "logs", "catalog")}
+    assert catalog["payment-service"].status is Status.OK
+    assert catalog["payment-service"].detail.endswith("= 42")
+    assert catalog["order-service"].status is Status.WARN
+    assert 'sum(count_over_time({namespace="prod", app="payment-service"} [1h]))' in seen

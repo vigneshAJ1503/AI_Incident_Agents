@@ -117,8 +117,8 @@ guardrails:
 #   settings        provider-specific mapping: THIS is where portability happens
 capabilities:
   logs:
-    provider: elasticsearch                   # implemented: elasticsearch (incl. Elastic Cloud)
-                                              # planned: opensearch, loki, splunk, datadog
+    provider: elasticsearch                   # implemented: elasticsearch (incl. Elastic Cloud), loki
+                                              # (see profiles/local-loki); planned: opensearch, splunk, datadog
     mcp:
       transport: http
       url: ${LOGS_MCP_URL}                    # mcp-servers/elasticsearch-mcp, run by you

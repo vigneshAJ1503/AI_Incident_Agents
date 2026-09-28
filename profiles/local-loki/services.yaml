@@ -1,0 +1,19 @@
+# Service catalog of profile `local-loki` (PR-P4a): the `local-k8s` catalog, except that
+# the logs identifier is a Loki STREAM SELECTOR instead of an Elasticsearch index pattern.
+# Every service shares the `prod` namespace streams; the provider adds `app="<service>"`
+# (settings.service_filter + fields.service = app).
+extends: local-k8s
+
+services:
+  - name: payment-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: '{namespace="prod"}' } } }
+  - name: order-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: '{namespace="prod"}' } } }
+  - name: user-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: '{namespace="prod"}' } } }
+  - name: inventory-service
+    environments:
+      production: { capabilities: { logs: { index_pattern: '{namespace="prod"}' } } }

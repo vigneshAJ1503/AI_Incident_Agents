@@ -9,6 +9,7 @@ variable, `AIOPS_PROFILE`, and created by one command, `aiops profile init <comp
 profiles/
   local/        profile.yaml services.yaml .env.example   the zero-cost demo (synthetic data)
   local-k8s/    profile.yaml services.yaml .env.example   extends local: real Minikube logs
+  local-loki/   profile.yaml services.yaml .env.example   extends local-k8s: the same logs in Loki
   _template/    profile.yaml services.yaml .env.example README.md   commented starting point
   <company>/    created by `aiops profile init <company>`  (gitignored, see "Secrets")
 config/prompts/ shared prompts; profiles/<company>/prompts/<agent>/vN.md overrides them
@@ -70,7 +71,7 @@ server. "Implemented" = works today by configuration only. "Planned" = named in 
 
 | Capability | Implemented ✓ | Planned | MCP server (implemented) |
 |------------|---------------|---------|--------------------------|
-| logs | `elasticsearch` ✓ (self-managed or Elastic Cloud, ES\|QL) | `opensearch`, `loki`, `splunk`, `datadog` | `mcp-servers/elasticsearch-mcp` |
+| logs | `elasticsearch` ✓ (self-managed or Elastic Cloud, ES\|QL); `loki` ✓ (self-hosted Loki or Grafana Cloud Logs, LogQL; PR-P4a) | `opensearch`, `splunk`, `datadog` | `mcp-servers/elasticsearch-mcp`, `mcp-servers/loki-mcp` |
 | metrics | `prometheus` ✓ (PromQL; any Prometheus-compatible API: Prometheus, Thanos, Mimir, Grafana Cloud, VictoriaMetrics, AMP, GMP) | `datadog` (skeleton: `providers/metrics/_skeleton.py`) | `mcp-servers/prometheus-mcp` |
 | alerts | `alertmanager` ✓ | `pagerduty`, `opsgenie` | `mcp-servers/alertmanager-mcp` |
 | k8s | `kubernetes` ✓ (EKS, GKE, AKS, OpenShift, Minikube) | – | `mcp-servers/kubernetes-mcp` |
@@ -85,8 +86,8 @@ from the **provider adapter registry** (`backend/src/aiops/providers/`, ADR-0012
 provider is "implemented" only when an adapter class exists; `validate` uses it:
 
 ```
-error: capability logs: provider 'loki' needs setting 'labels.service' (capabilities.logs.settings.labels.service)
-error: capability logs: provider 'loki' is planned, not implemented yet (roadmap PR-P2..P4; implemented: elasticsearch)
+error: capability logs: provider 'loki' needs setting 'stream_labels' (capabilities.logs.settings.stream_labels)
+error: capability logs: provider 'splunk' is planned, not implemented yet (roadmap PR-P2..P4; implemented: elasticsearch, loki)
 error: capability tickets: provider 'jira' needs setting 'project_key' (capabilities.tickets.settings.project_key)
 warning: capability tickets: tool_allowlist lacks ['jira_search'], which the tickets agent calls (its results will be partial)
 warning: service checkout: no logs.index_pattern in the catalog (nor capabilities.logs.settings.index_pattern); the Log agent will skip it
@@ -105,7 +106,8 @@ unless noted. `_template/profile.yaml` has each one commented.
 | logs | `fields.{timestamp,level,message,message_keyword,service,environment,trace_id,status_code,endpoint,version,error_type}` | your log field names (ECS: `log.level`, `service.name`, `trace.id`, ...). Check one document with `aiops mcp call logs get_mapping`. |
 | logs | `index_pattern` + `service_filter: true` | only if all services share one index family (filters on `fields.service` = catalog `logs.service_value`); otherwise per service in the catalog |
 | logs | `error_levels`, `pattern_levels`, `startup_pattern`, `baseline_hours` | your level names, the line your apps print on start-up, the "is this normal?" window |
-| logs | `ui_link_template` | Kibana Discover link; `{start}` `{end}` `{kql}` |
+| logs | `ui_link_template` | Kibana Discover link; `{start}` `{end}` `{kql}` (loki: Grafana Explore; `{panes}` `{query}` `{from_ms}` `{to_ms}`) |
+| logs (loki) | `stream_labels`, `fields`, `grafana_datasource_uid` | which field roles are Loki stream labels (`namespace`, `app`, `level`); any other role is a key of the JSON line (`\| json`). The catalog's `logs.index_pattern` is the stream selector (`{namespace="prod"}`) |
 | metrics | `labels.{service,namespace,status,k8s_app}` | label **names** (`job`, `app`, `code`, ...) |
 | metrics | `metrics.{requests,latency_histogram,db_pool_*,cache_up,memory_rss,restarts,...}` | metric **names** of your instrumentation (e.g. OpenTelemetry `http_server_request_duration_seconds`) |
 | metrics | `ui_link_template`, `explore_link_template`, `panels` | Grafana dashboard / Explore links; `{service}` `{namespace}` `{from_ms}` `{to_ms}` `{panel}` `{query}` `{range}` `{end_utc}` |
@@ -256,6 +258,7 @@ backend/src/aiops/providers/
   registry.py              PROVIDER_REGISTRY: (capability, provider) -> adapter class
   logs/__init__.py         the logs interface (LogsProvider) + neutral shapes (LogScope, LogWindow, LogTable)
   logs/elasticsearch.py    ES|QL + Kibana KQL links            (registered)
+  logs/loki.py             LogQL + Grafana Explore links      (registered; PR-P4a, ADR-0019)
   logs/_skeleton.py        copy-me template                   (NOT registered: leading "_")
   metrics/__init__.py      the metrics interface (MetricsProvider) + SLIS, MetricScope, MetricWindow, MetricRequest
   metrics/prometheus.py    PromQL + Grafana/Prometheus links  (registered)
@@ -301,7 +304,38 @@ config/prompts/providers/<capability>/<provider>/v1.md       query guidance for 
    Then record fixtures against the real backend
    (`backend/tests/fixtures/<capability>-<provider>/S*/`, with a `meta.json` window) and
    replay the agent's scenarios through the new provider: the evals must pass with **zero
-   agent change** (PR-P4 does this for a second logs backend).
+   agent change** (PR-P4a did exactly this for Loki; see below).
+
+## Proof: switching the logs vendor in 3 steps (Elasticsearch → Loki, PR-P4a)
+
+The same Log agent, the same cluster and the same Fluent Bit; Elasticsearch replaced by
+Grafana Loki (docs/setup/loki.md, ADR-0019). `git diff` of `backend/src/aiops/agents/` and
+`backend/src/aiops/orchestrator/` for that change is **empty**, and a test enforces it
+(`backend/tests/unit/test_portability_proof.py`).
+
+1. **Run the vendor's MCP server** next to the backend: `mcp-servers/loki-mcp`
+   (`make loki-up`; server-side stream allowlist `ALLOWED_STREAMS=namespace=prod`).
+2. **Select the provider in the profile** (`profiles/local-loki/profile.yaml`, which
+   `extends: local-k8s`; nothing else differs):
+   ```yaml
+   capabilities:
+     logs:
+       provider: loki
+       mcp: {transport: http, url: "${LOKI_MCP_URL:-http://localhost:8110/mcp}"}
+       tool_allowlist: [query, query_range, list_labels, label_values]
+       settings:
+         stream_labels: [namespace, app, level]
+         fields: {level: level, service: app, message: message, trace_id: trace_id, version: version}
+         ui_link_template: "${GRAFANA_URL:-http://localhost:3000}/explore?schemaVersion=1&orgId=1&panes={panes}"
+   ```
+3. **Point the catalog at the vendor's identifier**: `logs.index_pattern: '{namespace="prod"}'`
+   (a stream selector instead of `logs-k8s-*`, `profiles/local-loki/services.yaml`), then
+   `aiops doctor --profile local-loki` and `AIOPS_PROFILE=local-loki aiops agent run logs ...`.
+
+Result on live-recorded fixtures (`backend/tests/fixtures/logs-loki/`): S1 reaches
+`db_timeout_errors_up`, `error_rate_up`, `new_error_pattern`, `deployment_detected`, like the
+Elasticsearch fixtures; S0 has no false positive. The provider adapter
+(`providers/logs/loki.py`) and its prompt fragment were the only new code on the agent path.
 
 ## Known vendor couplings (P1 audit; P2 progress)
 

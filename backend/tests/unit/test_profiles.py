@@ -293,15 +293,29 @@ def _check(profiles: Path, capability_yaml: str) -> ValidationReport:
 def test_planned_provider_names_missing_setting(profiles: Path) -> None:
     report = _check(
         profiles,
-        "  logs: {provider: loki, mcp: {transport: http, url: 'http://x'},"
+        "  logs: {provider: splunk, mcp: {transport: http, url: 'http://x'},"
         " tool_allowlist: [query]}\n",
     )
     messages = [i.message for i in report.errors]
     assert (
-        "capability logs: provider 'loki' needs setting 'labels.service' "
-        "(capabilities.logs.settings.labels.service)" in messages
+        "capability logs: provider 'splunk' needs setting 'index' "
+        "(capabilities.logs.settings.index)" in messages
     )
-    assert any("provider 'loki' is planned, not implemented yet" in m for m in messages)
+    assert any("provider 'splunk' is planned, not implemented yet" in m for m in messages)
+
+
+def test_implemented_loki_names_missing_setting(profiles: Path) -> None:
+    report = _check(
+        profiles,
+        "  logs: {provider: loki, mcp: {transport: http, url: 'http://x'},"
+        " tool_allowlist: [query, query_range]}\n",
+    )
+    messages = [i.message for i in report.errors]
+    assert (
+        "capability logs: provider 'loki' needs setting 'stream_labels' "
+        "(capabilities.logs.settings.stream_labels)" in messages
+    )
+    assert not any("planned" in m for m in messages)
 
 
 def test_unknown_provider_lists_implemented(profiles: Path) -> None:

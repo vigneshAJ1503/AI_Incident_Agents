@@ -178,6 +178,37 @@ services:
     mem_limit: 128m
     restart: unless-stopped
 
+  # PR-P4a: our own thin read-only Loki MCP, backing the `logs` capability when
+  # capabilities.logs.provider = loki (profile local-loki). Opt-in with Loki itself
+  # (`make loki-up`). Guardrails are server-side: every stream selector must carry an
+  # allowlisted matcher (namespace="prod"), bounded time/[range]/offset, line/series caps.
+  loki-mcp:
+    build:
+      context: ../../mcp-servers/loki-mcp
+    image: aiops/loki-mcp:0.1.0
+    container_name: aiops-loki-mcp
+    profiles: ["loki"]
+    environment:
+      - LOKI_URL=${LOKI_URL:-http://aiops-loki:3100}
+      # Grafana Cloud Logs / multi-tenant Loki: bearer token OR basic auth + tenant header.
+      - LOKI_BEARER_TOKEN=${LOKI_BEARER_TOKEN:-}
+      - LOKI_USERNAME=${LOKI_USERNAME:-}
+      - LOKI_PASSWORD=${LOKI_PASSWORD:-}
+      - LOKI_ORG_ID=${LOKI_ORG_ID:-}
+      - ALLOWED_STREAMS=${LOKI_ALLOWED_STREAMS:-namespace=prod}
+      - QUERY_TIMEOUT_S=${LOKI_QUERY_TIMEOUT_S:-30}
+      - MAX_RANGE_HOURS=${LOKI_MAX_RANGE_HOURS:-48}
+      - MAX_LINES=${LOKI_MAX_LINES:-500}
+      - MAX_SERIES=${LOKI_MAX_SERIES:-1000}
+    ports:
+      - "127.0.0.1:${LOKI_MCP_PORT:-8110}:8110"
+    user: "10001:10001"
+    read_only: true
+    tmpfs:
+      - /tmp
+    mem_limit: 128m
+    restart: unless-stopped
+
 networks:
   default:
     name: aiops

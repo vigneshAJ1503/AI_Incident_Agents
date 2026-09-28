@@ -1,10 +1,40 @@
 from __future__ import annotations
 
+import contextlib
+import os
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def pytest_configure(config: pytest.Config) -> None:
+    """Disable .env loading for the WHOLE session, including module import/collection time.
+
+    Test modules may build settings at import time, before any fixture runs; a developer's
+    .env (which can hold a real LLM key) must never leak into tests.
+    """
+    import dotenv
+
+    no_dotenv = lambda *a, **k: False  # noqa: E731
+    dotenv.load_dotenv = no_dotenv  # type: ignore[assignment]
+    import aiops.core.config as aiops_config
+
+    aiops_config.load_dotenv = no_dotenv  # type: ignore[assignment]
+    for var in (
+        "OPENAI_COMPAT_API_KEY",
+        "OPENAI_COMPAT_API_KEY_2",
+        "AIOPS_REPLAY_LLM",
+        "LLM_MODEL_FAST",
+        "LLM_MODEL_AGENT",
+        "LLM_MODEL_RCA",
+        "LLM_REASONING_EFFORT",
+        "AIOPS_PROFILE",
+        "AIOPS_ENV",
+    ):
+        os.environ.pop(var, None)
 
 
 @pytest.fixture
@@ -23,6 +53,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "LLM_PROVIDER",
         "OPENAI_COMPAT_BASE_URL",
         "OPENAI_COMPAT_API_KEY",
+        "OPENAI_COMPAT_API_KEY_2",
+        "AIOPS_REPLAY_LLM",
         "LLM_MODEL_FAST",
         "LLM_MODEL_AGENT",
         "LLM_MODEL_RCA",
@@ -37,9 +69,26 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "AIOPS_API_KEY",
         "AIOPS_API_CORS_ORIGINS",
         "AIOPS_ENABLE_FAULTS",
+        "LLM_REASONING_EFFORT",
     ]:
         monkeypatch.delenv(var, raising=False)
-    monkeypatch.setattr("aiops.core.config.load_dotenv", lambda *a, **k: False)
+    # No test may read a developer's .env (it can hold a real LLM key). Block every
+    # loader, not just the config one: CLI modules load it too.
+    no_dotenv = lambda *a, **k: False  # noqa: E731
+    monkeypatch.setattr("dotenv.load_dotenv", no_dotenv)
+    monkeypatch.setattr("aiops.core.config.load_dotenv", no_dotenv)
+    for module in ("aiops.cli.knowledge_cmd", "aiops.cli.seed_cmd"):
+        with contextlib.suppress(ImportError, AttributeError):
+            monkeypatch.setattr(f"{module}.load_dotenv", no_dotenv)
+
+
+@pytest.fixture(autouse=True)
+def _restore_environ() -> Iterator[None]:
+    """Whatever a test puts into os.environ (directly or via a loader) is undone afterwards."""
+    snapshot = dict(os.environ)
+    yield
+    os.environ.clear()
+    os.environ.update(snapshot)
 
 
 def write_config(tmp_path: Path, env_yaml: str, catalog_yaml: str = "services: []\n") -> Path:

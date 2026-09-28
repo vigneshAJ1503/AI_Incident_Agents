@@ -32,9 +32,13 @@ services:
       - LLM_PROVIDER=${LLM_PROVIDER:-openai_compat}
       - OPENAI_COMPAT_BASE_URL=${OPENAI_COMPAT_BASE_URL:-https://api.groq.com/openai/v1}
       - OPENAI_COMPAT_API_KEY=${OPENAI_COMPAT_API_KEY:-}
+      - OPENAI_COMPAT_API_KEY_2=${OPENAI_COMPAT_API_KEY_2:-}
       - LLM_MODEL_FAST=${LLM_MODEL_FAST:-}
       - LLM_MODEL_AGENT=${LLM_MODEL_AGENT:-}
       - LLM_MODEL_RCA=${LLM_MODEL_RCA:-}
+      - LLM_REASONING_EFFORT=${LLM_REASONING_EFFORT:-}
+      # real = replays reason with the configured LLM (recorded data, real reasoning)
+      - AIOPS_REPLAY_LLM=${AIOPS_REPLAY_LLM:-}
       - AIOPS_API_KEY=${AIOPS_API_KEY:-}
       # Replays started from the Web UI: seconds per recorded tool call, so the live view
       # unfolds at a watchable pace (0 = instant). make demo: docs/setup/demo.md

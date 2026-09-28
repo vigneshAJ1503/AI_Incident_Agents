@@ -54,7 +54,7 @@ from aiops.llm.fake import FakeLLMProvider
 from aiops.mcp.registry import MCPRegistry
 from aiops.orchestrator.gaps import GapAnalysis, analyze_gaps
 from aiops.orchestrator.planner import Plan, Planner, PlanRequest
-from aiops.orchestrator.replay import ReplaySource, shift_result
+from aiops.orchestrator.replay import ReplaySource, replay_llm_enabled, shift_result
 
 log = logging.getLogger(__name__)
 
@@ -115,12 +115,17 @@ class Orchestrator:
         #: No usable LLM (replay, or no key configured): agents submit their deterministic
         #: overview and the planner/RCA stay rule-based. Zero tokens.
         self.deterministic_only = False
-        if llm is None and replay is None:
+        #: AIOPS_REPLAY_LLM=real: recorded data, but agents/planner/RCA reason with the
+        #: configured (hosted) LLM. Lets a real LLM be exercised without the live stack.
+        replay_with_llm = replay is not None and replay_llm_enabled()
+        if llm is None and (replay is None or replay_with_llm):
             try:
                 llm = create_provider(settings.llm)
             except ConfigError as exc:
                 log.warning("No LLM configured (%s): deterministic mode", exc)
                 llm = None
+        if replay is not None and replay_with_llm and llm is not None:
+            replay.llm = llm
         if llm is None:
             self.deterministic_only = True
             llm = FakeLLMProvider(responder=echo_responder())

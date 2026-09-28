@@ -19,6 +19,13 @@ class LLMError(Exception):
     """The provider failed (bad request, auth, server error, unparseable output)."""
 
 
+class LLMToolCallError(LLMError):
+    """The provider rejected the model's tool call (e.g. arguments failed schema validation).
+
+    Recoverable: the message is fed back to the model so it can correct the call.
+    """
+
+
 class LLMRateLimitError(LLMError):
     """Rate limit still exceeded after retries (common on free tiers)."""
 

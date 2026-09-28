@@ -45,7 +45,7 @@ def ping(
             provider.generate(
                 [ChatMessage.user("Reply with exactly one word: pong")],
                 role=model_role,
-                max_tokens=10,
+                max_tokens=256,  # reasoning models think before answering
             )
         )
     except LLMError as exc:

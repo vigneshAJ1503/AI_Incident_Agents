@@ -38,7 +38,7 @@ from aiops.core.models import (
     ToolCall,
 )
 from aiops.core.prompts import Prompt, PromptLoader
-from aiops.llm.base import ChatMessage, LLMError, LLMProvider, ToolSpec
+from aiops.llm.base import ChatMessage, LLMError, LLMProvider, LLMToolCallError, ToolSpec
 from aiops.llm.structured import SUBMIT_TOOL, submit_tool
 from aiops.mcp.client import MCPClientError
 from aiops.mcp.registry import MCPRegistry
@@ -344,6 +344,28 @@ class BaseAgent(ABC):
 
     # -- the loop -----------------------------------------------------------------------
 
+    async def _deterministic_fallback(
+        self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str, exc: LLMError
+    ) -> AgentResult:
+        """Finish from the evidence already gathered, as in zero-LLM (replay) mode."""
+        from aiops.evals.replay import echo_responder  # local: avoids an import cycle
+        from aiops.llm.fake import FakeLLMProvider
+
+        log.warning("Agent %s: LLM failed (%s); using the deterministic analysis", self.name, exc)
+        self.emit("llm_called", run.task, step=0, tool_calls=0, fallback=type(exc).__name__)
+        original = self.deps.llm
+        self.deps.llm = FakeLLMProvider(responder=echo_responder())
+        usage_before = run.usage
+        try:
+            result = await self.llm_loop(run, tool_specs, system, user)
+        finally:
+            self.deps.llm = original
+            run.usage = usage_before  # the stand-in spends no real tokens
+        note = f"LLM unavailable ({type(exc).__name__}): finished with the deterministic analysis."
+        return result.model_copy(
+            update={"suggested_followups": [*result.suggested_followups, note]}
+        )
+
     async def llm_loop(
         self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str
     ) -> AgentResult:
@@ -355,9 +377,36 @@ class BaseAgent(ABC):
         for step in range(1, run.limits.max_steps + 1):
             if run.usage.total_tokens >= run.limits.max_tokens:
                 return run.partial(f"Token budget ({run.limits.max_tokens}) reached.")
-            response = await self.deps.llm.generate(
-                messages, tools=tools, tool_choice="required", role=role
-            )
+            # Last step (or no tool budget left): only `submit` is offered, so a real model
+            # that keeps exploring still ends with an evidence-cited report.
+            final = step == run.limits.max_steps or len(run.tool_calls) >= run.limits.max_tool_calls
+            if final:
+                messages.append(
+                    ChatMessage.user(
+                        f"Final step: no more investigation. Call '{SUBMIT_TOOL}' now with your "
+                        "report, based only on the evidence ids you already have."
+                    )
+                )
+            try:
+                response = await self.deps.llm.generate(
+                    messages, tools=[submit] if final else tools, tool_choice="required", role=role
+                )
+            except LLMToolCallError as exc:
+                # The provider rejected the model's tool call (e.g. schema mismatch).
+                # Tell the model exactly what was wrong and let it try again.
+                self.emit("llm_called", run.task, step=step, tool_calls=0, rejected=True)
+                messages.append(
+                    ChatMessage.user(
+                        f"Your previous tool call was rejected: {exc}. Call the tool again with "
+                        f"arguments that match its JSON schema exactly (for '{SUBMIT_TOOL}': "
+                        "every finding needs 'kind', 'type' and 'description')."
+                    )
+                )
+                continue
+            except LLMError as exc:
+                # Rate limit / outage / unusable output: never let the LLM make the result
+                # WORSE than no LLM. Finish with the deterministic analysis instead.
+                return await self._deterministic_fallback(run, tool_specs, system, user, exc)
             run.usage = run.usage + response.usage
             run.model = response.model or run.model
             self.emit("llm_called", run.task, step=step, tool_calls=len(response.tool_calls))

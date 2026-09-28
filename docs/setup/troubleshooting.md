@@ -20,3 +20,12 @@ docker network rm aiops && minikube delete -p aiops
 make infra-up mcp-up k8s-up
 ```
 The cluster is stateless (manifests re-apply, sample data is ephemeral), so recreating it is safe.
+
+## kubernetes-mcp: "is a directory" / can't read `/etc/aiops/kubeconfig`
+If kubernetes-mcp starts before `.data/k8s/aiops-reader.kubeconfig` exists, Docker creates a **directory** at that path for the bind mount. `make mcp-up` now removes such a directory and generates the kubeconfig first when Minikube is running. To fix it by hand:
+```bash
+rm -rf .data/k8s/aiops-reader.kubeconfig
+make k8s-reader-kubeconfig
+docker compose --env-file .env.example -f deploy/compose/docker-compose.mcp.yml up -d --force-recreate kubernetes-mcp
+```
+Start order for a full restart: `make infra-up k8s-up k8s-reader-kubeconfig mcp-up logging-up`.

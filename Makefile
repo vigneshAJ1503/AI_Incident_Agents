@@ -104,6 +104,14 @@ MCP_COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example
 
 .PHONY: mcp-up
 mcp-up: ## Build and start the MCP servers (needs make infra-up)
+	@# kubernetes-mcp bind-mounts the reader kubeconfig: if the FILE is missing when the
+	@# container starts, Docker silently creates a DIRECTORY there. Create it first.
+	@if [ -d .data/k8s/aiops-reader.kubeconfig ]; then \
+		echo "Removing stale directory .data/k8s/aiops-reader.kubeconfig (Docker created it)"; \
+		rm -rf .data/k8s/aiops-reader.kubeconfig; fi
+	@if [ ! -f .data/k8s/aiops-reader.kubeconfig ] && command -v minikube >/dev/null && \
+		[ "$$(minikube status -p aiops --format '{{.Host}}' 2>/dev/null)" = "Running" ]; then \
+		./scripts/k8s-reader-kubeconfig.sh; fi
 	$(MCP_COMPOSE) up -d --build --wait
 
 .PHONY: mcp-down

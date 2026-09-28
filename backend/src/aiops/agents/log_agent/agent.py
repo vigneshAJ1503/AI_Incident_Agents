@@ -1,41 +1,34 @@
-"""Log (ELK) Agent.
+"""Log Agent.
 
 Investigation loop:
-  1. deterministic ES|QL (4 calls): volume, message patterns and versions/startups
+  1. deterministic queries (4 calls): volume, message patterns and versions/startups
      for the incident window AND the previous 24h baseline, plus trace ids and
      first occurrence for the top anomalous pattern;
   2. deterministic analysis: templating, baseline diff, signals (no LLM math);
   3. bounded LLM follow-ups + an evidence-cited report;
   4. deterministic signals are merged into the report (they can't be dropped).
 
-Vendor-neutral: index from the service catalog; field names, levels and the UI
-link template from the ``logs`` capability settings. When all services share one
-index (e.g. real Kubernetes logs, ``logs-k8s-*``), ``settings.service_filter: true``
-narrows every query to ``fields.service == <catalog logs.service_value>``.
+Vendor-neutral: the ``logs`` provider adapter (``capabilities.logs.provider``, ADR-0012)
+turns each question into the vendor's query language and tool calls, and normalizes the
+results. Index from the service catalog; field names, levels and the UI link template
+from the ``logs`` capability settings. When all services share one index (e.g. real
+Kubernetes logs, ``logs-k8s-*``), ``settings.service_filter: true`` narrows every query
+to ``fields.service == <catalog logs.service_value>``.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import timedelta
 from typing import Any
-from urllib.parse import quote
 
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
 from aiops.agents.log_agent.analysis import DATA_SIGNALS, SIGNALS, LogAnalysis, analyze
-from aiops.agents.log_agent.patterns import like_prefix
 from aiops.agents.registry import AGENTS
 from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind
 from aiops.llm.base import ToolSpec
+from aiops.providers.base import ToolRequest
+from aiops.providers.logs import LogScope, LogsProvider, LogTable, LogWindow, iso
 
-DEFAULT_FIELDS = {
-    "timestamp": "@timestamp",
-    "level": "level",
-    "message": "message",
-    "message_keyword": "message.keyword",
-    "service": "service",
-    "trace_id": "trace_id",
-}
 DEFAULT_ERROR_LEVELS = ["ERROR", "FATAL", "CRITICAL"]
 DEFAULT_PATTERN_LEVELS = ["ERROR", "FATAL", "CRITICAL", "WARN"]
 DEFAULT_BASELINE_HOURS = 24.0
@@ -43,52 +36,7 @@ DEFAULT_STARTUP_PATTERN = "Starting*"
 PATTERN_GROUP_LIMIT = 1000
 TRACE_SAMPLE = 5
 
-
-def iso(ts: datetime) -> str:
-    return ts.isoformat().replace("+00:00", "Z")
-
-
-def esql_string(value: str) -> str:
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def esql_like(prefix: str) -> str:
-    """LIKE pattern matching ``prefix`` literally, followed by anything."""
-    pattern = prefix.replace("\\", "\\\\").replace("*", "\\*").replace("?", "\\?") + "*"
-    return esql_string(pattern)
-
-
-@dataclass(frozen=True)
-class LogScope:
-    index: str
-    fields: dict[str, str]
-    error_levels: list[str]
-    pattern_levels: list[str]
-    baseline: timedelta
-    startup_pattern: str
-    link_template: str | None
-    #: Service value to filter on when several services share one index (None = no filter).
-    service_value: str | None = None
-
-    @property
-    def service_where(self) -> str | None:
-        """ES|QL condition selecting this service's lines in a shared index."""
-        if self.service_value is None:
-            return None
-        return f"{self.fields['service']} == {esql_string(self.service_value)}"
-
-    @property
-    def source(self) -> str:
-        """``FROM <index>``, narrowed to the service when the index is shared."""
-        where = self.service_where
-        return f"FROM {self.index}" + (f" | WHERE {where}" if where else "")
-
-    @property
-    def service_kql(self) -> str:
-        """KQL clause for UI links ('' when the index isn't shared)."""
-        if self.service_value is None:
-            return ""
-        return f'{self.fields["service"]}:"{self.service_value}"'
+__all__ = ["LogAgent", "LogScope"]
 
 
 class LogAgent(BaseAgent):
@@ -103,11 +51,13 @@ class LogAgent(BaseAgent):
 
     # -- scope ---------------------------------------------------------------------------
 
+    def logs(self) -> LogsProvider:
+        return self.provider("logs", LogsProvider)
+
     def scope(self, run: AgentRun) -> LogScope:
         ctx = run.task.context
         settings = self.deps.settings.capability("logs").settings
-        fields = {**DEFAULT_FIELDS, **settings.get("fields", {})}
-        fields.setdefault("message_keyword", f"{fields['message']}.keyword")
+        fields = self.logs().fields()
         identifiers: dict[str, Any] = {}
         if ctx.service:
             identifiers = self.deps.catalog.get(ctx.service).identifiers("logs", ctx.environment)
@@ -133,83 +83,58 @@ class LogAgent(BaseAgent):
             service_value=service_value,
         )
 
-    def ui_link(self, scope: LogScope, run: AgentRun, kql: str) -> str | None:
-        if not scope.link_template:
-            return None
-        window = run.task.context.time_range
-        if scope.service_kql:
-            kql = f"{scope.service_kql} and ({kql})" if kql else scope.service_kql
-        return scope.link_template.format(
-            start=iso(window.start), end=iso(window.end), kql=quote(kql, safe="")
-        )
+    def window(self, scope: LogScope, run: AgentRun) -> LogWindow:
+        time_range = run.task.context.time_range
+        return LogWindow(start=time_range.start, end=time_range.end, baseline=scope.baseline)
 
     # -- deterministic phase ---------------------------------------------------------------
 
-    def _window_eval(self, scope: LogScope, run: AgentRun) -> str:
-        start = iso(run.task.context.time_range.start)
-        ts = scope.fields["timestamp"]
-        return f'EVAL window = CASE({ts} >= TO_DATETIME("{start}"), "current", "baseline")'
-
-    async def _esql(
-        self, run: AgentRun, query: str, summary: str
-    ) -> tuple[Any, Evidence | None, str | None]:
-        window = run.task.context.time_range
-        scope_start = window.start - self.scope(run).baseline
-        outcome, evidence = await run.call_tool(
-            "execute_esql",
-            {"query": query, "start": iso(scope_start), "end": iso(window.end)},
-            summary=summary,
-        )
-        return outcome.data, evidence, outcome.tool_call.error
+    async def _query(
+        self, run: AgentRun, request: ToolRequest, summary: str
+    ) -> tuple[LogTable | None, Evidence | None, str | None]:
+        outcome, evidence = await run.call_tool(request.tool, request.arguments, summary=summary)
+        return self.logs().table(request, outcome.data), evidence, outcome.tool_call.error
 
     async def deterministic(
         self, run: AgentRun, scope: LogScope
     ) -> tuple[LogAnalysis | None, list[str]]:
-        f = scope.fields
-        levels = ", ".join(esql_string(level) for level in scope.pattern_levels)
-        window_eval = self._window_eval(scope, run)
+        logs = self.logs()
+        window = self.window(scope, run)
         notes: list[str] = []
 
-        volume, volume_ev, err = await self._esql(
+        volume, volume_ev, err = await self._query(
             run,
-            f"{scope.source} | {window_eval} | STATS count = COUNT(*) BY window, level = {f['level']}",
+            logs.volume_by_level(scope, window),
             f"Log volume by level: incident window vs {scope.baseline} baseline",
         )
         if volume_ev is None:
             return None, [f"Volume query failed: {err}"]
 
-        patterns, patterns_ev, err = await self._esql(
+        patterns, patterns_ev, err = await self._query(
             run,
-            f"{scope.source} | WHERE {f['level']} IN ({levels}) | {window_eval} "
-            f"| STATS count = COUNT(*), first_seen = MIN({f['timestamp']}), last_seen = MAX({f['timestamp']}) "
-            f"BY window, level = {f['level']}, msg = {f['message_keyword']} "
-            f"| SORT count DESC | LIMIT {PATTERN_GROUP_LIMIT}",
+            logs.message_patterns(scope, window, PATTERN_GROUP_LIMIT),
             "Error/warning message patterns: incident window vs baseline",
         )
         if patterns_ev is None:
             notes.append(f"Pattern query failed: {err}")
 
-        lifecycle: Any = None
+        lifecycle: LogTable | None = None
         lifecycle_ev: Evidence | None = None
-        if "version" in f:
-            lifecycle, lifecycle_ev, err = await self._esql(
+        if "version" in scope.fields:
+            lifecycle, lifecycle_ev, err = await self._query(
                 run,
-                f"{scope.source} | {window_eval} "
-                f"| EVAL is_start = CASE({f['message']} LIKE {esql_string(scope.startup_pattern)}, 1, 0) "
-                f"| STATS count = COUNT(*), starts = SUM(is_start), first_seen = MIN({f['timestamp']}) "
-                f"BY window, version = {f['version']}",
+                logs.versions_and_startups(scope, window),
                 "Versions and startups: incident window vs baseline",
             )
             if lifecycle_ev is None:
                 notes.append(f"Version query failed: {err}")
 
-        window = run.task.context.time_range
         analysis = analyze(
             volume,
             patterns,
             lifecycle,
             error_levels=scope.error_levels,
-            current=window.duration,
+            current=run.task.context.time_range.duration,
             baseline=scope.baseline,
         )
 
@@ -218,7 +143,7 @@ class LogAgent(BaseAgent):
             f"{analysis.current_errors} errors in {analysis.current_total} lines during the incident window "
             f"vs {analysis.baseline_errors} in {analysis.baseline_total} over the previous {scope.baseline}"
         )
-        volume_ev.link = self.ui_link(scope, run, "")
+        volume_ev.link = logs.ui_link(scope, window)
         notes.append(f"[{volume_ev.id}] volume")
         if patterns_ev is not None:
             new = [d for d in analysis.anomalous if d.is_new]
@@ -226,9 +151,7 @@ class LogAgent(BaseAgent):
                 f"{len(analysis.deltas)} error/warn patterns in window; {len(analysis.anomalous)} anomalous "
                 f"({len(new)} new vs baseline)"
             )
-            patterns_ev.link = self.ui_link(
-                scope, run, f"{f['level']}:({' or '.join(scope.pattern_levels)})"
-            )
+            patterns_ev.link = logs.ui_link(scope, window, levels=scope.pattern_levels)
             notes.append(f"[{patterns_ev.id}] patterns")
         if lifecycle_ev is not None:
             deploys = (
@@ -238,7 +161,7 @@ class LogAgent(BaseAgent):
             lifecycle_ev.summary = (
                 f"New versions in window: {deploys}; restarts: {analysis.restarts}"
             )
-            lifecycle_ev.link = self.ui_link(scope, run, "")
+            lifecycle_ev.link = logs.ui_link(scope, window)
             notes.append(f"[{lifecycle_ev.id}] versions")
 
         await self._trace_sample(run, scope, analysis, notes)
@@ -250,31 +173,23 @@ class LogAgent(BaseAgent):
         """Trace ids + first occurrence of the top anomalous pattern."""
         if not analysis.anomalous:
             return
-        top = analysis.anomalous[0]
-        prefix = like_prefix(top.pattern.template)
+        logs = self.logs()
+        prefix = logs.phrase(analysis.anomalous[0].pattern.template)
         if prefix is None:
             return
-        f = scope.fields
-        start = iso(run.task.context.time_range.start)
-        keep = ", ".join(
-            dict.fromkeys(f[k] for k in ("timestamp", "trace_id", "version") if k in f)
-        )
-        data, evidence, _ = await self._esql(
+        window = self.window(scope, run)
+        table, evidence, _ = await self._query(
             run,
-            f'{scope.source} | WHERE {f["timestamp"]} >= TO_DATETIME("{start}") '
-            f"AND {f['message']} LIKE {esql_like(prefix)} "
-            f"| KEEP {keep} | SORT {f['timestamp']} ASC | LIMIT {TRACE_SAMPLE}",
+            logs.first_occurrences(scope, window, prefix, TRACE_SAMPLE),
             f"First occurrences + trace ids of '{prefix}...'",
         )
-        if evidence is None or not isinstance(data, dict):
+        if evidence is None or table is None:
             return
-        columns, rows = data.get("columns", []), data.get("rows", [])
-        trace_ids = [r[columns.index(f["trace_id"])] for r in rows if f["trace_id"] in columns]
-        first = (
-            rows[0][columns.index(f["timestamp"])] if rows and f["timestamp"] in columns else None
-        )
+        columns, rows = table.columns, table.rows
+        trace_ids = [r[columns.index("trace_id")] for r in rows if "trace_id" in columns]
+        first = rows[0][columns.index("timestamp")] if rows and "timestamp" in columns else None
         evidence.summary = f"First occurrence of '{prefix}...' at {first}; trace ids {trace_ids}"
-        evidence.link = self.ui_link(scope, run, f'{f["message"]}:"{prefix}"')
+        evidence.link = logs.ui_link(scope, window, phrase=prefix)
         notes.append(
             f"[{evidence.id}] first occurrence {first}, trace ids: {', '.join(map(str, trace_ids))}"
         )
@@ -283,13 +198,7 @@ class LogAgent(BaseAgent):
 
     def fields_table(self, scope: LogScope) -> str:
         table = "\n".join(f"- {role}: `{name}`" for role, name in scope.fields.items())
-        if scope.service_where:
-            table += (
-                "\n\nThe index is shared by all services: every query MUST filter on this "
-                f"service, e.g. `{scope.source} | ...` (search_logs: add `{scope.service_kql}` "
-                "to the query)."
-            )
-        return table
+        return table + self.logs().scope_note(scope)
 
     def prompt_variables(self, run: AgentRun) -> dict[str, object]:
         variables = super().prompt_variables(run)
@@ -333,10 +242,8 @@ class LogAgent(BaseAgent):
         status = result.status
         if status is AgentStatus.NO_SIGNAL and analysis.anomalous:
             status = AgentStatus.SUCCESS
-        evidence = [
-            e if e.link else e.model_copy(update={"link": self.ui_link(scope, run, "")})
-            for e in result.evidence
-        ]
+        link = self.logs().ui_link(scope, self.window(scope, run))
+        evidence = [e if e.link else e.model_copy(update={"link": link}) for e in result.evidence]
         return result.model_copy(
             update={"signals": signals, "status": status, "evidence": evidence}
         )

@@ -11,6 +11,7 @@ from datetime import timedelta
 from typing import Any
 
 from aiops.agents.log_agent.patterns import Pattern, cluster
+from aiops.providers.logs import LogTable
 
 #: Signal vocabulary (must match config/prompts/logs/v*.md).
 SIGNALS = (
@@ -139,7 +140,9 @@ class LogAnalysis:
         return out
 
 
-def _rows(data: Any) -> tuple[list[str], list[list[Any]]]:
+def _rows(data: LogTable | dict[str, Any] | None) -> tuple[list[str], list[list[Any]]]:
+    if isinstance(data, LogTable):
+        return list(data.columns), list(data.rows)
     if not isinstance(data, dict):
         return [], []
     return list(data.get("columns", [])), list(data.get("rows", []))
@@ -150,15 +153,16 @@ def _col(columns: list[str], row: list[Any], name: str) -> Any:
 
 
 def analyze(
-    volume: Any,
-    patterns: Any,
-    lifecycle: Any,
+    volume: LogTable | dict[str, Any] | None,
+    patterns: LogTable | dict[str, Any] | None,
+    lifecycle: LogTable | dict[str, Any] | None,
     *,
     error_levels: list[str],
     current: timedelta,
     baseline: timedelta,
 ) -> LogAnalysis:
-    """Inputs are execute_esql results with a ``window`` column (current|baseline)."""
+    """Inputs are normalized log tables (``aiops.providers.logs``) with a ``window``
+    column (current|baseline)."""
     cols, rows = _rows(volume)
     totals = {"current": [0, 0], "baseline": [0, 0]}
     for row in rows:

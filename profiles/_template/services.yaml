@@ -1,8 +1,8 @@
 # =====================================================================================
 # SERVICE CATALOG TEMPLATE: every service agents may investigate, and what it is called
 # in each tool. Agents never invent a service that isn't here (they ask instead).
-# Tip: generate it from Backstage / your CMDB / Kubernetes labels (`aiops catalog import`
-# is planned, PR-P3). `extends: <profile>` merges another profile's catalog by service name.
+# Tip: generate it, don't type it: `aiops catalog import --from kubernetes|backstage` (it only
+# adds, never overwrites hand edits). `extends: <profile>` merges another profile's catalog.
 # =====================================================================================
 
 # Deployment environments and what people call them ("prod", "prd", "live" -> production).

@@ -20,6 +20,7 @@ from aiops.core.config import (
     PROFILE_FILE,
     ConfigError,
     Settings,
+    load_settings_lenient,
     load_yaml,
     referenced_env_vars,
 )
@@ -222,6 +223,30 @@ def _check_catalog(settings: Settings, catalog: ServiceCatalog, report: Validati
                     f"service {service.name}: no tickets.components/labels; the Tickets agent "
                     "falls back to keyword search only"
                 )
+
+
+def validate_profile(name: str) -> ValidationReport:
+    """Everything ``aiops profile validate`` checks for one profile (also used by doctor)."""
+    try:
+        settings, missing = load_settings_lenient(name, keep_missing=True)
+    except ConfigError as exc:
+        report = ValidationReport(name)
+        report.error(str(exc))
+        return report
+    report = ValidationReport(settings.profile)
+    for var in missing:
+        report.error(
+            f"required variable {var} is not set (put it in profiles/{name}/.env, the repo "
+            ".env or the shell)"
+        )
+    try:
+        catalog = ServiceCatalog.from_settings(settings)
+    except ConfigError as exc:
+        report.error(f"services.yaml: {exc}")
+        catalog = None
+    report.issues.extend(check_settings(settings, catalog).issues)
+    check_env_example(settings.profile_chain, report)
+    return report
 
 
 # --------------------------------------------------------------------------- env vars

@@ -9,6 +9,7 @@ What is deliberately left out (data minimization, no secrets):
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 CHANGE_CAUSE = "kubernetes.io/change-cause"
@@ -16,6 +17,12 @@ REVISION = "deployment.kubernetes.io/revision"
 RESTARTED_AT = "kubectl.kubernetes.io/restartedAt"
 ANNOTATION_ALLOWLIST = (CHANGE_CAUSE, REVISION, "deployment.kubernetes.io/desired-replicas")
 MESSAGE_CHARS = 300
+#: Ownership metadata a service catalog importer may read (`aiops catalog import`): only
+#: short, non-secret keys such as `team`, `owner`, `example.com/team`, `backstage.io/...`.
+OWNERSHIP_ANNOTATION = re.compile(
+    r"^(?:[a-z0-9.-]+/)?(?:team|owner|owners|contact|oncall|on-call|slack|part-of|system|"
+    r"component|kubernetes-id)$"
+)
 
 
 def _text(value: Any, limit: int = MESSAGE_CHARS) -> str | None:
@@ -33,6 +40,13 @@ def _meta(obj: dict[str, Any]) -> dict[str, Any]:
 def safe_annotations(obj: dict[str, Any]) -> dict[str, str]:
     annotations = _meta(obj).get("annotations") or {}
     return {k: _text(v) or "" for k, v in annotations.items() if k in ANNOTATION_ALLOWLIST}
+
+
+def ownership_annotations(obj: dict[str, Any]) -> dict[str, str]:
+    annotations = _meta(obj).get("annotations") or {}
+    return {
+        k: _text(v, 100) or "" for k, v in annotations.items() if OWNERSHIP_ANNOTATION.match(str(k))
+    }
 
 
 def _state(state: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -192,6 +206,7 @@ def compact_deployment(dep: dict[str, Any], *, detail: bool = False) -> dict[str
     }
     if detail:
         result["selector"] = (spec.get("selector") or {}).get("matchLabels") or {}
+        result["owner_annotations"] = ownership_annotations(dep)
         result["strategy"] = (spec.get("strategy") or {}).get("type")
         result["resources"] = {
             str(c.get("name")): _resources(c) for c in template_spec.get("containers") or []

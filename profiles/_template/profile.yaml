@@ -190,6 +190,12 @@ capabilities:
       probe_startup_grace_s: 60
       # {namespace} {kind} {name}, e.g. a Lens/Headlamp/cloud console URL. "" = no link.
       ui_link_template: ${K8S_UI_LINK_TEMPLATE:-}
+      # `aiops catalog import --from kubernetes`: which labels name a service / its team
+      # (first match wins; team annotations match by key suffix, e.g. acme.io/team).
+      # catalog_import:
+      #   name_labels: [app, app.kubernetes.io/name]
+      #   team_labels: [team, app.kubernetes.io/part-of, owner]
+      #   team_annotations: [team, owner]
 
   code:
     provider: git                             # local read-only clones; planned: github, gitlab

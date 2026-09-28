@@ -155,6 +155,30 @@ Recorded: S0 = 30 min healthy window, `no_errors`, 0 anomalies. S1 = 10:01:43–
 45 `Database connection timeout` errors (new vs baseline), `v1.8.2` first seen at the
 injection, signals `db_timeout_errors_up, error_rate_up, new_error_pattern, deployment_detected`.
 
+## Records without Kubernetes metadata (PR-P3)
+
+The kubernetes filter enriches each line by asking the API server about its pod. If the pod
+is already gone when Fluent Bit gets there, the lookup fails and the line used to reach
+Elasticsearch with **no `kubernetes` object** (a null `kubernetes.namespace_name`).
+
+Found on 2026-09-28 (read-only): 103 documents in `logs-k8s-2026.09.28`, all between
+13:42:24 and 13:42:31 UTC, 88 of them from pod `user-service-5499d86985-h7ppp`, all
+"Starting ..." lines. The node had just restarted; the pods started, then a rollout replaced
+them within seconds, while Fluent Bit was still waiting 30 s for cluster DNS
+(`Wait 30 secs until DNS starts up`, connectivity OK at 13:42:45). By then those pods no
+longer existed, so their lines were shipped unenriched.
+
+Fix: `deploy/k8s/logging/k8s-fallback.lua` runs after the kubernetes filter and, only when
+`kubernetes.namespace_name` is missing, fills `namespace_name`, `pod_name` and
+`container_name` from the tail tag (`<pod>_<namespace>_<container>-<id>.log`) and sets
+`kubernetes.metadata_source: tag`. Labels can't be recovered for a deleted pod, so these
+lines don't match `kubernetes.labels.app` filters; the app's JSON `service` field still names
+the service. Checked offline with the pinned image (`fluent/fluent-bit:5.1.2 --dry-run`, and
+a dummy-input run showing the fallback). **It takes effect at the next `make logging-up`**
+(it rolls the DaemonSet; not applied during PR-P3 because the shared cluster was recording).
+Old unenriched documents age out with the 2-day ILM; `test_k8s_logging_live.py` tolerates
+them (≤ 1 %) instead of failing.
+
 ## Measured cost (2026-09-26, 76 minutes of traffic, 16 samples every 5 min)
 
 | What | Measured | How |

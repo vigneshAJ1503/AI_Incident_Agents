@@ -46,7 +46,7 @@ invited committing a company's configuration next to the demo.
   without touching hand-written settings.
 - **Validate providers inside `load_settings`.** Would make every load (tests, replay evals)
   depend on the provider registry and fail on planned providers during experiments; kept as
-  an explicit `validate` step instead (and later `aiops doctor`, PR-P3).
+  an explicit `validate` step instead (and `aiops doctor`, PR-P3, which also checks connectivity, tool contracts and catalog identifiers live).
 
 ## Consequences
 - Onboarding = `aiops profile init <company>`, edit two YAML files, fill `.env`, `validate`.

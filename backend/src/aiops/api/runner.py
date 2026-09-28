@@ -29,7 +29,7 @@ from aiops.core.models import (
     utcnow,
 )
 from aiops.orchestrator.engine import InvestigationRequest, Orchestrator
-from aiops.orchestrator.replay import load_replay
+from aiops.orchestrator.replay import load_replay, replay_clock
 from aiops.store.repository import InvestigationStore
 
 log = logging.getLogger("aiops.api.runner")
@@ -69,7 +69,8 @@ def replay_tool_delay_s() -> float:
 
 
 def default_orchestrator(settings: Settings, bus: EventBus, scenario: str | None) -> Orchestrator:
-    replay = load_replay(settings, scenario) if scenario else None
+    # Replays are reported on today's clock (recorded dates never leak into the UI).
+    replay = load_replay(settings, scenario, display_end=replay_clock()) if scenario else None
     if replay is not None:
         replay.tool_delay_s = replay_tool_delay_s()
     return Orchestrator(settings, replay=replay, bus=bus)

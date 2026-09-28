@@ -15,7 +15,7 @@ from aiops.core.events import EventBus, InvestigationEvent
 from aiops.core.models import Investigation
 from aiops.orchestrator.engine import InvestigationRequest, Orchestrator
 from aiops.orchestrator.planner import Plan
-from aiops.orchestrator.replay import ReplayError, load_replay
+from aiops.orchestrator.replay import ReplayError, load_replay, replay_clock
 
 ServiceOption = typer.Option(None, "--service", "-s", help="Service (catalog name or alias).")
 EnvironmentOption = typer.Option(None, "--environment", help="Environment, e.g. production.")
@@ -55,7 +55,7 @@ def build_orchestrator(
     settings: Settings, replay: str | None, bus: EventBus | None = None
 ) -> Orchestrator:
     try:
-        source = load_replay(settings, replay) if replay else None
+        source = load_replay(settings, replay, display_end=replay_clock()) if replay else None
     except ReplayError as exc:
         err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=2) from exc

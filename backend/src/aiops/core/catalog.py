@@ -67,6 +67,9 @@ class ServiceEntry(_Model):
     owners: dict[str, str] = Field(default_factory=dict)
     depends_on: list[str] = Field(default_factory=list)
     runbooks: list[str] = Field(default_factory=list)
+    #: Business criticality: 1 = customer-facing revenue path (an outage is ``critical``),
+    #: higher = less critical. None = ``orchestrator.severity.default_tier``.
+    tier: int | None = Field(default=None, ge=1)
     capabilities: dict[str, dict[str, Any]] = Field(default_factory=dict)
     environments: dict[str, ServiceEnvironment] = Field(default_factory=dict)
 

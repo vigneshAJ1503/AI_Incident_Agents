@@ -64,6 +64,14 @@ def score_investigation(
     if report is None:
         return checks
     top = next((h for h in inv.hypotheses if h.id == report.root_cause_hypothesis_id), None)
+    if expected.severity is not None:
+        checks.append(
+            Check(
+                name=f"severity:{expected.severity}",
+                passed=report.severity == expected.severity,
+                detail=f"got {report.severity}",
+            )
+        )
     if scenario.healthy:
         checks += [
             Check(name="no_incident:no_hypothesis", passed=not inv.hypotheses),

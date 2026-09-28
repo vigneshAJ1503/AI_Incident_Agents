@@ -48,5 +48,11 @@ async def conclude(orchestrator: Orchestrator, run: InvestigationRun) -> None:
     )
     inv.timeline = build_timeline(inv)
     inv.versions = {**inv.versions, "rca": agent.version}
-    inv.report = build_report(inv, outcome, run.missing)
+    inv.report = build_report(
+        inv,
+        outcome,
+        run.missing,
+        rules=settings.orchestrator.severity,
+        tier=service.tier if service else None,
+    )
     orchestrator.bus.publish("report_ready", inv.id, report=inv.report.model_dump(mode="json"))

@@ -326,6 +326,14 @@ orchestrator:
   round2_agents: [knowledge, tickets]   # need round-1 findings as input
   llm_planner_fallback: true   # fast model only when the rules find no service
   llm_rca: true                # rca model ranks/phrases the rule-based hypotheses
+  # Report severity (first match wins): critical = users get errors (measured error ratio
+  # >= critical_error_rate) on a catalog `tier` in critical_tiers + a confident root cause; high = any
+  # user-facing impact or a critical alert; medium = latency only; low = the rest.
+  # severity:
+  #   critical_tiers: [1]
+  #   default_tier: 2
+  #   critical_min_confidence: 0.7
+  #   critical_error_rate: 0.05   # measured peak error ratio of the service
   # Gap analysis: extra/overriding "signal -> follow-ups" rules (defaults in
   # backend/src/aiops/orchestrator/gaps.py). target: incident | dependency.
   # followups:

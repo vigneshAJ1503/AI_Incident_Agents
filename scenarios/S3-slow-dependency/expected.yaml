@@ -11,4 +11,5 @@ root_cause: Slow stock_levels queries in inventory-service cause order-service u
 investigation:
   root_cause_keywords: [[inventory-service], [timeout], [order-service]]
   min_confidence: 0.7
+  severity: high  # report severity (orchestrator.severity rules)
 # Per-agent expectations live in agents/<agent>.yaml

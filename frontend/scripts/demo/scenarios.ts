@@ -2,6 +2,10 @@
  * Scenario ground truth for the demo dataset. Numbers come from the recorded replay fixtures
  * (backend/tests/fixtures/<agent>/S1..S5) and the scenario READMEs; clock times are moved onto the
  * demo calendar (the week ending 2026-09-28).
+ *
+ * Each report's `severity` must equal `investigation.severity` in scenarios/<id>/expected.yaml,
+ * i.e. what the backend's severity rules (profile `orchestrator.severity`) give the replay:
+ * S1 critical, S2-S5 high, S0 none. backend/tests/unit/test_demo_datasets.py checks it.
  */
 import type { Evidence, EvidenceKind } from "../../src/lib/api/schemas";
 import * as L from "./links";

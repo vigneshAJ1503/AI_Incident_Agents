@@ -24,7 +24,7 @@ from aiops.agents.base import AgentDeps
 from aiops.agents.deps import build_deps
 from aiops.core.config import Settings
 from aiops.core.events import EventSink
-from aiops.core.models import AgentResult, AgentTask, Investigation, TimeRange
+from aiops.core.models import AgentResult, AgentTask, Investigation, TimeRange, utcnow
 from aiops.evals.replay import REPLAY_NOW, ReplayMeta, echo_responder
 from aiops.evals.scenario import Scenario
 from aiops.llm.base import LLMProvider
@@ -36,17 +36,25 @@ from aiops.orchestrator.planner import PlanRequest
 REPLAY_INCIDENT_OFFSET = timedelta(minutes=20)
 
 _ISO = re.compile(
-    r"(?P<date>\d{4}-\d{2}-\d{2})(?P<sep>[T ])(?P<hm>\d{2}:\d{2})(?P<sec>:\d{2}(?P<frac>\.\d+)?)?"
-    r"(?P<tz>Z|[+-]\d{2}:\d{2})?"
+    r"(?<![\d-])(?P<date>\d{4}-\d{2}-\d{2})"
+    r"(?:(?P<sep>[T ])(?P<hm>\d{2}:\d{2})(?P<sec>:\d{2}(?P<frac>\.\d+)?)?"
+    r"(?P<tz>Z|[+-]\d{2}:\d{2})?)?(?![\d-])"
 )
 
 
 def shift_text(text: str, delta: timedelta) -> str:
-    """Move every ISO-like timestamp in ``text`` by ``delta``, keeping its format."""
+    """Move every ISO-like timestamp (or bare ``YYYY-MM-DD`` date) in ``text`` by
+    ``delta``, keeping its format."""
     if not delta or not text:
         return text
 
     def _sub(match: re.Match[str]) -> str:
+        if match.group("hm") is None:  # a bare date, e.g. "created 2026-09-22"
+            try:
+                day = datetime.fromisoformat(match.group("date")) + delta
+            except ValueError:
+                return match.group(0)
+            return day.strftime("%Y-%m-%d")
         sec = match.group("sec") or ""
         frac = match.group("frac") or ""
         raw = f"{match.group('date')}T{match.group('hm')}{sec[:3] if sec else ''}"
@@ -174,10 +182,21 @@ class ReplaySource:
     tool_delay_s: float = 0.0
     #: A real LLM for the agents (AIOPS_REPLAY_LLM=real); None = deterministic fake.
     llm: LLMProvider | None = None
+    #: The clock the replay is *reported* on (API/CLI replays: "now"). The investigated window
+    #: ends here, and every timestamp of the recorded data (evidence, findings, timeline,
+    #: report texts) moves with it, so a replay run today never shows the recording date.
+    #: Agents still query the recorded window (fixtures match on it). None = the recording
+    #: clock (evals and tests: deterministic).
+    display_end: datetime | None = None
 
     @property
     def anchor_incident_start(self) -> datetime | None:
         return None if self.scenario.healthy else self.anchor_end - REPLAY_INCIDENT_OFFSET
+
+    @property
+    def clock_shift(self) -> timedelta:
+        """Recording clock -> reporting clock (0 without ``display_end``)."""
+        return self.display_end - self.anchor_end if self.display_end else timedelta(0)
 
     def request(self) -> PlanRequest:
         return PlanRequest(
@@ -185,7 +204,7 @@ class ReplaySource:
             service=self.scenario.service,
             environment=self.scenario.environment,
             since=self.scenario.window,
-            end=self.anchor_end,
+            end=self.anchor_end + self.clock_shift,
         )
 
     def fixture_dir(self, agent: str, service: str | None) -> Path | None:
@@ -196,17 +215,25 @@ class ReplaySource:
         return path if path.is_dir() else None
 
     def prepare(self, task: AgentTask) -> tuple[AgentTask, timedelta]:
-        """The task with its recorded window, and the offset that normalizes its result."""
+        """The task with its recorded window, and the offset that moves its result onto
+        the reporting clock (scenario anchor + ``clock_shift``)."""
+        shift = self.clock_shift
+        if shift:  # back onto the recording clock: fixtures match the recorded queries
+            tr = task.context.time_range
+            recorded = TimeRange(start=tr.start - shift, end=tr.end - shift)
+            task = task.model_copy(
+                update={"context": task.context.model_copy(update={"time_range": recorded})}
+            )
         path = self.fixture_dir(task.agent, task.context.service)
         meta = ReplayMeta.load(path) if path else None
         if meta is None:
-            return task, timedelta(0)
+            return task, shift
         anchor = self.anchor_incident_start
         if anchor is not None and meta.incident_start is not None:
             offset = anchor - meta.incident_start
         else:
             offset = self.anchor_end - meta.end
-        return meta.apply(task), offset
+        return meta.apply(task), offset + shift
 
     def deps(
         self, settings: Settings, agent: str, service: str | None, events: EventSink
@@ -226,9 +253,14 @@ class ReplayError(Exception):
 
 
 def load_replay(
-    settings: Settings, scenario_id: str, anchor_end: datetime = REPLAY_NOW
+    settings: Settings,
+    scenario_id: str,
+    anchor_end: datetime = REPLAY_NOW,
+    *,
+    display_end: datetime | None = None,
 ) -> ReplaySource:
-    """The recorded fixtures of scenario ``scenario_id`` (e.g. ``S1``)."""
+    """The recorded fixtures of scenario ``scenario_id`` (e.g. ``S1``), reported on
+    ``display_end`` (e.g. now; default: the recording clock)."""
     from aiops.evals.runner import EvalPaths
     from aiops.evals.scenario import load_scenarios
 
@@ -240,7 +272,17 @@ def load_replay(
         raise ReplayError(f"Unknown scenario '{scenario_id}' (known: {known}).")
     if not paths.fixtures.is_dir():
         raise ReplayError(f"No recorded fixtures in {paths.fixtures}.")
-    return ReplaySource(scenario=scenario, fixtures=paths.fixtures, anchor_end=anchor_end)
+    return ReplaySource(
+        scenario=scenario,
+        fixtures=paths.fixtures,
+        anchor_end=anchor_end,
+        display_end=display_end,
+    )
+
+
+def replay_clock(now: datetime | None = None) -> datetime:
+    """The reporting clock of an on-demand replay: now, on a whole minute."""
+    return (now or utcnow()).replace(second=0, microsecond=0)
 
 
 def replay_llm_enabled() -> bool:

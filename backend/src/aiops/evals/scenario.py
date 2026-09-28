@@ -9,7 +9,7 @@ from typing import Any
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
 from aiops.core.config import ConfigError, format_validation_error, load_yaml
-from aiops.core.models import AgentStatus, AgentTask, IncidentContext, TimeRange
+from aiops.core.models import AgentStatus, AgentTask, IncidentContext, Severity, TimeRange
 
 
 class AgentExpectation(BaseModel):
@@ -33,6 +33,8 @@ class InvestigationExpectation(BaseModel):
     #: Groups of alternatives: the root-cause hypothesis mentions one word of every group.
     root_cause_keywords: list[list[str]] = Field(default_factory=list)
     min_confidence: float = Field(default=0.7, ge=0, le=1)
+    #: Expected report severity (orchestrator.severity rules); None = not checked.
+    severity: Severity | None = None
 
 
 class Scenario(BaseModel):

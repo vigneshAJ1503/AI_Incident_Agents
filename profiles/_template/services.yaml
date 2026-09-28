@@ -19,6 +19,7 @@ services:
     owners: { team: payments, slack: "#payments-oncall" }
     depends_on: [postgres, payment-gateway] # catalog services or plain infra names
     runbooks: [checkout-service.md]         # paths in the knowledge base
+    tier: 1                                 # 1 = revenue path (outage = critical); default 2
 
     # Identifiers per CAPABILITY (defaults for every environment). Keys by capability:
     #   logs:     service_value (value of fields.service), index_pattern

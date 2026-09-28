@@ -1,4 +1,8 @@
 import {
+  BoxesIcon,
+  FlaskConicalIcon,
+  ServerIcon,
+  ShieldCheckIcon,
   BotIcon,
   LayoutDashboardIcon,
   ListChecksIcon,
@@ -36,6 +40,32 @@ export const NAV: NavItem[] = [
     icon: ListChecksIcon,
     shortcut: "i",
     match: (p) => p.startsWith("/investigations") && p !== "/investigations/new",
+  },
+  {
+    href: "/approvals",
+    label: "Approvals",
+    icon: ShieldCheckIcon,
+    shortcut: "a",
+    match: (p) => p.startsWith("/approvals"),
+  },
+  {
+    href: "/services",
+    label: "Services",
+    icon: ServerIcon,
+    shortcut: "s",
+    match: (p) => p.startsWith("/services"),
+  },
+  {
+    href: "/agents",
+    label: "Agents",
+    icon: BoxesIcon,
+    match: (p) => p.startsWith("/agents"),
+  },
+  {
+    href: "/scenarios",
+    label: "Scenarios",
+    icon: FlaskConicalIcon,
+    match: (p) => p.startsWith("/scenarios"),
   },
 ];
 

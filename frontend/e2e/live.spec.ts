@@ -24,7 +24,8 @@ test.describe("live investigation (demo mode)", () => {
     await expect(page.getByTestId("lane-logs-r2")).toBeVisible({ timeout: 30_000 });
     // then the report replaces the live view
     await expect(page.getByTestId("report")).toBeVisible({ timeout: 30_000 });
-    await expect(page.getByTestId("report")).toContainText(/connection pool/i);
+    await expect(page.getByTestId("root-cause")).toContainText(/DB_POOL_SIZE|connection pool/i);
+    await expect(page.getByTestId("confidence")).toHaveText("91%");
   });
 
   test("clarification: 'Something is broken' asks for a service, then resumes", async ({

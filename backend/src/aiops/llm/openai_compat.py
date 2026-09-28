@@ -1,8 +1,16 @@
-"""OpenAI-compatible chat completions provider.
+"""OpenAI-compatible Chat Completions provider.
 
-Works with hosted free tiers that expose the OpenAI API shape — Groq
-(https://api.groq.com/openai/v1) and Google Gemini
-(https://generativelanguage.googleapis.com/v1beta/openai/). No local models.
+Any hosted endpoint that exposes the OpenAI API shape with tool calling, selected by
+``llm.base_url`` (docs/setup/llm-providers.md):
+
+- Groq (free tier): ``https://api.groq.com/openai/v1``
+- Google Gemini (free tier): ``https://generativelanguage.googleapis.com/v1beta/openai/``
+- OpenRouter: ``https://openrouter.ai/api/v1``
+- OpenAI: ``https://api.openai.com/v1``
+- a company-hosted vLLM / LiteLLM / Ollama *server*: ``https://llm.internal.example/v1``
+
+Never a model on the developer's laptop (project rule): a company's own inference server
+is fine. Azure OpenAI has its own adapter (``azure_openai``) that reuses this one.
 """
 
 from __future__ import annotations
@@ -17,6 +25,7 @@ from openai import AsyncOpenAI
 
 from aiops.core.config import ConfigError, LLMConfig, ModelRole
 from aiops.core.models import TokenUsage
+from aiops.llm._common import mask
 from aiops.llm.base import (
     ChatMessage,
     LLMError,
@@ -32,6 +41,12 @@ log = logging.getLogger(__name__)
 
 class OpenAICompatProvider:
     def __init__(self, config: LLMConfig, http_client: httpx2.AsyncClient | None = None) -> None:
+        self._config = config
+        self._require(config)
+        # The SDK retries 408/409/429/5xx with exponential backoff (honours Retry-After).
+        self._client = self._build_client(config, http_client)
+
+    def _require(self, config: LLMConfig) -> None:
         if not config.base_url:
             raise ConfigError("LLM base_url is not set (OPENAI_COMPAT_BASE_URL).")
         if config.api_key is None:
@@ -39,9 +54,12 @@ class OpenAICompatProvider:
                 "LLM API key is not set (OPENAI_COMPAT_API_KEY). "
                 "Get a free key: see docs/setup/zero-cost.md."
             )
-        self._config = config
-        # The SDK retries 408/409/429/5xx with exponential backoff (honours Retry-After).
-        self._client = AsyncOpenAI(
+
+    def _build_client(
+        self, config: LLMConfig, http_client: httpx2.AsyncClient | None
+    ) -> AsyncOpenAI:
+        assert config.api_key is not None  # noqa: S101 (checked in _require)
+        return AsyncOpenAI(
             base_url=config.base_url,
             api_key=config.api_key.get_secret_value(),
             timeout=config.timeout_s,
@@ -81,18 +99,24 @@ class OpenAICompatProvider:
                 }
                 for t in tools
             ]
-            request["tool_choice"] = tool_choice
+            forced = tool_choice == "required" and not self._config.forced_tool_choice
+            request["tool_choice"] = "auto" if forced else tool_choice
+        secret = self._config.api_key
         try:
             completion = await self._client.chat.completions.create(**request)
         except openai.RateLimitError as exc:
-            raise LLMRateLimitError(f"Rate limited by provider after retries: {exc}") from exc
+            raise LLMRateLimitError(
+                mask(f"{self.name}: rate limited after retries: {exc}", secret)
+            ) from None
         except openai.APIStatusError as exc:
-            raise LLMError(f"Provider returned HTTP {exc.status_code}: {exc.message}") from exc
+            raise LLMError(
+                mask(f"{self.name}: HTTP {exc.status_code}: {exc.message}", secret)
+            ) from None
         except openai.APIError as exc:  # connection errors, timeouts
-            raise LLMError(f"Provider request failed: {exc}") from exc
+            raise LLMError(mask(f"{self.name}: request failed: {exc}", secret)) from None
 
         if not completion.choices:
-            raise LLMError("Provider returned no choices.")
+            raise LLMError(f"{self.name}: the provider returned no choices.")
         choice = completion.choices[0]
         usage = completion.usage
         return LLMResponse(

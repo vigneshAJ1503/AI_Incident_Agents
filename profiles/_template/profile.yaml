@@ -29,9 +29,13 @@ metadata:
   owners: [you@example.com]          # who maintains this profile
 
 # ------------------------------------------------------------------------------ LLM
-# Hosted models only. openai_compat = any OpenAI-compatible Chat Completions API with tool
-# calling: Groq, Gemini (OpenAI endpoint), OpenAI, Azure OpenAI, a LiteLLM/vLLM gateway.
-# Planned: anthropic, bedrock (docs/portability.md).
+# Hosted models only: pick the ONE platform your company approved and keep one llm block
+# (docs/setup/llm-providers.md). Model ids come from the models: roles, never from code.
+#   openai_compat  any OpenAI-compatible API with tool calling: Groq, Gemini, OpenAI,
+#                  OpenRouter, or a company-hosted vLLM/LiteLLM/Ollama *server*
+#   anthropic      Claude via the Anthropic Messages API
+#   bedrock        Amazon Bedrock Converse API (Claude, Nova, Llama, Mistral, ...)
+#   azure_openai   an Azure OpenAI resource (models = deployment names)
 llm:
   provider: openai_compat
   base_url: ${OPENAI_COMPAT_BASE_URL}
@@ -41,7 +45,45 @@ llm:
     agent: ${LLM_MODEL_AGENT}                 # specialist agents
     rca: ${LLM_MODEL_RCA:-}                   # root-cause synthesis (optional)
   timeout_s: 60
-  max_retries: 4
+  max_retries: 4                              # retries 429/5xx with exponential backoff
+  # forced_tool_choice: false                 # for models that reject forced tool use
+
+# --- Anthropic (Claude API) ---------------------------------------------------------------
+# llm:
+#   provider: anthropic
+#   api_key: ${ANTHROPIC_API_KEY}             # SECRET (a workspace key with a spend limit)
+#   base_url: ${ANTHROPIC_BASE_URL:-}         # optional: your approved gateway/proxy
+#   models:                                   # e.g. claude-haiku-4-5 / claude-sonnet-5
+#     fast: ${LLM_MODEL_FAST:-}
+#     agent: ${LLM_MODEL_AGENT}
+#     rca: ${LLM_MODEL_RCA:-}
+#   timeout_s: 60
+#   max_retries: 4                            # also retries 529 "overloaded"
+
+# --- Amazon Bedrock (no key here: region + credentials from the standard AWS chain) -------
+# llm:
+#   provider: bedrock
+#   base_url: ${BEDROCK_ENDPOINT_URL:-}       # optional: a VPC/PrivateLink endpoint
+#   models:                                   # model ids or inference-profile ids/ARNs
+#     fast: ${LLM_MODEL_FAST:-}
+#     agent: ${LLM_MODEL_AGENT}
+#     rca: ${LLM_MODEL_RCA:-}
+#   timeout_s: 60
+#   max_retries: 4
+#   # forced_tool_choice: false               # models without toolChoice "any" support
+
+# --- Azure OpenAI ---------------------------------------------------------------------------
+# llm:
+#   provider: azure_openai
+#   base_url: ${AZURE_OPENAI_ENDPOINT}        # https://<resource>.openai.azure.com
+#   api_key: ${AZURE_OPENAI_API_KEY}          # SECRET
+#   api_version: ${AZURE_OPENAI_API_VERSION}  # e.g. 2024-10-21
+#   models:                                   # DEPLOYMENT names, not model names
+#     fast: ${LLM_MODEL_FAST:-}
+#     agent: ${LLM_MODEL_AGENT}
+#     rca: ${LLM_MODEL_RCA:-}
+#   timeout_s: 60
+#   max_retries: 4
 
 # Global per-agent budget (agents.<name>.limits overrides it).
 limits:

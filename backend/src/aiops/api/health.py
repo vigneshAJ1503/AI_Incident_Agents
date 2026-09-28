@@ -16,6 +16,8 @@ from collections.abc import Awaitable, Callable
 from urllib.parse import urlsplit
 
 from aiops.core.config import CapabilityConfig, Settings
+from aiops.llm.factory import config_problems
+from aiops.llm.factory import llm_configured as factory_llm_configured
 
 Probe = Callable[[CapabilityConfig, float], Awaitable[bool]]
 
@@ -41,12 +43,17 @@ async def tcp_probe(cap: CapabilityConfig, timeout: float) -> bool:
 
 
 def llm_configured(settings: Settings) -> bool:
-    """A real, hosted LLM is usable: provider + key + an agent model (the key isn't shown)."""
-    llm = settings.llm
-    if llm.provider != "openai_compat":
-        return False
-    key = llm.api_key.get_secret_value() if llm.api_key else ""
-    return bool(key.strip() and llm.base_url and llm.models.get("agent"))
+    """A real, hosted LLM is usable: every field its provider needs is set (openai_compat,
+    anthropic, azure_openai: endpoint/key/api-version; bedrock: an AWS region) plus an
+    agent model. No network call, and the key is never part of the answer."""
+    return factory_llm_configured(settings.llm)
+
+
+def llm_missing(settings: Settings) -> list[str]:
+    """Why ``llm_configured`` is false, e.g. ``["llm.api_key is not set (ANTHROPIC_API_KEY)"]``."""
+    if settings.llm.provider == "fake":
+        return ["llm.provider is 'fake' (set LLM_PROVIDER or the profile's llm block)"]
+    return config_problems(settings.llm)
 
 
 class CapabilityHealth:

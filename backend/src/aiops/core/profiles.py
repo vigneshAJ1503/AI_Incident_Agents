@@ -93,10 +93,15 @@ PROVIDERS: dict[str, dict[str, ProviderSpec]] = provider_matrix()
 
 #: LLM providers: implemented = accepted by ``llm.provider`` today.
 LLM_PROVIDERS: dict[str, tuple[Status, str]] = {
-    "openai_compat": ("implemented", "Groq, Gemini, OpenAI, Azure OpenAI, vLLM gateways, ..."),
+    "openai_compat": (
+        "implemented",
+        "Groq, Gemini, OpenAI, OpenRouter, a company vLLM/LiteLLM/Ollama server",
+    ),
+    "anthropic": ("implemented", "Claude via the Anthropic Messages API (ANTHROPIC_API_KEY)"),
+    "bedrock": ("implemented", "Amazon Bedrock Converse API (AWS credential chain, no key)"),
+    "azure_openai": ("implemented", "Azure OpenAI deployments (endpoint + api-version)"),
     "fake": ("implemented", "tests only (zero tokens)"),
-    "anthropic": ("planned", "Claude API"),
-    "bedrock": ("planned", "AWS Bedrock"),
+    "vertex": ("planned", "Google Vertex AI (Gemini/Claude); use openai_compat meanwhile"),
 }
 
 
@@ -189,14 +194,19 @@ def check_settings(settings: Settings, catalog: ServiceCatalog | None = None) ->
 
 
 def _check_llm(settings: Settings, report: ValidationReport) -> None:
+    """Endpoint/api-version gaps are errors (the profile is wrong); a missing key or model
+    is a warning (normal on a laptop without keys: replay still works)."""
     llm = settings.llm
-    if llm.provider == "openai_compat":
-        if not llm.base_url:
-            report.error("llm: provider 'openai_compat' needs 'base_url'")
-        if llm.api_key is None:
-            report.warn("llm: api_key is not set; live LLM calls will fail (replay evals work)")
-        if not llm.models.get("agent"):
-            report.warn("llm: models.agent is not set (set LLM_MODEL_AGENT)")
+    for problem in llm.missing():
+        field = problem.split(" ", 1)[0]
+        if field in ("llm.base_url", "llm.api_version"):
+            report.error(f"llm: provider '{llm.provider}' needs {problem.removeprefix('llm.')}")
+        elif field == "llm.api_key":
+            report.warn(
+                f"llm: {problem.removeprefix('llm.')}; live LLM calls will fail (replay evals work)"
+            )
+        else:
+            report.warn(f"llm: {problem.removeprefix('llm.')}")
 
 
 def _check_catalog(settings: Settings, catalog: ServiceCatalog, report: ValidationReport) -> None:

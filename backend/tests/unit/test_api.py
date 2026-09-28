@@ -123,6 +123,40 @@ async def test_health_reports_profile_llm_and_capabilities_without_secrets(
     assert FAKE_LLM_KEY not in json.dumps(body)
 
 
+@pytest.mark.parametrize(
+    ("llm", "configured"),
+    [
+        ({"provider": "anthropic", "api_key": FAKE_LLM_KEY, "models": {"agent": "m"}}, True),
+        ({"provider": "anthropic", "models": {"agent": "m"}}, False),
+        ({"provider": "bedrock", "models": {"agent": "m"}}, True),  # AWS chain, no key
+        (
+            {
+                "provider": "azure_openai",
+                "base_url": "https://acme.openai.azure.com",
+                "api_key": FAKE_LLM_KEY,
+                "api_version": "2024-10-21",
+                "models": {"agent": "gpt-deployment"},
+            },
+            True,
+        ),
+        ({"provider": "azure_openai", "api_key": FAKE_LLM_KEY, "models": {"agent": "d"}}, False),
+    ],
+)
+async def test_health_reports_each_enterprise_llm_provider(
+    settings: Settings,
+    store: InvestigationStore,
+    monkeypatch: pytest.MonkeyPatch,
+    llm: dict[str, Any],
+    configured: bool,
+) -> None:
+    monkeypatch.setenv("AWS_REGION", "eu-west-1")
+    profile = settings.model_copy(update={"llm": LLMConfig.model_validate(llm)})
+    async with api_client(make_context(profile, store)) as client:
+        body = (await client.get("/api/health")).json()
+    assert body["llm"] == {"provider": llm["provider"], "configured": configured}
+    assert FAKE_LLM_KEY not in json.dumps(body)
+
+
 def test_llm_configured_needs_key_and_model(settings: Settings) -> None:
     assert not llm_configured(settings)  # no key on this machine / in CI
     assert llm_configured(with_llm_key(settings))

@@ -107,16 +107,101 @@ class CapabilityConfig(_Strict):
 
 
 ModelRole = Literal["fast", "agent", "rca"]
+LLMProviderName = Literal["openai_compat", "anthropic", "bedrock", "azure_openai", "fake"]
+
+#: The conventional env var behind each provider field, for readable error messages (the
+#: profile YAML decides the real mapping via ``${VAR}``). Bedrock has no key: the standard
+#: AWS credential chain (env, ~/.aws profile/SSO, IRSA, instance role) is used.
+LLM_ENV_VARS: dict[str, dict[str, str]] = {
+    "openai_compat": {"base_url": "OPENAI_COMPAT_BASE_URL", "api_key": "OPENAI_COMPAT_API_KEY"},
+    "anthropic": {"base_url": "ANTHROPIC_BASE_URL", "api_key": "ANTHROPIC_API_KEY"},
+    "azure_openai": {
+        "base_url": "AZURE_OPENAI_ENDPOINT",
+        "api_key": "AZURE_OPENAI_API_KEY",
+        "api_version": "AZURE_OPENAI_API_VERSION",
+    },
+    "bedrock": {"base_url": "BEDROCK_ENDPOINT_URL", "region": "AWS_REGION"},
+    "fake": {},
+}
 
 
 class LLMConfig(_Strict):
-    provider: Literal["openai_compat", "fake"]
+    """The hosted LLM. ``provider`` picks the adapter (``aiops.llm.factory``):
+
+    - ``openai_compat``: any OpenAI-compatible Chat Completions API (Groq, Gemini, OpenAI,
+      OpenRouter, a company vLLM/LiteLLM/Ollama *server*). Needs ``base_url`` + ``api_key``.
+    - ``anthropic``: the Anthropic Messages API. Needs ``api_key``; ``base_url`` optional
+      (an approved gateway/proxy).
+    - ``bedrock``: the Amazon Bedrock Converse API. No key in YAML: region + credentials
+      come from the standard AWS chain; ``base_url`` optional (a VPC/PrivateLink endpoint).
+    - ``azure_openai``: an Azure OpenAI resource. ``base_url`` = the resource endpoint,
+      ``api_version`` is required, and ``models`` map roles to *deployment* names.
+    - ``fake``: scripted, zero tokens (tests, replay).
+    """
+
+    provider: LLMProviderName
     base_url: str | None = None
     api_key: SecretStr | None = None
+    #: Azure OpenAI ``api-version`` query parameter (e.g. ``2024-10-21``).
+    api_version: str | None = None
     models: dict[ModelRole, str] = Field(default_factory=dict)
     timeout_s: float = Field(default=60.0, gt=0)
     max_retries: int = Field(default=4, ge=0)
+    #: Always sent to OpenAI-style APIs; sent to Anthropic/Bedrock only when set explicitly
+    #: in the profile (recent Claude models reject sampling parameters).
     temperature: float = Field(default=0.0, ge=0, le=2)
+    #: ``tool_choice="required"`` (the structured-output ``submit`` tool) is sent as a forced
+    #: tool choice. Set false for models that reject forced tool use: ``required`` is then
+    #: sent as ``auto`` and ``generate_structured`` relies on its prompt + corrective retry.
+    forced_tool_choice: bool = True
+
+    @model_validator(mode="after")
+    def _provider_fields(self) -> LLMConfig:
+        if self.provider == "bedrock" and self.api_key is not None:
+            raise ValueError(
+                "llm.api_key must not be set for provider 'bedrock': AWS credentials come from "
+                "the standard AWS chain (AWS_PROFILE, SSO, IRSA, instance role), never YAML"
+            )
+        if self.api_version and self.provider != "azure_openai":
+            raise ValueError("llm.api_version is only used by provider 'azure_openai'")
+        return self
+
+    @property
+    def explicit_temperature(self) -> float | None:
+        """``temperature`` only if the profile set it (for APIs that may reject it)."""
+        return self.temperature if "temperature" in self.model_fields_set else None
+
+    def env_var(self, field: str) -> str:
+        """The conventional env var of ``field`` for this provider ('' if none)."""
+        return LLM_ENV_VARS.get(self.provider, {}).get(field, "")
+
+    def missing(self) -> list[str]:
+        """Readable problems that stop real LLM calls, without network or SDK imports, e.g.
+        ``["llm.api_key is not set (ANTHROPIC_API_KEY)"]``. Empty = ready to try."""
+        if self.provider == "fake":
+            return []
+        problems: list[str] = []
+
+        def need(field: str, value: str | None) -> None:
+            if value is None or not value.strip():
+                var = self.env_var(field)
+                problems.append(f"llm.{field} is not set" + (f" ({var})" if var else ""))
+
+        if self.provider in ("openai_compat", "azure_openai"):
+            need("base_url", self.base_url)
+        if self.provider == "azure_openai":
+            need("api_version", self.api_version)
+        if self.provider != "bedrock":
+            need("api_key", self.api_key.get_secret_value() if self.api_key else None)
+        if not self.models.get("agent"):
+            what = "deployment" if self.provider == "azure_openai" else "model"
+            problems.append(f"llm.models.agent ({what} name) is not set (LLM_MODEL_AGENT)")
+        return problems
+
+    def models_by_role(self) -> dict[str, str]:
+        """``{"fast": ..., "agent": ..., "rca": ...}`` after the ``agent`` fallback."""
+        agent = self.models.get("agent") or "-"
+        return {role: self.models.get(role) or agent for role in ("fast", "agent", "rca")}
 
     def model_for(self, role: ModelRole) -> str:
         """Model for a role, falling back to ``agent`` when a role is not set."""

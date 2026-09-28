@@ -1108,6 +1108,34 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   profile.
 - 🎯 UC-12 ✅ The Log agent evals pass on the second backend with **zero agent code change**.
 
+#### PR-P4b · Enterprise LLM providers ✅
+- **Branch:** `feat/p4b-enterprise-llm-providers` · ADR-0017 · docs/setup/llm-providers.md
+- **Scope:** companies mandate an LLM platform, so switching it is profile configuration
+  only: `llm.provider: anthropic | bedrock | azure_openai` next to `openai_compat`.
+- **Delivered:**
+  - `aiops.llm.anthropic_messages` (official `anthropic` SDK 1.9.0, pinned): system
+    prompt, `tool_use`/`tool_result` mapping (parallel results merged into one user turn),
+    `tool_choice` auto/any/none, cache tokens counted as input, SDK retries on
+    408/409/429/5xx/529, errors → `LLMError`/`LLMRateLimitError`.
+  - `aiops.llm.bedrock` (Converse API via `boto3` 1.43.103, pinned; sync client in a worker
+    thread): Claude and other Bedrock models, region + credentials from the standard AWS
+    chain only (`llm.api_key` is rejected for bedrock), botocore "standard" retries,
+    ThrottlingException → `LLMRateLimitError`, AccessDenied hint.
+  - `aiops.llm.azure_openai`: the OpenAI adapter on `AsyncAzureOpenAI` (endpoint,
+    `api_version`, roles → deployment names).
+  - `LLMConfig`: `api_version`, `forced_tool_choice` (models that reject forced tool use),
+    `missing()` (which field, which env var), `models_by_role()`. Errors and logs mask keys.
+  - `aiops llm ping`, `aiops doctor` (provider + endpoint + model per role; Bedrock
+    credential check), `/health` `{provider, configured}` and the eval runner use one
+    readiness check (`llm.factory.config_problems`). Provider matrix + `.env.example` names
+    + `_template` blocks.
+  - Tests with mocked vendor transports (httpx2 `MockTransport`, botocore `before-send`):
+    completion, tool round trip, `generate_structured`, 429, 5xx retry, usage, key masking;
+    plus a full orchestrated S1 replay investigation on each provider (7 agents + RCA,
+    agent code untouched, same ground truth).
+- **Deviation:** no live call (no keys on the dev machine); `vertex` stays planned
+  (Gemini on Vertex works through `openai_compat` meanwhile).
+
 ### Phase 5 — Metrics slice (EPIC-007)
 
 #### PR-020 · Prometheus + Grafana + kube-state-metrics

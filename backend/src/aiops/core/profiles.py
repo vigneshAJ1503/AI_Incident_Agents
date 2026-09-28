@@ -54,6 +54,7 @@ _STATIC_PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
         "datadog": ProviderSpec("planned", "datadog-mcp", required=("site",)),
     },
     "metrics": {
+        # Adapter pending (the Metrics agent, PR-022, is adapted in a later wave).
         "prometheus": ProviderSpec(
             "implemented",
             "mcp-servers/prometheus-mcp",
@@ -63,55 +64,16 @@ _STATIC_PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
         "datadog": ProviderSpec("planned", "datadog-mcp", required=("site",)),
     },
     "alerts": {
-        "alertmanager": ProviderSpec(
-            "implemented",
-            "mcp-servers/alertmanager-mcp",
-            agent_tools=("list_alerts", "list_silences"),
-        ),
         "pagerduty": ProviderSpec("planned", "pagerduty-mcp", required=("service_ids",)),
         "opsgenie": ProviderSpec("planned", "opsgenie-mcp", required=("team",)),
     },
-    "k8s": {
-        "kubernetes": ProviderSpec(
-            "implemented",
-            "mcp-servers/kubernetes-mcp",
-            agent_tools=("get_deployment", "list_pods", "list_events"),
-            note="EKS/GKE/AKS/Minikube via a read-only ServiceAccount",
-        ),
-    },
+    "k8s": {},
     "code": {
-        "git": ProviderSpec(
-            "implemented",
-            "mcp-servers/git-mcp",
-            agent_tools=("list_releases", "search_commits", "get_diff"),
-            note="local clones (mirror your GitHub/GitLab repos read-only)",
-        ),
         "github": ProviderSpec("planned", "github-mcp", required=("owner",)),
         "gitlab": ProviderSpec("planned", "gitlab-mcp", required=("group",)),
     },
-    "tickets": {
-        "jira": ProviderSpec(
-            "implemented",
-            "sooperset/mcp-atlassian",
-            required=("project_key",),
-            agent_tools=("jira_search",),
-            note="mcp-atlassian tool contract (Jira Cloud / Data Center)",
-        ),
-        "mock": ProviderSpec(
-            "implemented",
-            "mcp-servers/mock-tickets-mcp",
-            required=("project_key",),
-            agent_tools=("jira_search",),
-            note="offline, same contract as jira",
-        ),
-    },
+    "tickets": {},
     "knowledge": {
-        "postgres_fts": ProviderSpec(
-            "implemented",
-            "mcp-servers/knowledge-mcp",
-            agent_tools=("search", "get_doc", "list_docs"),
-            note="markdown runbooks -> Postgres full-text search",
-        ),
         "confluence": ProviderSpec("planned", "mcp-atlassian", required=("spaces",)),
     },
 }

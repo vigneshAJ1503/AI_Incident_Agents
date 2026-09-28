@@ -26,10 +26,6 @@ ROOT_CAUSE_NOTE = (
     "Alerts are symptoms reported by monitoring rules: correlate them with the incident, "
     "never present an alert as the root cause."
 )
-HISTORY_NOTE = (
-    "Alertmanager keeps no history: alerts that already resolved are not visible here "
-    "(full alert history arrives with Prometheus ALERTS)."
-)
 
 
 def parse_ts(value: Any) -> datetime | None:
@@ -85,7 +81,7 @@ class AlertView:
 
 
 def alert_views(data: Any, scope: str, *, is_dependency: bool) -> list[AlertView]:
-    """AlertViews from a list_alerts tool result (alertmanager-mcp's compact format)."""
+    """AlertViews from a neutral alerts result (``aiops.providers.alerts``)."""
     alerts = data.get("alerts", []) if isinstance(data, dict) else []
     views = []
     for a in alerts:
@@ -120,6 +116,8 @@ class AlertAnalysis:
     alerts: list[AlertView] = field(default_factory=list)
     silences: list[dict[str, Any]] = field(default_factory=list)
     failed_scopes: list[str] = field(default_factory=list)
+    #: The provider's caveat when it can't see resolved alerts (None = it keeps history).
+    history_note: str | None = None
 
     # -- classification ------------------------------------------------------------------
 
@@ -213,7 +211,8 @@ class AlertAnalysis:
             )
         if self.failed_scopes:
             out.append(f"Could not query alerts for: {', '.join(self.failed_scopes)}.")
-        out.append(HISTORY_NOTE)
+        if self.history_note:
+            out.append(self.history_note)
         out.append(ROOT_CAUSE_NOTE)
         out.append(f"Deterministic signals: {', '.join(self.signals) or 'none'}")
         return out
@@ -230,6 +229,7 @@ def analyze(
     incident_start_source: str,
     critical_severities: list[str],
     failed_scopes: list[str] | None = None,
+    history_note: str | None = None,
 ) -> AlertAnalysis:
     alerts = alert_views(service_data, service, is_dependency=False)
     for dep, data in dependency_data.items():
@@ -245,4 +245,5 @@ def analyze(
         alerts=alerts,
         silences=[s for s in silences if isinstance(s, dict)],
         failed_scopes=list(failed_scopes or []),
+        history_note=history_note,
     )

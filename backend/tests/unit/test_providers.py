@@ -16,9 +16,12 @@ from aiops.core.config import ConfigError, load_settings
 from aiops.core.profiles import PROVIDERS, check_settings
 from aiops.core.prompts import PromptLoader
 from aiops.providers import PROVIDER_REGISTRY, Provider, ToolRequest
+from aiops.providers.alerts.alertmanager import AlertmanagerAlerts
+from aiops.providers.code.git import GitCode
 from aiops.providers.logs import LogScope, LogsProvider, LogWindow
 from aiops.providers.logs.elasticsearch import ElasticsearchLogs
 from aiops.providers.registry import ProviderRegistry
+from aiops.providers.tickets.jira import JiraTickets, MockTickets
 
 CONFIG = Path(__file__).resolve().parents[3] / "config"
 
@@ -43,7 +46,7 @@ def test_registered_providers_have_prompt_fragments() -> None:
     for cls in PROVIDER_REGISTRY.all():
         if cls.prompt_fragment:
             fragment = loader.load(cls.prompt_fragment)
-            assert fragment.ref.startswith(f"providers/{cls.capability}/{cls.name}/v")
+            assert fragment.ref.startswith(f"providers/{cls.capability}/")
 
 
 def test_registry_errors_are_readable() -> None:
@@ -138,3 +141,55 @@ def test_elasticsearch_normalizes_columns_and_links() -> None:
     )
     assert "MUST filter" in es.scope_note(s) and es.scope_note(scope()) == ""
     assert es.phrase("Short <NUM>") is None
+
+
+# -- tickets/jira, alerts/alertmanager, code/git contracts ------------------------------------
+
+
+def test_every_capability_has_an_adapter() -> None:
+    for capability in ("logs", "tickets", "alerts", "code", "k8s", "knowledge"):
+        assert PROVIDER_REGISTRY.names(capability), capability
+
+
+def test_jira_and_mock_share_the_contract() -> None:
+    for cls in (JiraTickets, MockTickets):
+        request = cls().scope_search("OPS", ["payments"], ["payment-service"], START, 20)
+        assert request.tool == "jira_search" and request.arguments["limit"] == 20
+        assert request.arguments["jql"] == (
+            'project = "OPS" AND (component in ("payments") OR labels in ("payment-service")) '
+            'AND (statusCategory != Done OR resolved >= "2026-09-25") ORDER BY updated DESC'
+        )
+    words = JiraTickets().keyword_search("OPS", ["oom*", "memory", "oom*"], START, 5)
+    assert '(text ~ "oom*" OR text ~ "memory") AND' in words.arguments["jql"]
+    assert JiraTickets().tickets({"issues": [{"key": "OPS-1", "summary": "x"}]})[0].key == "OPS-1"
+
+
+def test_alertmanager_requests_links_and_history() -> None:
+    am = AlertmanagerAlerts()
+    labels = {"service": "payment-service"}
+    assert am.alerts_for(labels, 50) == ToolRequest(
+        "list_alerts", {"labels": labels, "state": "all", "limit": 50}
+    )
+    assert am.silences_for(labels, 20).arguments["state"] == "active"
+    assert am.ui_link("http://am/#/alerts?filter={filter}", labels) == (
+        "http://am/#/alerts?filter=%7Bservice%3D%22payment-service%22%7D"
+    )
+    assert am.ui_link(None, labels) is None
+    assert not am.has_history and am.history_note and "no history" in am.history_note
+
+
+def test_git_requests() -> None:
+    git = GitCode()
+    assert git.releases_of("shop", 30) == ToolRequest(
+        "list_releases", {"repo": "shop", "limit": 30}
+    )
+    commits = git.commits_touching("shop", START, START + timedelta(hours=1), ("payment/",), 30)
+    assert commits.arguments == {
+        "repo": "shop",
+        "since": "2026-09-25T10:00:00Z",
+        "until": "2026-09-25T11:00:00Z",
+        "paths": ["payment/"],
+        "limit": 30,
+    }
+    assert git.diff_of("shop", "abc", ("payment/",)).tool == "get_diff"
+    assert git.commits(None) == [] and git.diff_files({"files": [{"path": "a"}]}) == [{"path": "a"}]

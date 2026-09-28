@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import UTC, datetime
 from typing import Any
 
-from aiops.agents.alert_agent.agent import matcher_filter
 from aiops.agents.alert_agent.analysis import alert_views, analyze, minutes, parse_ts
 from aiops.core.models import TimeRange
+from aiops.providers.alerts.alertmanager import matcher_filter
 
 WINDOW = TimeRange(
     start=datetime(2026, 9, 25, 10, 0, tzinfo=UTC), end=datetime(2026, 9, 25, 10, 30, tzinfo=UTC)

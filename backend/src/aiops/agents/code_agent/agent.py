@@ -10,7 +10,8 @@ Investigation loop:
   3. bounded LLM follow-ups + an evidence-cited report;
   4. deterministic signals and status are authoritative (the LLM can't add or drop them).
 
-Vendor-neutral: repo names and paths from the service catalog (``code: {repo, paths}``);
+Vendor-neutral: the ``code`` provider adapter (``capabilities.code.provider``, ADR-0012)
+names the tools; repo names and paths from the service catalog (``code: {repo, paths}``);
 tag scheme, thresholds and the commit link template from ``capabilities.code.settings``.
 """
 
@@ -38,6 +39,7 @@ from aiops.agents.registry import AGENTS
 from aiops.core.config import ConfigError
 from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind
 from aiops.llm.base import ToolSpec
+from aiops.providers.code import CodeProvider
 
 DEFAULT_LOOKBACK_HOURS = 24.0
 DEFAULT_TAG_TEMPLATE = "{service}/{version}"
@@ -141,6 +143,9 @@ class CodeAgent(BaseAgent):
             return None
         return scope.link_template.format(repo=repo, sha=sha)
 
+    def vcs(self) -> CodeProvider:
+        return self.provider("code", CodeProvider)
+
     # -- deterministic phase ---------------------------------------------------------------
 
     async def deterministic(
@@ -155,13 +160,13 @@ class CodeAgent(BaseAgent):
         release_evidence: list[Evidence] = []
         commit_evidence: list[tuple[Evidence, list[str]]] = []
 
+        vcs = self.vcs()
         for repo, targets in scope.repos().items():
+            request = vcs.releases_of(repo, scope.max_commits)
             outcome, evidence = await run.call_tool(
-                "list_releases",
-                {"repo": repo, "limit": scope.max_commits},
-                summary=f"Release tags in {repo}",
+                request.tool, request.arguments, summary=f"Release tags in {repo}"
             )
-            raw_releases = (outcome.data or {}).get("releases", []) if evidence else []
+            raw_releases = vcs.releases(outcome.data) if evidence else []
             if evidence is None:
                 notes.append(f"Release tags unavailable for {repo}: {outcome.tool_call.error}")
             else:
@@ -172,21 +177,14 @@ class CodeAgent(BaseAgent):
             )
 
             paths = [p for t in targets for p in t.paths]
+            request = vcs.commits_touching(repo, since, until, paths, scope.max_commits)
             outcome, evidence = await run.call_tool(
-                "search_commits",
-                {
-                    "repo": repo,
-                    "since": iso(since),
-                    "until": iso(until),
-                    "paths": paths,
-                    "limit": scope.max_commits,
-                },
-                summary=f"Commits touching {', '.join(paths)}",
+                request.tool, request.arguments, summary=f"Commits touching {', '.join(paths)}"
             )
             if evidence is None:
                 return None, [*notes, f"Commit search failed for {repo}: {outcome.tool_call.error}"]
             commit_evidence.append((evidence, paths))
-            for raw in (outcome.data or {}).get("commits", []):
+            for raw in vcs.commits(outcome.data):
                 files = [str(f.get("path", "")) for f in raw.get("files", [])]
                 owner = next((t for t in targets if any(t.owns(f) for f in files)), targets[0])
                 commit = Commit.from_tool(raw, owner.service, owner.dependency)
@@ -234,6 +232,7 @@ class CodeAgent(BaseAgent):
         tags_by_repo: dict[str, set[str]],
     ) -> None:
         """Fetch diffs of the highest pre-scored commits and apply the risk rules."""
+        vcs = self.vcs()
         rules = DiffRules(scope.risky_keys)
         targets = {t.service: t for t in scope.targets}
         candidates = sorted(
@@ -242,15 +241,14 @@ class CodeAgent(BaseAgent):
         )[: scope.max_diffs]
         for risk in candidates:
             target = targets[risk.commit.service]
+            request = vcs.diff_of(target.repo, risk.commit.sha, target.paths)
             outcome, evidence = await run.call_tool(
-                "get_diff",
-                {"repo": target.repo, "sha": risk.commit.sha, "paths": list(target.paths)},
-                summary=f"Diff of {risk.commit.short}",
+                request.tool, request.arguments, summary=f"Diff of {risk.commit.short}"
             )
             if evidence is None:
                 continue
             risk.facts = rules.facts(
-                (outcome.data or {}).get("files", []),
+                vcs.diff_files(outcome.data),
                 service=risk.commit.service,
                 release_tags=tags_by_repo.get(target.repo, set()),
                 template=scope.tag_template,

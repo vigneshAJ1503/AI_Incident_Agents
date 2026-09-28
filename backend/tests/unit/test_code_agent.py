@@ -82,7 +82,7 @@ def test_s1_identifies_tune_db_pool_and_quotes_the_hunk() -> None:
     assert suspects.index("'tune db pool'") < suspects.index("'release payment-service v1.8.2'")
     assert "Released in the scan window: payment-service/v1.8.2" in user
     assert "'docs(payment-service): link the connection pool runbook'" not in suspects
-    assert result.prompt_version and result.prompt_version.startswith("code/v1@")
+    assert result.prompt_version and result.prompt_version.startswith("code/v2@")
 
 
 def test_s3_blames_the_dependency_not_the_service() -> None:

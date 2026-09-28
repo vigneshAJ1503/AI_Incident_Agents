@@ -1,4 +1,4 @@
-"""Deterministic ticket analysis: symptom terms, JQL, relevance and signals.
+"""Deterministic ticket analysis: symptom terms, relevance and signals.
 
 The LLM reads the result; it doesn't decide which ticket is a known issue.
 """
@@ -32,7 +32,7 @@ class SymptomTerm:
 
     name: str
     triggers: re.Pattern[str]
-    search: tuple[str, ...]  # JQL text terms; 'word*' = prefix
+    search: tuple[str, ...]  # text search words; 'word*' = prefix
 
 
 def _term(name: str, triggers: str, *search: str) -> SymptomTerm:
@@ -99,7 +99,7 @@ def _stem(word: str) -> str:
 
 
 def mentions(text: str, term: str) -> bool:
-    """Word match with light stemming; 'oom*' is a prefix match (like JQL text search)."""
+    """Word match with light stemming; 'oom*' is a prefix match (like tracker text search)."""
     words = {_stem(w) for w in _WORD.findall(text.casefold())}
     needle = term.casefold()
     if needle.endswith("*"):
@@ -107,42 +107,6 @@ def mentions(text: str, term: str) -> bool:
         return any(w.startswith(prefix) for w in words)
     parts = _WORD.findall(needle)
     return bool(parts) and all(_stem(p) in words for p in parts)
-
-
-# --------------------------------------------------------------------------- JQL
-
-
-def jql_value(value: str) -> str:
-    return '"' + value.replace("\\", "\\\\").replace('"', '\\"') + '"'
-
-
-def jql_list(values: Iterable[str]) -> str:
-    return "(" + ", ".join(jql_value(v) for v in values) + ")"
-
-
-def recency_clause(cutoff: datetime) -> str:
-    """Open issues, or issues resolved since ``cutoff`` (absolute date: replayable)."""
-    return f'(statusCategory != Done OR resolved >= "{cutoff:%Y-%m-%d}")'
-
-
-def scope_jql(
-    project: str, components: Sequence[str], labels: Sequence[str], cutoff: datetime
-) -> str:
-    parts = []
-    if components:
-        parts.append(f"component in {jql_list(components)}")
-    if labels:
-        parts.append(f"labels in {jql_list(labels)}")
-    return (
-        f"project = {jql_value(project)} AND ({' OR '.join(parts)}) AND {recency_clause(cutoff)} "
-        "ORDER BY updated DESC"
-    )
-
-
-def keyword_jql(project: str, terms: Sequence[SymptomTerm], cutoff: datetime) -> str:
-    words = dict.fromkeys(s for t in terms for s in t.search)
-    text = " OR ".join(f"text ~ {jql_value(w)}" for w in words)
-    return f"project = {jql_value(project)} AND ({text}) AND {recency_clause(cutoff)} ORDER BY updated DESC"
 
 
 # --------------------------------------------------------------------------- relevance

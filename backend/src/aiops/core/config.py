@@ -178,6 +178,19 @@ class OrchestratorConfig(_Strict):
     llm_rca: bool = True
 
 
+class StorageConfig(_Strict):
+    """The evidence store (PR-032): investigations, events, approvals, audit."""
+
+    #: SQLAlchemy URL. Unset = ``$AIOPS_DATABASE_URL``, else the local compose Postgres from
+    #: POSTGRES_* (``postgresql+psycopg://aiops:...@localhost:15432/aiops``).
+    database_url: str | None = None
+    db_schema: str = "investigations"  # Postgres schema (ignored by SQLite)
+    #: Where approvals and the tool-call audit live. ``file``/``jsonl`` = the JSON files in
+    #: ``guardrails`` (the fallback); ``postgres`` = the store (falls back to JSONL on errors).
+    approvals: Literal["file", "postgres"] = "file"
+    audit: Literal["jsonl", "postgres"] = "jsonl"
+
+
 class ProfileMetadata(_Strict):
     """Who this profile is for. Informational; never inherited through ``extends``."""
 
@@ -195,6 +208,7 @@ class Settings(_Strict):
     agents: dict[str, AgentConfig] = Field(default_factory=dict)
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
     orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
+    storage: StorageConfig = Field(default_factory=StorageConfig)
     service_catalog: str = "local"
 
     # Set by the loader, not by YAML.

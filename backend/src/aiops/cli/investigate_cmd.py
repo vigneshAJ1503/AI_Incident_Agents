@@ -107,7 +107,7 @@ def plan(
         print_plan(result)
 
 
-def _print_event(event: InvestigationEvent) -> None:
+def print_event(event: InvestigationEvent) -> None:
     data = event.data
     agent = f"{event.agent} " if event.agent else ""
     detail = {
@@ -153,6 +153,29 @@ def print_investigation(inv: Investigation) -> None:
         console.print(report.markdown or report.summary)
 
 
+def _save(settings: Settings, inv: Investigation, bus: EventBus) -> None:
+    """Persist to the evidence store; a store outage never loses the printed result."""
+    from aiops.store.db import StoreError
+    from aiops.store.repository import InvestigationStore
+
+    store = InvestigationStore.from_settings(settings)
+
+    async def _persist() -> None:
+        try:
+            await store.save(inv)
+            await store.save_events(bus.history(inv.id))
+        finally:
+            await store.close()
+
+    try:
+        store.migrate()
+        asyncio.run(_persist())
+    except (StoreError, OSError) as exc:
+        err_console.print(f"[yellow]Not saved to the evidence store:[/yellow] {exc}")
+        return
+    err_console.print(f"[dim]saved: aiops show {inv.id}[/dim]")
+
+
 @handle_errors
 def investigate(
     question: str = typer.Argument("", help="The engineer's question (optional with --replay)."),
@@ -165,6 +188,9 @@ def investigate(
         None, "--replay", help="Replay a scenario's recorded fixtures (S0-S5): zero tokens."
     ),
     quiet: bool = typer.Option(False, "--quiet", "-q", help="Don't stream events."),
+    save: bool = typer.Option(
+        True, "--save/--no-save", help="Store it in the evidence store (aiops history/show)."
+    ),
     as_json: bool = JsonOption,
     env: str | None = EnvOption,
 ) -> None:
@@ -175,10 +201,12 @@ def investigate(
     settings = load_settings(env)
     bus = EventBus()
     if not quiet and not as_json:
-        bus.subscribe(_print_event)
+        bus.subscribe(print_event)
     orchestrator = build_orchestrator(settings, replay, bus)
     request = _request(question, service, environment, since, start, end, replay)
     inv = asyncio.run(orchestrator.investigate(request))
+    if save:
+        _save(settings, inv, bus)
     if as_json:
         console.print_json(json.dumps(inv.model_dump(mode="json")))
     else:

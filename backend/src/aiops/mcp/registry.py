@@ -31,11 +31,21 @@ class MCPRegistry:
         if record_dir and replay_dir:
             raise ValueError("record_dir and replay_dir are mutually exclusive")
         self.settings = settings
-        self.audit = audit or JsonlAuditSink(self._audit_path(settings))
+        self.audit = audit or self._default_audit(settings)
         self._overrides = dict(overrides or {})
         self._record_dir = record_dir
         self._replay_dir = replay_dir
         self._replay_lenient = replay_lenient
+
+    @classmethod
+    def _default_audit(cls, settings: Settings) -> AuditSink:
+        jsonl = JsonlAuditSink(cls._audit_path(settings))
+        if settings.storage.audit != "postgres":
+            return jsonl
+        from aiops.store.db import database_url
+        from aiops.store.sync_stores import SqlAuditSink
+
+        return SqlAuditSink(database_url(settings), settings.storage.db_schema, fallback=jsonl)
 
     @staticmethod
     def _audit_path(settings: Settings) -> Path:

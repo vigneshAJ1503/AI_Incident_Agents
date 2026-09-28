@@ -1221,6 +1221,13 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - token budget per investigation
 - ✅ Killing the ES MCP mid-run still completes the investigation with the others (PARTIAL).
 
+> **As built (PR-032):** package `aiops.store` (SQLAlchemy 2 async + Alembic) in Postgres
+> schema `investigations`; the full Investigation JSON is the source of truth, normalized
+> rows (steps, tool calls, findings, evidence excerpts, hypotheses, recommendations, event
+> log, approval links, audit) serve lists and the dashboard. Approvals and the tool-call
+> audit have Postgres implementations behind the existing interfaces, selected with
+> `storage.approvals/audit: postgres`; the JSON/JSONL files stay the default and fallback.
+
 #### PR-032 · Evidence store
 - **Branch:** `feat/032-evidence-store`
 - **Scope:**

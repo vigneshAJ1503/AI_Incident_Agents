@@ -79,7 +79,7 @@ def test_grafana_dashboards_are_provisioned_with_stable_uids() -> None:
     datasources = yaml.safe_load(
         (GRAFANA_DIR / "provisioning/datasources/datasources.yml").read_text()
     )["datasources"]
-    assert {d["uid"] for d in datasources} == {"prometheus", "elasticsearch"}
+    assert {d["uid"] for d in datasources} == {"prometheus", "elasticsearch", "loki"}
     dashboards = {
         p.name: json.loads(p.read_text()) for p in (GRAFANA_DIR / "dashboards").glob("*.json")
     }

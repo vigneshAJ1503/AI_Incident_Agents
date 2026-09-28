@@ -47,10 +47,8 @@ class ProviderSpec:
 #: (``aiops.providers``, ADR-0012) are added from the provider registry below.
 _STATIC_PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
     "logs": {
+        # elasticsearch, loki: registered adapters (aiops.providers.logs.*).
         "opensearch": ProviderSpec("planned", "opensearch-mcp", note="P4 candidate"),
-        "loki": ProviderSpec(
-            "planned", "loki-mcp", required=("labels.service",), note="LogQL; P4 candidate"
-        ),
         "splunk": ProviderSpec("planned", "splunk-mcp", required=("index",), note="SPL"),
         "datadog": ProviderSpec("planned", "datadog-mcp", required=("site",)),
     },

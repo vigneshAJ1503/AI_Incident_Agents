@@ -171,6 +171,37 @@ logging-up: venv-fix ## Ship prod pod logs to Elasticsearch (logs-k8s-*): ES tem
 	$(KUBECTL) apply -k deploy/k8s/logging
 	$(KUBECTL) -n logging rollout status ds/fluent-bit --timeout=180s
 
+# --- Second logs backend (PR-P4a): Grafana Loki + loki-mcp (docs/setup/loki.md) ----------
+.PHONY: loki-up
+loki-up: ## Start Loki (127.0.0.1:3101, ~0.1 GB) + loki-mcp (:8110); Fluent Bit ships prod logs to it too
+	@./scripts/ensure-network.sh
+	$(COMPOSE) --profile loki up -d --wait loki
+	$(MCP_COMPOSE) --profile loki up -d --build --wait loki-mcp
+
+.PHONY: loki-down
+loki-down: ## Stop Loki and loki-mcp (keeps the loki-data volume; 2-day retention)
+	-$(MCP_COMPOSE) --profile loki stop loki-mcp
+	-$(MCP_COMPOSE) --profile loki rm -f loki-mcp
+	$(COMPOSE) --profile loki stop loki
+	$(COMPOSE) --profile loki rm -f loki
+
+.PHONY: loki-status
+loki-status: ## Loki readiness, memory and the prod streams it holds
+	@curl -fsS http://localhost:$${LOKI_PORT:-3101}/ready || true
+	@docker stats --no-stream --format '{{.Name}} {{.MemUsage}}' aiops-loki aiops-loki-mcp 2>/dev/null || true
+	@curl -fsS -G http://localhost:$${LOKI_PORT:-3101}/loki/api/v1/label/app/values --data-urlencode 'query={namespace="prod"}' || true
+	@echo
+
+.PHONY: record-logs-loki
+record-logs-loki: venv-fix ## Record Log agent fixtures on Loki from a LIVE fault: make record-logs-loki S=S1 (S0 = healthy)
+	@if [ "$(S)" = "S0" ]; then \
+		cd $(BACKEND) && uv run --no-sync python -m tests.fixtures.record_logs_loki --scenario S0 \
+			--lock-repo $(CURDIR) --out $(CURDIR)/$(BACKEND)/tests/fixtures/logs-loki/S0; \
+	else \
+		cd $(BACKEND) && uv run --no-sync aiops fault run $(S) -- uv --directory $(CURDIR)/$(BACKEND) run --no-sync \
+			python -m tests.fixtures.record_logs_loki --out $(CURDIR)/$(BACKEND)/tests/fixtures/logs-loki/$(S); \
+	fi
+
 .PHONY: logging-status
 logging-status: ## Show Fluent Bit, its memory, and the logs-k8s-* indices
 	$(KUBECTL) -n logging get pods -o wide

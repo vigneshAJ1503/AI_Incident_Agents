@@ -14,6 +14,17 @@ datasources:
       timeInterval: 30s          # = scrape_interval: $__rate_interval never drops below 2 scrapes
       httpMethod: POST
 
+  # PR-P4a: the second logs backend (opt-in, `make loki-up`); the local-loki profile's
+  # Explore links use uid `loki`. Harmless when Loki isn't running.
+  - name: Loki logs
+    uid: loki
+    type: loki
+    access: proxy
+    url: http://aiops-loki:3100
+    editable: false
+    jsonData:
+      maxLines: 1000
+
   - name: Elasticsearch logs
     uid: elasticsearch
     type: elasticsearch

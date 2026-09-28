@@ -1,0 +1,640 @@
+{
+  "calls": [
+    {
+      "arguments": {
+        "query": "label_replace(sum by (window, level) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s])), \"stat\", \"count\", \"\", \"\")",
+        "time": "2026-09-28T20:39:05Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "query": "label_replace(sum by (window, level) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s])), \"stat\", \"count\", \"\", \"\")",
+          "result_type": "vector",
+          "returned": 3,
+          "series": [
+            {
+              "labels": {
+                "level": "ERROR",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 33
+            },
+            {
+              "labels": {
+                "level": "INFO",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2087
+            },
+            {
+              "labels": {
+                "level": "INFO",
+                "stat": "count",
+                "window": "current"
+              },
+              "value": 5375
+            }
+          ],
+          "series_total": 3,
+          "time": "2026-09-28T20:39:05Z",
+          "truncated": false
+        },
+        "text": "{\n  \"query\": \"label_replace(sum by (window, level) (count_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\"} | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` [2700s])), \\\"stat\\\", \\\"count\\\", \\\"\\\", \\\"\\\")\",\n  \"time\": \"2026-09-28T20:39:05Z\",\n  \"result_type\": \"vector\",\n  \"series_total\": 3,\n  \"returned\": 3,\n  \"truncated\": false,\n  \"series\": [\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 33\n    },\n    {\n      \"labels\": {\n        \"level\": \"INFO\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2087\n    },\n    {\n      \"labels\": {\n        \"level\": \"INFO\",\n        \"stat\": \"count\",\n        \"window\": \"current\"\n      },\n      \"value\": 5375\n    }\n  ]\n}"
+      },
+      "tool": "query"
+    },
+    {
+      "arguments": {
+        "query": "label_replace(topk(1000, sum by (window, level, msg) (count_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s]))), \"stat\", \"count\", \"\", \"\") or label_replace(min by (window, level, msg) (min_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"first_seen\", \"\", \"\") or label_replace(max by (window, level, msg) (max_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"last_seen\", \"\", \"\")",
+        "time": "2026-09-28T20:39:05Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "query": "label_replace(topk(1000, sum by (window, level, msg) (count_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s]))), \"stat\", \"count\", \"\", \"\") or label_replace(min by (window, level, msg) (min_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"first_seen\", \"\", \"\") or label_replace(max by (window, level, msg) (max_over_time({namespace=\"prod\", app=\"payment-service\", level=~\"^(?:ERROR|FATAL|CRITICAL|WARN)$\"} | json msg=\"message\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"last_seen\", \"\", \"\")",
+          "result_type": "vector",
+          "returned": 33,
+          "series": [
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625654450
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625666186
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 3
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625653837
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625675806
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 3
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625647399
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625675501
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 7
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625638435
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625674716
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625640276
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625640846
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625631852
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625637792
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 3
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625630131
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625637739
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625635168
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625637583
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 5
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625630429
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625637427
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625632978
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625636395
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)",
+                "stat": "count",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)",
+                "stat": "first_seen",
+                "window": "baseline"
+              },
+              "value": 1790625666934
+            },
+            {
+              "labels": {
+                "level": "ERROR",
+                "msg": "Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)",
+                "stat": "last_seen",
+                "window": "baseline"
+              },
+              "value": 1790625676309
+            }
+          ],
+          "series_total": 33,
+          "time": "2026-09-28T20:39:05Z",
+          "truncated": false
+        },
+        "text": "{\n  \"query\": \"label_replace(topk(1000, sum by (window, level, msg) (count_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\", level=~\\\"^(?:ERROR|FATAL|CRITICAL|WARN)$\\\"} | json msg=\\\"message\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` [2700s]))), \\\"stat\\\", \\\"count\\\", \\\"\\\", \\\"\\\") or label_replace(min by (window, level, msg) (min_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\", level=~\\\"^(?:ERROR|FATAL|CRITICAL|WARN)$\\\"} | json msg=\\\"message\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \\\"stat\\\", \\\"first_seen\\\", \\\"\\\", \\\"\\\") or label_replace(max by (window, level, msg) (max_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\", level=~\\\"^(?:ERROR|FATAL|CRITICAL|WARN)$\\\"} | json msg=\\\"message\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \\\"stat\\\", \\\"last_seen\\\", \\\"\\\", \\\"\\\")\",\n  \"time\": \"2026-09-28T20:39:05Z\",\n  \"result_type\": \"vector\",\n  \"series_total\": 33,\n  \"returned\": 33,\n  \"truncated\": false,\n  \"series\": [\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625654450\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=10)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625666186\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 3\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625653837\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=11)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625675806\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 3\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625647399\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=12)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625675501\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 7\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625638435\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=13)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625674716\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625640276\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=14)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625640846\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625631852\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=16)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625637792\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 3\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625630131\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=17)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625637739\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625635168\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=18)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625637583\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 5\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625630429\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=19)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625637427\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625632978\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=20)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625636395\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)\",\n        \"stat\": \"count\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)\",\n        \"stat\": \"first_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625666934\n    },\n    {\n      \"labels\": {\n        \"level\": \"ERROR\",\n        \"msg\": \"Database connection timeout: could not acquire a connection from the pool within 5000ms (pool size=2, active=2, waiting=9)\",\n        \"stat\": \"last_seen\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625676309\n    }\n  ]\n}"
+      },
+      "tool": "query"
+    },
+    {
+      "arguments": {
+        "query": "label_replace(sum by (window, version) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s])), \"stat\", \"count\", \"\", \"\") or label_replace(sum by (window, version) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | msg=~\"^Starting.*$\" [2700s])), \"stat\", \"starts\", \"\", \"\") or label_replace(min by (window, version) (min_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"first_seen\", \"\", \"\")",
+        "time": "2026-09-28T20:39:05Z"
+      },
+      "result": {
+        "is_error": false,
+        "structured": {
+          "query": "label_replace(sum by (window, version) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` [2700s])), \"stat\", \"count\", \"\", \"\") or label_replace(sum by (window, version) (count_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | msg=~\"^Starting.*$\" [2700s])), \"stat\", \"starts\", \"\", \"\") or label_replace(min by (window, version) (min_over_time({namespace=\"prod\", app=\"payment-service\"} | json msg=\"message\", version=\"version\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \"1790626145000\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \"stat\", \"first_seen\", \"\", \"\")",
+          "result_type": "vector",
+          "returned": 8,
+          "series": [
+            {
+              "labels": {
+                "stat": "count",
+                "version": "v1.8.1",
+                "window": "baseline"
+              },
+              "value": 1855
+            },
+            {
+              "labels": {
+                "stat": "count",
+                "version": "v1.8.1",
+                "window": "current"
+              },
+              "value": 5375
+            },
+            {
+              "labels": {
+                "stat": "count",
+                "version": "v1.8.2",
+                "window": "baseline"
+              },
+              "value": 265
+            },
+            {
+              "labels": {
+                "stat": "first_seen",
+                "version": "v1.8.1",
+                "window": "baseline"
+              },
+              "value": 1790625245383
+            },
+            {
+              "labels": {
+                "stat": "first_seen",
+                "version": "v1.8.1",
+                "window": "current"
+              },
+              "value": 1790626145615
+            },
+            {
+              "labels": {
+                "stat": "first_seen",
+                "version": "v1.8.2",
+                "window": "baseline"
+              },
+              "value": 1790625589249
+            },
+            {
+              "labels": {
+                "stat": "starts",
+                "version": "v1.8.1",
+                "window": "baseline"
+              },
+              "value": 2
+            },
+            {
+              "labels": {
+                "stat": "starts",
+                "version": "v1.8.2",
+                "window": "baseline"
+              },
+              "value": 1
+            }
+          ],
+          "series_total": 8,
+          "time": "2026-09-28T20:39:05Z",
+          "truncated": false
+        },
+        "text": "{\n  \"query\": \"label_replace(sum by (window, version) (count_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\"} | json msg=\\\"message\\\", version=\\\"version\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` [2700s])), \\\"stat\\\", \\\"count\\\", \\\"\\\", \\\"\\\") or label_replace(sum by (window, version) (count_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\"} | json msg=\\\"message\\\", version=\\\"version\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` | msg=~\\\"^Starting.*$\\\" [2700s])), \\\"stat\\\", \\\"starts\\\", \\\"\\\", \\\"\\\") or label_replace(min by (window, version) (min_over_time({namespace=\\\"prod\\\", app=\\\"payment-service\\\"} | json msg=\\\"message\\\", version=\\\"version\\\" | drop __error__, __error_details__ | label_format window=`{{ if ge (unixEpochMillis __timestamp__) \\\"1790626145000\\\" }}current{{ else }}baseline{{ end }}` | label_format ts_ms=`{{ unixEpochMillis __timestamp__ }}` | unwrap ts_ms [2700s])), \\\"stat\\\", \\\"first_seen\\\", \\\"\\\", \\\"\\\")\",\n  \"time\": \"2026-09-28T20:39:05Z\",\n  \"result_type\": \"vector\",\n  \"series_total\": 8,\n  \"returned\": 8,\n  \"truncated\": false,\n  \"series\": [\n    {\n      \"labels\": {\n        \"stat\": \"count\",\n        \"version\": \"v1.8.1\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1855\n    },\n    {\n      \"labels\": {\n        \"stat\": \"count\",\n        \"version\": \"v1.8.1\",\n        \"window\": \"current\"\n      },\n      \"value\": 5375\n    },\n    {\n      \"labels\": {\n        \"stat\": \"count\",\n        \"version\": \"v1.8.2\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 265\n    },\n    {\n      \"labels\": {\n        \"stat\": \"first_seen\",\n        \"version\": \"v1.8.1\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625245383\n    },\n    {\n      \"labels\": {\n        \"stat\": \"first_seen\",\n        \"version\": \"v1.8.1\",\n        \"window\": \"current\"\n      },\n      \"value\": 1790626145615\n    },\n    {\n      \"labels\": {\n        \"stat\": \"first_seen\",\n        \"version\": \"v1.8.2\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1790625589249\n    },\n    {\n      \"labels\": {\n        \"stat\": \"starts\",\n        \"version\": \"v1.8.1\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 2\n    },\n    {\n      \"labels\": {\n        \"stat\": \"starts\",\n        \"version\": \"v1.8.2\",\n        \"window\": \"baseline\"\n      },\n      \"value\": 1\n    }\n  ]\n}"
+      },
+      "tool": "query"
+    }
+  ],
+  "tools": [
+    {
+      "description": "Run LogQL over [start, end]: log lines for a log query, series for a metric query.\n\n        Args:\n            query: LogQL, e.g. '{namespace=\"prod\", app=\"payment-service\"} |= \"timeout\" | json'\n                or 'sum by (level) (count_over_time({namespace=\"prod\"} [1m]))'.\n            start: ISO-8601 UTC (e.g. '2026-09-25T10:00:00Z') or unix seconds.\n            end: ISO-8601 UTC or unix seconds (range capped by the server).\n            limit: max log lines (capped by the server); ignored for metric queries.\n            direction: 'backward' (newest first) or 'forward' (oldest first).\n            step: metric queries only, e.g. '30s'; omitted = the finest within the point cap.\n        ",
+      "input_schema": {
+        "properties": {
+          "direction": {
+            "default": "backward",
+            "enum": [
+              "backward",
+              "forward"
+            ],
+            "title": "Direction",
+            "type": "string"
+          },
+          "end": {
+            "title": "End",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "start": {
+            "title": "Start",
+            "type": "string"
+          },
+          "step": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Step"
+          }
+        },
+        "required": [
+          "query",
+          "start",
+          "end"
+        ],
+        "title": "query_rangeArguments",
+        "type": "object"
+      },
+      "name": "query_range"
+    },
+    {
+      "description": "Evaluate a metric LogQL query at one instant (default: now): counts, rates, top-k.\n\n        Args:\n            query: metric LogQL, e.g.\n                'sum by (level) (count_over_time({namespace=\"prod\", app=\"x\"} [15m]))'.\n            time: ISO-8601 UTC or unix seconds; default now.\n        ",
+      "input_schema": {
+        "properties": {
+          "query": {
+            "title": "Query",
+            "type": "string"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Time"
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "title": "queryArguments",
+        "type": "object"
+      },
+      "name": "query"
+    },
+    {
+      "description": "Stream label names in [start, end] (default: the last hour).\n\n        Args:\n            start: ISO-8601 UTC or unix seconds.\n            end: ISO-8601 UTC or unix seconds.\n            selector: stream selector to scope to, e.g. '{namespace=\"prod\"}' (default: the\n                server's allowlisted streams).\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "End"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start"
+          }
+        },
+        "title": "list_labelsArguments",
+        "type": "object"
+      },
+      "name": "list_labels"
+    },
+    {
+      "description": "Values of one stream label in [start, end] (default: the last hour).\n\n        Args:\n            label: label name, e.g. 'app' or 'level'.\n            start: ISO-8601 UTC or unix seconds.\n            end: ISO-8601 UTC or unix seconds.\n            selector: stream selector to scope to (default: the allowlisted streams).\n            limit: max values returned (capped by the server).\n        ",
+      "input_schema": {
+        "properties": {
+          "end": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "End"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "limit": {
+            "default": 100,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "selector": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Selector"
+          },
+          "start": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Start"
+          }
+        },
+        "required": [
+          "label"
+        ],
+        "title": "label_valuesArguments",
+        "type": "object"
+      },
+      "name": "label_values"
+    }
+  ]
+}

@@ -1136,6 +1136,45 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 - **Deviation:** no live call (no keys on the dev machine); `vertex` stays planned
   (Gemini on Vertex works through `openai_compat` meanwhile).
 
+#### PR-P4a · Loki: the second logs provider ✅
+- **Branch:** `feat/p4a-loki-logs-provider` · ADR-0019 · docs/setup/loki.md
+- **Delivered:**
+  - Loki `grafana/loki:3.7.8` in compose (profile `loki`, `make loki-up`): single binary,
+    TSDB + filesystem, 2-day retention, no results cache, `mem_limit 256m`
+    (`GOMEMLIMIT=180MiB`), UID 10001, `127.0.0.1:3101` (3100 = Web UI).
+  - Fluent Bit **dual output**: the same `prod` records go to Elasticsearch (unchanged) and
+    Loki; stream labels `namespace`, `app`, `level` only; the JSON line keeps the rest; pod
+    as structured metadata.
+  - `mcp-servers/loki-mcp` (own, MCP SDK v2, `127.0.0.1:8110`, 128 MB, read-only rootfs):
+    `query_range`, `query`, `list_labels`, `label_values`; server-side stream-selector
+    allowlist (`ALLOWED_STREAMS=namespace=prod`, string-aware scanner), 48 h range/`[range]`/
+    `offset` cap, line/series/points/query-length caps, timeouts; GET-only.
+  - `providers/logs/loki.py`: each Log-agent question = ONE LogQL call (query-time
+    `label_format window=` split on `unixEpochMillis __timestamp__`; stats joined with `or`
+    and tagged by `label_replace(..., "stat", ...)`, pivoted by `table()`; first/last seen
+    via `min/max_over_time` of an unwrapped epoch-ms label; first occurrences via a forward
+    `query_range`); Grafana Explore links (`{panes}`); prompt fragment
+    `providers/logs/loki/v1`. Static `loki` "planned" row removed: implemented via the registry.
+  - `profiles/local-loki` (`extends: local-k8s`; only `capabilities.logs` + the catalog's
+    stream selector differ); `aiops doctor` Loki smoke (labels + 1 h count per service);
+    Grafana `Loki logs` datasource (uid `loki`).
+  - **The proof:** live fixtures on Loki (`backend/tests/fixtures/logs-loki/S{0,1}`,
+    `make record-logs-loki S=...`, windows in `meta.json`); `test_log_agent_loki.py` replays
+    them with `AIOPS_PROFILE=local-loki`: S1 = `db_timeout_errors_up`, `error_rate_up`,
+    `new_error_pattern`, `deployment_detected` (same conclusions as the Elasticsearch
+    fixtures), S0 no false positive; `test_portability_proof.py` asserts from git history
+    that the change adding the adapter touched nothing in `agents/` or `orchestrator/`
+    (CI `fetch-depth: 0`).
+  - Memory (live, `docker stats` / `crictl stats`): Loki 83–161 MiB (limit 256), loki-mcp
+    55–59 MiB (limit 128), Fluent Bit with dual output 9–27 MB (limit 64 Mi), whole stack
+    with Minikube, ES, Loki, all 8 MCP servers and the demo app ≈ 3.3 GiB (< 5 GB budget).
+  - Live checks: `aiops doctor --profile local-loki` 46 OK / 0 WARN / 0 FAIL; a live
+    `aiops investigate --profile local-loki` (no LLM key → deterministic mode, 0 tokens)
+    ran all 7 agents, the Log agent through LogQL (`query` ×3).
+- *Deviation:* the orchestrated replay (`aiops investigate --replay`) reads the synthetic
+  per-agent fixtures (`fixtures/logs/S*`, Elasticsearch-shaped), so the Loki proof for the
+  orchestrator is a live `aiops investigate --profile local-loki` run with the fake LLM.
+
 ### Phase 5 — Metrics slice (EPIC-007)
 
 #### PR-020 · Prometheus + Grafana + kube-state-metrics

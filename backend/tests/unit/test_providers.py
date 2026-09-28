@@ -40,7 +40,8 @@ def test_matrix_marks_registered_providers_implemented() -> None:
         spec = PROVIDERS[cls.capability][cls.name]
         assert spec.status == "implemented" and spec.mcp == cls.mcp
         assert spec.agent_tools == cls.agent_tools
-    assert PROVIDERS["logs"]["loki"].status == "planned"
+    assert PROVIDERS["logs"]["loki"].status == "implemented"  # PR-P4a
+    assert PROVIDERS["logs"]["splunk"].status == "planned"
 
 
 def test_registered_providers_have_prompt_fragments() -> None:
@@ -55,9 +56,9 @@ def test_registry_errors_are_readable() -> None:
     registry = ProviderRegistry()
     registry.register(ElasticsearchLogs)
     with pytest.raises(
-        ConfigError, match=r"no provider adapter 'loki'.*implemented: elasticsearch"
+        ConfigError, match=r"no provider adapter 'splunk'.*implemented: elasticsearch"
     ):
-        registry.get("logs", "loki")
+        registry.get("logs", "splunk")
 
     class Other(ElasticsearchLogs):
         pass

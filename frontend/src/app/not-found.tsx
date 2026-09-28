@@ -10,11 +10,16 @@ export default function NotFound() {
   return (
     <div className="py-10">
       <h1 className="sr-only">Page not found</h1>
-      <EmptyState icon={CompassIcon} title="Page not found">
-        <p>This page doesn&apos;t exist.</p>
-        <Button asChild variant="outline" size="sm" className="mt-3">
-          <Link href="/">Back to the dashboard</Link>
-        </Button>
+      <EmptyState
+        icon={CompassIcon}
+        title="Page not found"
+        action={
+          <Button asChild variant="outline" size="sm">
+            <Link href="/">Back to the dashboard</Link>
+          </Button>
+        }
+      >
+        This page doesn&apos;t exist.
       </EmptyState>
     </div>
   );

@@ -36,7 +36,7 @@ export function ErrorState({
     <div
       role="alert"
       className={cn(
-        "flex flex-col items-center gap-3 rounded-xl border border-dashed p-8 text-center",
+        "flex flex-col items-center gap-3 rounded-xl border border-dashed border-danger/40 bg-glass p-8 text-center",
         className,
       )}
     >
@@ -54,27 +54,57 @@ export function ErrorState({
   );
 }
 
+/** A small decorative illustration: the icon on a glass tile with orbiting accents. */
+function EmptyIllustration({ icon: Icon }: { icon: LucideIcon }) {
+  return (
+    <div aria-hidden className="relative mb-2 grid size-20 place-items-center">
+      <svg viewBox="0 0 80 80" className="absolute inset-0 size-full text-primary">
+        <circle
+          cx="40"
+          cy="40"
+          r="37"
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity="0.18"
+          strokeDasharray="3 6"
+        />
+        <circle cx="12" cy="22" r="3" fill="currentColor" fillOpacity="0.35" />
+        <circle cx="70" cy="58" r="2.5" fill="currentColor" fillOpacity="0.25" />
+        <circle cx="64" cy="14" r="1.8" fill="currentColor" fillOpacity="0.3" />
+      </svg>
+      <span className="grid size-12 place-items-center rounded-2xl glass">
+        <Icon className="size-6 text-primary" />
+      </span>
+    </div>
+  );
+}
+
 export function EmptyState({
-  icon: Icon = InboxIcon,
+  icon = InboxIcon,
   title,
   children,
+  action,
   className,
 }: {
   icon?: LucideIcon;
   title: string;
   children?: React.ReactNode;
+  /** The next step (a button or link). */
+  action?: React.ReactNode;
   className?: string;
 }) {
   return (
     <div
+      data-testid="empty-state"
       className={cn(
-        "flex flex-col items-center gap-2 rounded-xl border border-dashed p-10 text-center",
+        "flex flex-col items-center gap-2 rounded-xl border border-dashed border-glass-border bg-glass/50 p-10 text-center",
         className,
       )}
     >
-      <Icon aria-hidden className="size-8 text-muted-foreground" />
+      <EmptyIllustration icon={icon} />
       <p className="font-medium">{title}</p>
-      {children && <div className="text-sm text-muted-foreground">{children}</div>}
+      {children && <div className="max-w-md text-sm text-muted-foreground">{children}</div>}
+      {action && <div className="mt-2 flex flex-wrap justify-center gap-2">{action}</div>}
     </div>
   );
 }

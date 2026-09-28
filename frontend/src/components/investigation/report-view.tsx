@@ -7,12 +7,14 @@ import {
   BoxesIcon,
   ChartLineIcon,
   CircleCheckBigIcon,
+  FileQuestionIcon,
   FileTextIcon,
   GitCommitHorizontalIcon,
   ListChecksIcon,
   ScrollTextIcon,
   ShieldAlertIcon,
   TicketIcon,
+  TriangleAlertIcon,
   type LucideIcon,
 } from "lucide-react";
 import { useMemo } from "react";
@@ -40,6 +42,7 @@ import { agentMeta } from "./agent-meta";
 import { ReportActions } from "./report-actions";
 
 type Ev = Evidence & { agent: string };
+const NO_EVIDENCE: Ev[] = [];
 
 function RootCauseHero({ inv }: { inv: Investigation }) {
   const r = inv.report!;
@@ -47,17 +50,30 @@ function RootCauseHero({ inv }: { inv: Investigation }) {
   const noIncident = !top;
   return (
     <motion.section
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
+      // slide only, no fade: the root-cause headline is the LCP element and must paint at once
+      initial={{ y: 8 }}
+      animate={{ y: 0 }}
       aria-labelledby="root-cause-title"
       data-testid="root-cause"
       className={cn(
-        "relative overflow-hidden rounded-2xl border p-6 shadow-sm",
-        noIncident ? "border-ok/40 bg-ok-bg/50" : "border-danger/30 bg-card",
+        "relative overflow-hidden rounded-2xl glass p-6 shadow-elev-3",
+        noIncident ? "border-ok/40" : "border-danger/30",
       )}
     >
-      {!noIncident && <div aria-hidden className="absolute inset-y-0 left-0 w-1.5 bg-danger" />}
-      <div className="flex flex-col gap-6 md:flex-row md:items-center">
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -top-24 -right-24 size-72",
+          noIncident
+            ? "bg-radial from-ok/15 to-transparent to-70%"
+            : "bg-radial from-danger/12 to-transparent to-70%",
+        )}
+      />
+      <div
+        aria-hidden
+        className={cn("absolute inset-y-0 left-0 w-1.5", noIncident ? "bg-ok" : "bg-danger")}
+      />
+      <div className="relative flex flex-col gap-6 md:flex-row md:items-center">
         <div className="min-w-0 flex-1 space-y-3">
           <p className="flex items-center gap-2 text-xs font-semibold tracking-wide uppercase">
             {noIncident ? (
@@ -92,7 +108,7 @@ function RootCauseHero({ inv }: { inv: Investigation }) {
             <div className="flex flex-wrap items-center gap-1.5">
               <span className="text-xs text-muted-foreground">Evidence:</span>
               {top.supporting_evidence_ids.map((id) => (
-                <Citation key={id} id={id} />
+                <Citation key={id} id={id} trail={top.supporting_evidence_ids} />
               ))}
             </div>
           )}
@@ -105,12 +121,18 @@ function RootCauseHero({ inv }: { inv: Investigation }) {
 
 function Timeline({ inv }: { inv: Investigation }) {
   const { open, highlighted, setHighlighted } = useEvidence();
+  const trail = useMemo(
+    () => inv.timeline.flatMap((t) => (t.evidence_id ? [t.evidence_id] : [])),
+    [inv.timeline],
+  );
   if (inv.timeline.length === 0) return null;
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Timeline</CardTitle>
-        <CardDescription>UTC · click an event to see its evidence</CardDescription>
+        <CardTitle>Why it happened</CardTitle>
+        <CardDescription>
+          The chain of events (UTC) · click an event to see its evidence
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <motion.ol
@@ -137,7 +159,7 @@ function Timeline({ inv }: { inv: Investigation }) {
                 <button
                   type="button"
                   disabled={!t.evidence_id}
-                  onClick={() => t.evidence_id && open(t.evidence_id)}
+                  onClick={() => t.evidence_id && open(t.evidence_id, trail)}
                   onMouseEnter={() => t.evidence_id && setHighlighted(t.evidence_id)}
                   className={cn(
                     "grid w-full grid-cols-[4.5rem_1fr] gap-3 rounded-md px-2 py-1.5 text-left text-sm transition-colors enabled:cursor-pointer enabled:hover:bg-accent",
@@ -205,7 +227,7 @@ function SummaryTab({ inv }: { inv: Investigation }) {
                     <p className="text-sm">{f.description}</p>
                     <div className="flex flex-wrap gap-1">
                       {f.evidence_ids.map((id) => (
-                        <Citation key={id} id={id} />
+                        <Citation key={id} id={id} trail={f.evidence_ids} />
                       ))}
                     </div>
                   </li>
@@ -242,7 +264,7 @@ function SummaryTab({ inv }: { inv: Investigation }) {
                       <div className="flex flex-wrap items-center gap-1">
                         <span className="text-xs text-muted-foreground">supports:</span>
                         {h.supporting_evidence_ids.map((id) => (
-                          <Citation key={id} id={id} />
+                          <Citation key={id} id={id} trail={h.supporting_evidence_ids} />
                         ))}
                       </div>
                     )}
@@ -253,7 +275,12 @@ function SummaryTab({ inv }: { inv: Investigation }) {
                       >
                         <span className="text-xs text-danger">contradicts:</span>
                         {h.contradicting_evidence_ids.map((id) => (
-                          <Citation key={id} id={id} tone="contra" />
+                          <Citation
+                            key={id}
+                            id={id}
+                            tone="contra"
+                            trail={h.contradicting_evidence_ids}
+                          />
                         ))}
                       </div>
                     )}
@@ -312,15 +339,22 @@ function SummaryTab({ inv }: { inv: Investigation }) {
   );
 }
 
-function EvidenceTab({ items, empty }: { items: Ev[]; empty: string }) {
+function EvidenceTab({ items, empty, icon }: { items: Ev[]; empty: string; icon: LucideIcon }) {
   const { open, highlighted } = useEvidence();
-  if (items.length === 0) return <EmptyState title={empty} />;
+  const trail = useMemo(() => items.map((e) => e.id), [items]);
+  if (items.length === 0)
+    return (
+      <EmptyState icon={icon} title={empty}>
+        The agents found nothing of this kind for this incident. The other tabs and the timeline
+        show what they did find.
+      </EmptyState>
+    );
   return (
     <motion.ul className="grid gap-4" variants={listVariants} initial="hidden" animate="show">
       {items.map((e) => (
         <motion.li key={e.id} variants={itemVariants}>
           <Card className={cn("transition-shadow", highlighted === e.id && "ring-2 ring-ring")}>
-            <CardContent className="space-y-3 pt-5">
+            <CardContent className="space-y-3 pt-(--pad)">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <div className="min-w-0 space-y-0.5">
                   <p className="text-sm font-medium">{e.summary}</p>
@@ -330,7 +364,7 @@ function EvidenceTab({ items, empty }: { items: Ev[]; empty: string }) {
                     <button
                       type="button"
                       className="cursor-pointer font-mono hover:underline"
-                      onClick={() => open(e.id)}
+                      onClick={() => open(e.id, trail)}
                     >
                       {e.id}
                     </button>
@@ -397,7 +431,7 @@ function NextStepsTab({ inv }: { inv: Investigation }) {
                   </Badge>
                   {rec.requires_approval && <Badge tone="purple">needs approval</Badge>}
                   {rec.evidence_ids.map((id) => (
-                    <Citation key={id} id={id} />
+                    <Citation key={id} id={id} trail={rec.evidence_ids} />
                   ))}
                 </p>
               </li>
@@ -460,27 +494,37 @@ const TABS: {
 /** Report mode (PR-038): hero, timeline, tabs, clickable evidence citations and actions. */
 export function ReportView({ inv }: { inv: Investigation }) {
   const evidence = useMemo(() => collectEvidence(inv), [inv]);
+  const byKind = useMemo(() => {
+    const m = new Map<EvidenceKind, Ev[]>();
+    for (const e of evidence.values()) m.set(e.kind, [...(m.get(e.kind) ?? []), e]);
+    return m;
+  }, [evidence]);
   if (!inv.report) {
     return (
       <EmptyState
+        icon={inv.status === "failed" ? TriangleAlertIcon : FileQuestionIcon}
         title={inv.status === "failed" ? "The investigation failed before a report" : "No report"}
       >
         {inv.status === "cancelled" ? "It was cancelled." : "Re-run it to try again."}
       </EmptyState>
     );
   }
-  const all = [...evidence.values()];
-  const byKind = (k: EvidenceKind) => all.filter((e) => e.kind === k);
+  const kind = (k: EvidenceKind) => byKind.get(k) ?? NO_EVIDENCE;
+  // Hierarchy: the root cause first, then the "why" (timeline), then the evidence tabs.
   return (
     <EvidenceProvider evidence={evidence}>
       <div className="space-y-6" data-testid="report">
-        <ReportActions inv={inv} />
         <RootCauseHero inv={inv} />
+        <ReportActions inv={inv} />
         <Timeline inv={inv} />
         <Tabs defaultValue="summary">
-          <TabsList aria-label="Report sections" className="w-full justify-start">
+          <TabsList
+            aria-label="Report sections"
+            data-testid="report-tabs"
+            className="sticky top-16 z-20 w-full justify-start glass-chrome shadow-elev-2"
+          >
             {TABS.map((t) => {
-              const n = t.kind ? byKind(t.kind).length : null;
+              const n = t.kind ? kind(t.kind).length : null;
               return (
                 <TabsTrigger key={t.value} value={t.value}>
                   <t.icon aria-hidden />
@@ -497,7 +541,7 @@ export function ReportView({ inv }: { inv: Investigation }) {
           </TabsContent>
           {TABS.filter((t) => t.kind).map((t) => (
             <TabsContent key={t.value} value={t.value}>
-              <EvidenceTab items={byKind(t.kind!)} empty={t.empty!} />
+              <EvidenceTab items={kind(t.kind!)} empty={t.empty!} icon={t.icon} />
             </TabsContent>
           ))}
           <TabsContent value="next">

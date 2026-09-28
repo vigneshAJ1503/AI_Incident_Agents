@@ -37,6 +37,16 @@ for (const [name, path] of PAGES) {
 }
 
 for (const theme of THEMES) {
+  test(`chat reply card (${theme})`, async ({ page }) => {
+    await page.goto("/investigations/new");
+    await setTheme(page, theme);
+    await page.reload();
+    await page.getByRole("button", { name: "Which agents do you have?" }).click();
+    await expect(page.getByTestId("answer-card")).toBeVisible();
+    await page.waitForTimeout(600);
+    await page.screenshot({ path: `${OUT}/chat-reply-${theme}.png`, fullPage: true });
+  });
+
   test(`live run (${theme})`, async ({ page }) => {
     test.skip(
       !process.env.SCREENSHOT_LIVE,

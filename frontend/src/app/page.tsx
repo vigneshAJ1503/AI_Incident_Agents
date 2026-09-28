@@ -6,14 +6,19 @@ import {
   BotIcon,
   CircleDotIcon,
   GaugeIcon,
+  MinusIcon,
   SparklesIcon,
   TargetIcon,
   TimerIcon,
+  TrendingDownIcon,
+  TrendingUpIcon,
   type LucideIcon,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
+import { useMemo } from "react";
 
+import { Sparkline } from "@/components/charts/sparkline";
 import { InvestigationListItem } from "@/components/investigation-row";
 import { NumberTicker, Stagger, StaggerItem } from "@/components/motion";
 import { PageHeader } from "@/components/page-header";
@@ -42,6 +47,29 @@ const ByServiceChart = dynamic(
   },
 );
 
+/** Last-7-days vs the 7 before: "+12%" style change, or null when there's no baseline. */
+function weekOverWeek(series: number[]): number | null {
+  if (series.length < 14) return null;
+  const sum = (a: number[]) => a.reduce((x, y) => x + y, 0);
+  const prev = sum(series.slice(-14, -7));
+  const cur = sum(series.slice(-7));
+  return prev === 0 ? null : (cur - prev) / prev;
+}
+
+function Trend({ change }: { change: number | null }) {
+  if (change === null) return null;
+  const flat = Math.abs(change) < 0.005;
+  const Icon = flat ? MinusIcon : change > 0 ? TrendingUpIcon : TrendingDownIcon;
+  return (
+    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground tabular-nums">
+      <Icon aria-hidden className="size-3.5" />
+      {flat ? "flat" : `${change > 0 ? "+" : ""}${Math.round(change * 100)}%`}
+      <span className="sr-only">compared with the previous 7 days</span>
+      <span aria-hidden>vs prev 7d</span>
+    </span>
+  );
+}
+
 function Kpi({
   icon: Icon,
   label,
@@ -49,6 +77,9 @@ function Kpi({
   format,
   hint,
   accent,
+  trend,
+  trendLabel,
+  color,
 }: {
   icon: LucideIcon;
   label: string;
@@ -56,21 +87,40 @@ function Kpi({
   format?: (n: number) => string;
   hint?: string;
   accent: string;
+  /** daily values for the sparkline (oldest first) */
+  trend?: number[];
+  /** what one sparkline point counts, e.g. "investigations per day" */
+  trendLabel?: string;
+  color?: string;
 }) {
   return (
-    <Card className="h-full">
-      <CardContent className="flex h-full flex-col gap-3 pt-5">
+    <Card className="h-full lift" data-testid="kpi">
+      <CardContent className="flex h-full flex-col gap-2 pt-(--pad)">
         <div className="flex items-center justify-between">
           <span className="text-xs font-medium text-muted-foreground">{label}</span>
           <span className={cn("grid size-7 place-items-center rounded-md", accent)}>
             <Icon aria-hidden className="size-4" />
           </span>
         </div>
-        <NumberTicker
-          value={value}
-          format={format}
-          className="text-2xl font-semibold tracking-tight tabular-nums"
-        />
+        <div className="flex items-end justify-between gap-3">
+          <NumberTicker
+            value={value}
+            format={format}
+            className="text-2xl font-semibold tracking-tight tabular-nums"
+          />
+          {trend && <Trend change={weekOverWeek(trend)} />}
+        </div>
+        {trend ? (
+          <Sparkline
+            values={trend}
+            color={color}
+            label={`${trendLabel ?? label} over ${trend.length} days, latest ${trend.at(-1) ?? 0}`}
+            className="mt-auto"
+          />
+        ) : (
+          // same height as a sparkline so the tiles line up (no layout shift either way)
+          <div className="mt-auto h-8" aria-hidden />
+        )}
         {hint && <span className="text-xs text-muted-foreground">{hint}</span>}
       </CardContent>
     </Card>
@@ -82,7 +132,7 @@ function DashboardSkeleton() {
     <div className="space-y-6" aria-busy="true" aria-label="Loading dashboard">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-5">
         {Array.from({ length: 5 }, (_, i) => (
-          <Skeleton key={i} className="h-[118px] rounded-xl" />
+          <Skeleton key={i} className="h-[172px] rounded-xl" />
         ))}
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
@@ -95,6 +145,14 @@ function DashboardSkeleton() {
 
 export default function DashboardPage() {
   const { data, isLoading, error, refetch } = useDashboard(14);
+  const trends = useMemo(
+    () =>
+      data && {
+        investigations: data.by_day.map((d) => d.investigations),
+        rootCauses: data.by_day.map((d) => d.critical + d.high + d.medium + d.low),
+      },
+    [data],
+  );
   const maxSignal = Math.max(1, ...(data?.top_signals.map((s) => s.count) ?? [1]));
 
   return (
@@ -130,6 +188,9 @@ export default function DashboardPage() {
                 value={data.totals.investigations}
                 hint={`${data.window_days} days`}
                 accent="bg-info-bg text-info"
+                trend={trends?.investigations}
+                trendLabel="Investigations per day"
+                color="var(--chart-1)"
               />
             </StaggerItem>
             <StaggerItem>
@@ -154,6 +215,9 @@ export default function DashboardPage() {
                 format={(n) => formatPercent(n)}
                 hint={`${data.totals.root_cause_found} found · ${data.totals.no_incident} no incident`}
                 accent="bg-ok-bg text-ok"
+                trend={trends?.rootCauses}
+                trendLabel="Root causes found per day"
+                color="var(--chart-3)"
               />
             </StaggerItem>
             <StaggerItem>

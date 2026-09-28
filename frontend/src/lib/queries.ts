@@ -3,7 +3,12 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { getClient, type Decision, type InvestigationFilters } from "@/lib/api";
-import type { Approval, AskRequest, CreateInvestigationRequest } from "@/lib/api/schemas";
+import type {
+  Approval,
+  AskRequest,
+  CreateInvestigationRequest,
+  InvestigationSummary,
+} from "@/lib/api/schemas";
 
 export const qk = {
   health: ["health"] as const,
@@ -40,6 +45,27 @@ export const useInvestigations = (f: InvestigationFilters) =>
 
 export const useInvestigation = (id: string) =>
   useQuery({ queryKey: qk.investigation(id), queryFn: () => getClient().getInvestigation(id) });
+
+/**
+ * The list/dashboard summary of an investigation that is already in the cache, so the detail page
+ * can show (and morph) its title while the full investigation loads.
+ */
+export function useCachedSummary(id: string): InvestigationSummary | undefined {
+  const qc = useQueryClient();
+  for (const [, data] of qc.getQueriesData<{ items?: InvestigationSummary[] }>({
+    queryKey: ["investigations"],
+  })) {
+    const hit = data?.items?.find((i) => i.id === id);
+    if (hit) return hit;
+  }
+  for (const [, data] of qc.getQueriesData<{ recent?: InvestigationSummary[] }>({
+    queryKey: ["dashboard"],
+  })) {
+    const hit = data?.recent?.find((i) => i.id === id);
+    if (hit) return hit;
+  }
+  return undefined;
+}
 
 export const useServices = () =>
   useQuery({ queryKey: qk.services, queryFn: () => getClient().services(), staleTime: 300_000 });

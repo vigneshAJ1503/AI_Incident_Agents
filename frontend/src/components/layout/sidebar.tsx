@@ -20,9 +20,9 @@ export function SidebarNav({
   const pathname = usePathname();
   const Brand = BRAND.icon;
   return (
-    <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+    <div className="flex h-full flex-col text-sidebar-foreground">
       <Link href="/" onClick={onNavigate} className="flex items-center gap-2.5 px-5 py-5">
-        <span className="grid size-8 place-items-center rounded-lg bg-sidebar-primary text-white shadow-sm">
+        <span className="grid size-8 place-items-center rounded-lg bg-(image:--brand-gradient) text-white shadow-elev-2">
           <Brand aria-hidden className="size-4.5" />
         </span>
         <span className="leading-tight">
@@ -41,7 +41,7 @@ export function SidebarNav({
                 {active && (
                   <motion.span
                     layoutId="nav-active"
-                    className="absolute inset-0 rounded-md bg-sidebar-accent"
+                    className="absolute inset-0 rounded-md bg-sidebar-accent shadow-[inset_0_0_0_1px_var(--glass-border)]"
                     transition={{ type: "spring", stiffness: 500, damping: 40 }}
                   />
                 )}
@@ -52,7 +52,7 @@ export function SidebarNav({
                   className={cn(
                     "relative flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
                     active
-                      ? "font-medium text-white"
+                      ? "font-medium text-sidebar-accent-foreground"
                       : "text-sidebar-muted hover:text-sidebar-foreground",
                   )}
                 >
@@ -63,7 +63,7 @@ export function SidebarNav({
                       {badge}
                     </span>
                   ) : item.shortcut ? (
-                    <Kbd className="hidden border-white/10 bg-white/5 text-sidebar-muted lg:inline-flex">
+                    <Kbd className="hidden border-sidebar-foreground/15 bg-sidebar-foreground/5 text-sidebar-muted lg:inline-flex">
                       g {item.shortcut}
                     </Kbd>
                   ) : null}
@@ -73,7 +73,7 @@ export function SidebarNav({
           })}
         </ul>
       </nav>
-      <div className="m-3 rounded-lg bg-white/5 px-3 py-2.5 text-[11px] text-sidebar-muted">
+      <div className="m-3 rounded-lg border border-glass-border bg-glass px-3 py-2.5 text-[11px] text-sidebar-muted">
         {DEMO_MODE ? (
           <>
             <span className="font-medium text-sidebar-foreground">Demo mode</span> · static dataset,
@@ -81,8 +81,11 @@ export function SidebarNav({
           </>
         ) : (
           <>
-            Press <Kbd className="border-white/10 bg-white/5 text-sidebar-muted">?</Kbd> for
-            keyboard shortcuts
+            Press{" "}
+            <Kbd className="border-sidebar-foreground/15 bg-sidebar-foreground/5 text-sidebar-muted">
+              ?
+            </Kbd>{" "}
+            for keyboard shortcuts
           </>
         )}
       </div>

@@ -28,11 +28,37 @@
   --border: oklch(0.91 0.008 255);
   --input: oklch(0.89 0.01 255);
   --ring: oklch(0.55 0.19 262);
-  --sidebar: oklch(0.24 0.045 262);
-  --sidebar-foreground: oklch(0.93 0.01 260);
-  --sidebar-muted: oklch(0.78 0.02 260);
-  --sidebar-accent: oklch(0.32 0.07 262);
-  --sidebar-primary: oklch(0.62 0.17 255);
+  --sidebar: oklch(0.985 0.006 262 / 0.72);
+  --sidebar-foreground: oklch(0.22 0.03 262);
+  --sidebar-muted: oklch(0.42 0.03 262);
+  --sidebar-accent: oklch(0.5 0.19 262 / 0.12);
+  --sidebar-accent-foreground: oklch(0.36 0.16 262);
+  --sidebar-primary: oklch(0.5 0.19 262);
+
+  /*
+   * Glass. Surfaces are *tinted* translucent fills, never plain transparency, so text keeps
+   * WCAG AA contrast whatever the aurora shows through. Only the chrome that floats over content
+   * (sidebar, topbar, dialogs, drawers, palette) pays for backdrop-filter; cards sit on the
+   * already-soft aurora and don't need a blur (blur is the expensive part).
+   */
+  --glass: oklch(1 0 0 / 0.72);
+  --glass-strong: oklch(0.995 0.003 262 / 0.86);
+  --glass-border: oklch(0.55 0.04 262 / 0.16);
+  --glass-highlight: oklch(1 0 0 / 0.85);
+  --glass-fallback: oklch(0.995 0.003 262);
+  --glass-blur: 16px;
+  --elev-1: 0 1px 2px oklch(0.3 0.05 262 / 0.06), 0 1px 1px oklch(0.3 0.05 262 / 0.04);
+  --elev-2: 0 1px 2px oklch(0.3 0.05 262 / 0.06), 0 6px 16px -4px oklch(0.3 0.05 262 / 0.1);
+  --elev-3: 0 2px 4px oklch(0.3 0.05 262 / 0.06), 0 14px 32px -8px oklch(0.3 0.05 262 / 0.18);
+  --elev-4: 0 4px 8px oklch(0.3 0.05 262 / 0.08), 0 28px 64px -12px oklch(0.3 0.05 262 / 0.28);
+  --glow: oklch(0.55 0.19 262 / 0.28);
+  --aurora-1: oklch(0.82 0.1 262 / 0.55);
+  --aurora-2: oklch(0.86 0.09 200 / 0.45);
+  --aurora-3: oklch(0.86 0.08 320 / 0.4);
+  --aurora-base: oklch(0.975 0.006 255);
+  --brand-gradient: linear-gradient(135deg, oklch(0.5 0.2 265), oklch(0.52 0.16 235));
+  --pad: 1.25rem;
+  --row-y: 0.75rem;
 
   /* Okabe-Ito based semantic colours: -fg is text on the page, -bg a tinted surface */
   --ok: oklch(0.45 0.1 165);
@@ -76,11 +102,28 @@
   --border: oklch(0.3 0.02 262);
   --input: oklch(0.33 0.02 262);
   --ring: oklch(0.68 0.15 258);
-  --sidebar: oklch(0.13 0.02 262);
-  --sidebar-foreground: oklch(0.92 0.01 260);
-  --sidebar-muted: oklch(0.72 0.02 260);
-  --sidebar-accent: oklch(0.24 0.04 262);
+  --sidebar: oklch(0.17 0.025 262 / 0.66);
+  --sidebar-foreground: oklch(0.93 0.01 260);
+  --sidebar-muted: oklch(0.76 0.02 260);
+  --sidebar-accent: oklch(0.68 0.15 258 / 0.18);
+  --sidebar-accent-foreground: oklch(0.97 0.01 260);
   --sidebar-primary: oklch(0.68 0.15 258);
+
+  --glass: oklch(0.22 0.025 262 / 0.62);
+  --glass-strong: oklch(0.2 0.025 262 / 0.84);
+  --glass-border: oklch(0.85 0.03 262 / 0.12);
+  --glass-highlight: oklch(1 0 0 / 0.07);
+  --glass-fallback: oklch(0.2 0.02 262);
+  --elev-1: 0 1px 2px oklch(0 0 0 / 0.3);
+  --elev-2: 0 1px 2px oklch(0 0 0 / 0.3), 0 8px 20px -6px oklch(0 0 0 / 0.45);
+  --elev-3: 0 2px 4px oklch(0 0 0 / 0.3), 0 16px 36px -8px oklch(0 0 0 / 0.55);
+  --elev-4: 0 4px 8px oklch(0 0 0 / 0.35), 0 30px 70px -12px oklch(0 0 0 / 0.65);
+  --glow: oklch(0.68 0.15 258 / 0.35);
+  --aurora-1: oklch(0.42 0.14 265 / 0.45);
+  --aurora-2: oklch(0.42 0.1 205 / 0.32);
+  --aurora-3: oklch(0.4 0.12 320 / 0.3);
+  --aurora-base: oklch(0.15 0.018 262);
+  --brand-gradient: linear-gradient(135deg, oklch(0.62 0.17 265), oklch(0.68 0.13 225));
 
   --ok: oklch(0.76 0.13 165);
   --ok-bg: oklch(0.3 0.05 165);
@@ -128,6 +171,14 @@
   --color-sidebar-muted: var(--sidebar-muted);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-glass-border: var(--glass-border);
+  --shadow-elev-1: var(--elev-1);
+  --shadow-elev-2: var(--elev-2);
+  --shadow-elev-3: var(--elev-3);
+  --shadow-elev-4: var(--elev-4);
   --color-ok: var(--ok);
   --color-ok-bg: var(--ok-bg);
   --color-info: var(--info);
@@ -164,7 +215,8 @@
     color-scheme: dark;
   }
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply text-foreground antialiased;
+    background-color: var(--aurora-base);
     font-feature-settings: "cv11", "ss01";
   }
   :focus-visible {
@@ -195,5 +247,114 @@
   }
   100% {
     transform: translateX(300%);
+  }
+}
+
+/* Density (comfortable | compact): <html data-density>, set by the topbar toggle. */
+[data-density="compact"] {
+  --pad: 0.875rem;
+  --row-y: 0.45rem;
+}
+
+/*
+ * Aurora: three soft colour fields on ONE fixed, composited layer that only animates `transform`
+ * (no repaint, no layout, no blur filter: the radial gradients are already soft). Low contrast
+ * by design; frozen under prefers-reduced-motion.
+ */
+.aurora {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: var(--aurora-base);
+  contain: strict;
+}
+.aurora::before {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  background:
+    radial-gradient(40% 35% at 20% 15%, var(--aurora-1), transparent 70%),
+    radial-gradient(35% 30% at 85% 20%, var(--aurora-2), transparent 70%),
+    radial-gradient(45% 40% at 60% 95%, var(--aurora-3), transparent 70%);
+  will-change: transform;
+  animation: aurora-drift 40s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg) scale(1);
+  }
+  50% {
+    transform: translate3d(-4%, 3%, 0) rotate(8deg) scale(1.08);
+  }
+  100% {
+    transform: translate3d(3%, -2%, 0) rotate(-6deg) scale(1.02);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .aurora::before {
+    animation: none;
+  }
+}
+
+/* Glass surface: tinted fill + 1px border + inner top highlight + layered shadow. */
+@utility glass {
+  background-color: var(--glass);
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    inset 0 1px 0 0 var(--glass-highlight),
+    var(--elev-2);
+}
+/* Floating chrome: the only surfaces with backdrop-filter (kept to a few small areas). */
+@utility glass-chrome {
+  background-color: var(--glass-strong);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.6);
+}
+/* Without backdrop-filter support: an opaque tinted fill (still AA, just not frosted). */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-chrome {
+    background-color: var(--glass-fallback);
+  }
+}
+/* Hover lift + glow for interactive cards (transform and box-shadow only). */
+@utility lift {
+  transition:
+    transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 180ms cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 180ms;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      inset 0 1px 0 0 var(--glass-highlight),
+      var(--elev-3),
+      0 0 0 1px var(--glow),
+      0 10px 28px -10px var(--glow);
+  }
+}
+
+@keyframes glass-shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes typing-dot {
+  0%,
+  60%,
+  100% {
+    opacity: 0.35;
+    transform: translateY(0);
+  }
+  30% {
+    opacity: 1;
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes ring-spin {
+  100% {
+    transform: rotate(360deg);
   }
 }

@@ -2,8 +2,9 @@
 
 import { MenuIcon, SearchIcon } from "lucide-react";
 import type { Route } from "next";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type * as React from "react";
 
 import { ModeBanner } from "@/components/system-status";
@@ -20,16 +21,26 @@ import { Kbd } from "@/components/ui/kbd";
 import { useApprovals } from "@/lib/queries";
 import { createSequencer } from "@/lib/shortcuts";
 
-import { CommandPalette } from "./command-palette";
+import { DensityToggle } from "./density-toggle";
 import { NAV } from "./nav";
 import { SidebarNav } from "./sidebar";
 import { ThemeToggle } from "./theme-toggle";
 
 const NEW_ROUTE = NAV.find((n) => n.href === ("/investigations/new" as Route))?.href ?? null;
 
+// cmdk + the recent-investigations query load on first use (⌘K or the search box), not on every page
+const CommandPalette = dynamic(() => import("./command-palette").then((m) => m.CommandPalette), {
+  ssr: false,
+});
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteOpen, setPaletteOpenState] = useState(false);
+  const [paletteUsed, setPaletteUsed] = useState(false);
+  const setPaletteOpen = useCallback((o: boolean | ((prev: boolean) => boolean)) => {
+    setPaletteUsed(true);
+    setPaletteOpenState(o);
+  }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const approvals = useApprovals("pending");
@@ -68,18 +79,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shortcuts, router, paletteOpen, helpOpen]);
+  }, [shortcuts, router, paletteOpen, helpOpen, setPaletteOpen]);
 
   const badges = { "/approvals": pending };
   return (
     <div className="flex min-h-dvh">
+      <div aria-hidden className="aurora" />
       <a
         href="#main"
         className="sr-only z-50 rounded bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
       >
         Skip to content
       </a>
-      <aside className="hidden w-60 shrink-0 bg-sidebar md:block">
+      <aside className="hidden w-60 shrink-0 border-r border-glass-border bg-sidebar md:block">
         <div className="sticky top-0 h-dvh">
           <SidebarNav badges={badges} />
         </div>
@@ -91,7 +103,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Dialog>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-glass-border glass-chrome px-4 md:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -105,7 +117,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={() => setPaletteOpen(true)}
             data-testid="open-palette"
-            className="flex h-9 w-full max-w-md cursor-pointer items-center gap-2 rounded-md border bg-card px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:bg-accent"
+            className="flex h-9 max-w-md min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-glass-border bg-card/70 px-3 text-sm text-muted-foreground shadow-elev-1 transition-[background-color,box-shadow] hover:bg-accent hover:shadow-elev-2"
           >
             <SearchIcon aria-hidden className="size-4" />
             <span className="flex-1 truncate text-left">
@@ -113,7 +125,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <Kbd>⌘K</Kbd>
           </button>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <DensityToggle />
             <ThemeToggle />
           </div>
         </header>
@@ -122,11 +135,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        canInvestigate={NEW_ROUTE !== null}
-      />
+      {paletteUsed && (
+        <CommandPalette
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          canInvestigate={NEW_ROUTE !== null}
+        />
+      )}
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

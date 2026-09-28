@@ -1,11 +1,13 @@
 "use client";
 
-import { FilterXIcon, SearchIcon } from "lucide-react";
+import { motion } from "framer-motion";
+import { FilterXIcon, SearchIcon, SearchXIcon, SparklesIcon } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { memo, useCallback, useState } from "react";
 
+import { titleLayoutId } from "@/components/investigation-row";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState } from "@/components/states";
 import {
@@ -19,13 +21,65 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input, NativeSelect } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import type { InvestigationStatus, Severity } from "@/lib/api/schemas";
+import type { InvestigationStatus, InvestigationSummary, Severity } from "@/lib/api/schemas";
 import { formatDateTime, formatDuration, formatRelative } from "@/lib/format";
 import { useInvestigations, useServices } from "@/lib/queries";
 import { useDebounced } from "@/lib/use-debounced";
 import { cn } from "@/lib/utils";
 
 const PAGE = 20;
+
+/** One row; memoized so typing in the search box doesn't re-render every row. */
+const Row = memo(function Row({
+  inv,
+  onOpen,
+}: {
+  inv: InvestigationSummary;
+  onOpen: (id: string) => void;
+}) {
+  return (
+    <tr
+      className="cursor-pointer transition-colors hover:bg-accent/60"
+      onClick={() => onOpen(inv.id)}
+    >
+      <td className="max-w-0 px-4 py-(--row-y)">
+        <Link
+          href={`/investigations/${inv.id}` as Route}
+          className="block truncate font-medium hover:underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <motion.span layoutId={titleLayoutId(inv.id)} className="block truncate">
+            {inv.incident.title}
+          </motion.span>
+        </Link>
+        <span className="block truncate text-xs text-muted-foreground">
+          {inv.incident.service ?? "service unknown"} · <span className="font-mono">{inv.id}</span>
+        </span>
+      </td>
+      <td className="px-3 py-(--row-y)">
+        <StatusBadge status={inv.status} />
+      </td>
+      <td className="hidden px-3 py-(--row-y) md:table-cell">
+        {inv.report ? (
+          <SeverityBadge severity={inv.report.severity} />
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
+      </td>
+      <td className="px-3 py-(--row-y)">
+        <ConfidenceMeter value={inv.report?.confidence} />
+      </td>
+      <td className="hidden px-3 py-(--row-y) text-xs tabular-nums lg:table-cell">
+        {formatDuration(inv.duration_ms)}
+      </td>
+      <td className="px-4 py-(--row-y) text-right text-xs whitespace-nowrap text-muted-foreground">
+        <time dateTime={inv.created_at} title={formatDateTime(inv.created_at)}>
+          {formatRelative(inv.created_at)}
+        </time>
+      </td>
+    </tr>
+  );
+});
 
 export default function InvestigationsPage() {
   const router = useRouter();
@@ -46,11 +100,19 @@ export default function InvestigationsPage() {
     cursor,
   });
   const filtered = Boolean(dq || status || service || severity);
+  const open = useCallback((id: string) => router.push(`/investigations/${id}` as Route), [router]);
   const reset = (fn: () => void) => {
     fn();
     setCursor(null);
     setHistory([]);
   };
+  const clearFilters = () =>
+    reset(() => {
+      setQ("");
+      setStatus("");
+      setService("");
+      setSeverity("");
+    });
 
   return (
     <div>
@@ -112,18 +174,7 @@ export default function InvestigationsPage() {
             </NativeSelect>
           </div>
           {filtered && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                reset(() => {
-                  setQ("");
-                  setStatus("");
-                  setService("");
-                  setSeverity("");
-                })
-              }
-            >
+            <Button variant="ghost" size="sm" onClick={clearFilters}>
               <FilterXIcon /> Clear
             </Button>
           )}
@@ -140,7 +191,7 @@ export default function InvestigationsPage() {
           >
             <table className="w-full min-w-[640px] text-sm" aria-busy={isLoading}>
               <caption className="sr-only">Investigations, newest first</caption>
-              <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
+              <thead className="bg-muted/40 text-left text-xs text-muted-foreground">
                 <tr>
                   <th scope="col" className="w-[42%] px-4 py-2.5 font-medium">
                     Incident
@@ -166,61 +217,38 @@ export default function InvestigationsPage() {
                 {isLoading &&
                   Array.from({ length: 8 }, (_, i) => (
                     <tr key={i}>
-                      <td className="px-4 py-3" colSpan={6}>
+                      <td className="px-4 py-(--row-y)" colSpan={6}>
                         <Skeleton className="h-9 w-full" />
                       </td>
                     </tr>
                   ))}
                 {data?.items.map((inv) => (
-                  <tr
-                    key={inv.id}
-                    className="cursor-pointer transition-colors hover:bg-accent/60"
-                    onClick={() => router.push(`/investigations/${inv.id}` as Route)}
-                  >
-                    <td className="max-w-0 px-4 py-3">
-                      <Link
-                        href={`/investigations/${inv.id}` as Route}
-                        className="block truncate font-medium hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {inv.incident.title}
-                      </Link>
-                      <span className="block truncate text-xs text-muted-foreground">
-                        {inv.incident.service ?? "service unknown"} ·{" "}
-                        <span className="font-mono">{inv.id}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3">
-                      <StatusBadge status={inv.status} />
-                    </td>
-                    <td className="hidden px-3 py-3 md:table-cell">
-                      {inv.report ? (
-                        <SeverityBadge severity={inv.report.severity} />
-                      ) : (
-                        <span className="text-xs text-muted-foreground">—</span>
-                      )}
-                    </td>
-                    <td className="px-3 py-3">
-                      <ConfidenceMeter value={inv.report?.confidence} />
-                    </td>
-                    <td className="hidden px-3 py-3 text-xs tabular-nums lg:table-cell">
-                      {formatDuration(inv.duration_ms)}
-                    </td>
-                    <td className="px-4 py-3 text-right text-xs whitespace-nowrap text-muted-foreground">
-                      <time dateTime={inv.created_at} title={formatDateTime(inv.created_at)}>
-                        {formatRelative(inv.created_at)}
-                      </time>
-                    </td>
-                  </tr>
+                  <Row key={inv.id} inv={inv} onOpen={open} />
                 ))}
               </tbody>
             </table>
             {data && data.items.length === 0 && (
               <EmptyState
                 title={filtered ? "No investigations match these filters" : "No investigations yet"}
+                icon={filtered ? SearchXIcon : SparklesIcon}
                 className="m-4"
+                action={
+                  filtered ? (
+                    <Button variant="outline" size="sm" onClick={clearFilters}>
+                      <FilterXIcon /> Reset all filters
+                    </Button>
+                  ) : (
+                    <Button asChild size="sm">
+                      <Link href="/investigations/new">
+                        <SparklesIcon /> New investigation
+                      </Link>
+                    </Button>
+                  )
+                }
               >
-                {filtered ? "Try clearing the filters." : "Ask a question to start the first one."}
+                {filtered
+                  ? "Nothing matches the search and filters."
+                  : "Ask a question to start the first one."}
               </EmptyState>
             )}
           </div>

@@ -92,7 +92,7 @@ export function SystemStatusStrip() {
     return (
       <div
         role="status"
-        className="flex items-center gap-2 rounded-xl border border-dashed px-4 py-3 text-sm text-danger"
+        className="flex min-h-11 items-center gap-2 rounded-xl border border-dashed px-4 py-2 text-sm text-danger"
       >
         <CircleXIcon aria-hidden className="size-4" /> System status unavailable (GET /health
         failed)
@@ -102,7 +102,7 @@ export function SystemStatusStrip() {
   return (
     <section
       aria-label="System status"
-      className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border bg-card px-4 py-2.5 text-xs shadow-xs"
+      className="flex min-h-11 flex-wrap items-center gap-x-4 gap-y-2 rounded-xl glass px-4 py-2 text-xs"
     >
       <span className="flex items-center gap-1.5 font-medium">
         <span

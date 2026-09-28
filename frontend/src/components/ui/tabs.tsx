@@ -11,7 +11,7 @@ export function TabsList({ className, ...props }: React.ComponentProps<typeof T.
   return (
     <T.List
       className={cn(
-        "inline-flex h-10 max-w-full items-center gap-1 overflow-x-auto rounded-lg bg-muted p-1 text-muted-foreground",
+        "inline-flex h-10 max-w-full items-center gap-1 overflow-x-auto rounded-xl border border-glass-border bg-glass p-1 text-muted-foreground shadow-elev-1",
         className,
       )}
       {...props}
@@ -23,7 +23,7 @@ export function TabsTrigger({ className, ...props }: React.ComponentProps<typeof
   return (
     <T.Trigger
       className={cn(
-        "inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-all outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm [&_svg]:size-4",
+        "inline-flex h-8 cursor-pointer items-center justify-center gap-1.5 rounded-md px-3 text-sm font-medium whitespace-nowrap transition-all outline-none hover:text-foreground focus-visible:ring-[3px] focus-visible:ring-ring/50 data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-elev-2 [&_svg]:size-4",
         className,
       )}
       {...props}

@@ -35,6 +35,8 @@ test.describe("ask: platform questions (demo mode)", () => {
   }) => {
     await page.goto("/investigations/new");
     await page.getByRole("button", { name: "Which agents do you have?" }).click();
+    // the question shows at once as a chat bubble (optimistic), then the reply card
+    await expect(page.getByTestId("conversation")).toContainText("Which agents do you have?");
     const agents = page.getByRole("region", { name: "The agents" });
     await expect(agents.getByTestId("agent-item")).toHaveCount(7);
     await expect(agents).toContainText("prometheus");

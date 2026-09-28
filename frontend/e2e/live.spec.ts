@@ -20,6 +20,12 @@ test.describe("live investigation (demo mode)", () => {
     await expect(page.getByRole("log", { name: "Investigation event log" })).toContainText(
       "Round 1",
     );
+    // the event log follows new events until paused
+    await page.getByTestId("log-pause").click();
+    await expect(page.getByTestId("log-pause")).toHaveAttribute("aria-pressed", "true");
+    await expect(page.getByTestId("log-unseen")).toBeVisible({ timeout: 15_000 });
+    await page.getByTestId("log-unseen").click();
+    await expect(page.getByTestId("log-pause")).toHaveAttribute("aria-pressed", "false");
     await expect(logs).toHaveAttribute("data-phase", "done", { timeout: 30_000 });
     await expect(page.getByTestId("lane-logs-r2")).toBeVisible({ timeout: 30_000 });
     // then the report replaces the live view

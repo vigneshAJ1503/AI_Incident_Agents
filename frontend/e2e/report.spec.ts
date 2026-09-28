@@ -44,6 +44,40 @@ test.describe("report view (S1)", () => {
     await expectNoSeriousA11yViolations(page);
   });
 
+  test("evidence drawer: ←/→ between citations, copy the query; sticky tab bar", async ({
+    page,
+    context,
+  }) => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/investigations/inv-demo-s1");
+    const hero = page.getByTestId("root-cause");
+    await hero.getByTestId("citation").first().click();
+    const drawer = page.getByTestId("evidence-drawer");
+    const pos = drawer.getByTestId("evidence-pos");
+    await expect(pos).toHaveText(/^1 of \d+$/);
+    await page.keyboard.press("ArrowRight");
+    await expect(pos).toHaveText(/^2 of \d+$/);
+    await page.keyboard.press("ArrowLeft");
+    await page.keyboard.press("ArrowLeft");
+    await expect(pos).not.toHaveText(/^1 of/); // wraps to the last one
+    await drawer.getByTestId("evidence-next").click();
+    await expect(pos).toHaveText(/^1 of \d+$/);
+    // walk to an item with a query and copy it
+    const copy = drawer.getByRole("button", { name: "Copy query" });
+    for (let i = 0; i < 12 && !(await copy.isVisible()); i++)
+      await page.keyboard.press("ArrowRight");
+    await copy.click();
+    await expect(page.getByText("Query copied")).toBeVisible();
+    expect((await page.evaluate(() => navigator.clipboard.readText())).length).toBeGreaterThan(0);
+    await page.keyboard.press("Escape");
+
+    // the tab bar sticks under the top bar while the evidence scrolls
+    await page.mouse.wheel(0, 1500);
+    await expect
+      .poll(async () => (await page.getByTestId("report-tabs").boundingBox())?.y ?? -1)
+      .toBeLessThan(80);
+  });
+
   test("S0 shows 'no incident detected' without a hallucinated root cause", async ({ page }) => {
     await page.goto("/investigations/inv-demo-s0");
     await expect(page.getByTestId("root-cause")).toContainText("No incident detected");

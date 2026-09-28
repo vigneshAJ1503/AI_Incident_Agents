@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 from pathlib import Path
 
 import typer
@@ -145,6 +146,11 @@ def evaluate(
         raise typer.BadParameter("nothing to evaluate", param_hint="--agents/--investigations")
 
     settings = load_settings(env)
+    if run_mode == "replay":
+        # Replay evals must be deterministic and zero-token, even when the developer's .env
+        # enables AIOPS_REPLAY_LLM=real for the demo (a rate-limited real LLM would otherwise
+        # make the regression gate flaky). After load_settings: it loads .env.
+        os.environ.pop("AIOPS_REPLAY_LLM", None)
     paths = EvalPaths.discover(settings.config_dir)
     try:
         report = asyncio.run(

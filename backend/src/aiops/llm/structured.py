@@ -11,7 +11,7 @@ from pydantic import BaseModel, ValidationError
 
 from aiops.core.config import ModelRole
 from aiops.core.models import TokenUsage
-from aiops.llm.base import ChatMessage, LLMError, LLMProvider, ToolSpec
+from aiops.llm.base import ChatMessage, LLMError, LLMProvider, LLMToolCallError, ToolSpec
 
 SUBMIT_TOOL = "submit"
 
@@ -36,7 +36,20 @@ async def generate_structured[T: BaseModel](
     usage = TokenUsage()
     last_error = "no attempt"
     for _ in range(max_attempts):
-        response = await provider.generate(history, tools=[tool], tool_choice="required", role=role)
+        try:
+            response = await provider.generate(
+                history, tools=[tool], tool_choice="required", role=role
+            )
+        except LLMToolCallError as exc:  # provider-side schema validation failed
+            last_error = str(exc)
+            history = [
+                *history,
+                ChatMessage.user(
+                    f"Your previous answer was rejected ({last_error}). "
+                    f"Call '{SUBMIT_TOOL}' again with arguments matching its schema exactly."
+                ),
+            ]
+            continue
         usage = usage + response.usage
         call = next((c for c in response.tool_calls if c.name == SUBMIT_TOOL), None)
         if call is None:

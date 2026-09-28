@@ -4,7 +4,7 @@ from pathlib import Path
 
 from aiops.agents.registry import AgentRegistry
 from aiops.core.models import AgentStatus, ClaimKind
-from aiops.llm.base import ChatMessage, LLMResponse, ToolSpec
+from aiops.llm.base import ChatMessage, LLMResponse, LLMToolCallError, ToolSpec
 from aiops.llm.fake import FakeLLMProvider, text, tool_call
 from aiops.mcp.registry import MCPRegistry
 from tests.unit.agent_helpers import (
@@ -100,7 +100,44 @@ async def test_tool_call_limit(tmp_path: Path) -> None:
     deps, _, _ = make_deps(tmp_path, llm, settings=make_settings(max_tool_calls=1))
     result = await EchoAgent(deps).run(make_task())
     assert len(result.tool_calls) == 1
-    assert "max_tool_calls" in (llm.requests[2]["messages"][-1].content or "")
+    # Once the tool budget is used up, the next turn offers ONLY submit, with an explicit nudge.
+    assert [spec.name for spec in llm.requests[1]["tools"]] == ["submit"]
+    assert "Final step" in (llm.requests[1]["messages"][-1].content or "")
+
+
+async def test_last_step_forces_a_report(tmp_path: Path) -> None:
+    """A real model that keeps exploring still ends with a submitted report."""
+
+    def responder(messages: list[ChatMessage], tools: list[ToolSpec] | None) -> LLMResponse:
+        if tools and [spec.name for spec in tools] == ["submit"]:
+            return submit(last_evidence_id(messages))
+        return tool_call("search_logs", {"service": "payment-service"})
+
+    deps, _, _ = make_deps(
+        tmp_path, FakeLLMProvider(responder=responder), settings=make_settings(max_steps=3)
+    )
+    result = await EchoAgent(deps).run(make_task())
+    assert result.status is AgentStatus.SUCCESS
+    assert len(result.tool_calls) == 2
+
+
+async def test_provider_rejected_tool_call_is_retried(tmp_path: Path) -> None:
+    """Groq-style server-side schema rejections are fed back to the model, not fatal."""
+    calls = {"n": 0}
+
+    class RejectOnce(FakeLLMProvider):
+        async def generate(self, messages, **kwargs):  # type: ignore[no-untyped-def,override]
+            calls["n"] += 1
+            if calls["n"] == 1:
+                raise LLMToolCallError("parameters for tool submit did not match schema: 'kind'")
+            return await super().generate(messages, **kwargs)
+
+    llm = RejectOnce(responder=search_then_submit)
+    deps, events, _ = make_deps(tmp_path, llm)
+    result = await EchoAgent(deps).run(make_task())
+    assert result.status is AgentStatus.SUCCESS
+    assert "rejected" in (llm.requests[0]["messages"][-1].content or "")
+    assert any(e.data.get("rejected") for e in events.events)
 
 
 async def test_step_limit_returns_partial_with_evidence(tmp_path: Path) -> None:

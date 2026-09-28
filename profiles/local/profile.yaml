@@ -18,17 +18,24 @@ llm:
   provider: ${LLM_PROVIDER:-openai_compat}
   base_url: ${OPENAI_COMPAT_BASE_URL:-https://api.groq.com/openai/v1}
   api_key: ${OPENAI_COMPAT_API_KEY:-}
+  # Optional extra keys, used in turn when one is rate-limited (free-tier TPM caps).
+  fallback_api_keys:
+    - ${OPENAI_COMPAT_API_KEY_2:-}
   models:
     fast: ${LLM_MODEL_FAST:-}
     agent: ${LLM_MODEL_AGENT:-}
     rca: ${LLM_MODEL_RCA:-}
   timeout_s: 60
   max_retries: 4
+  # Provider-specific request params. Reasoning models (e.g. openai/gpt-oss on Groq)
+  # are much faster and cheaper with reasoning_effort: low. Empty = not sent.
+  extra:
+    reasoning_effort: ${LLM_REASONING_EFFORT:-}
 
 limits:
   max_steps: 8
   max_tool_calls: 10
-  max_execution_s: 60
+  max_execution_s: 120
   max_tokens: 60000
 
 guardrails:
@@ -273,7 +280,7 @@ agents:
     limits:
       max_steps: 6
       max_tool_calls: 10
-      max_execution_s: 60
+      max_execution_s: 120
       max_tokens: 40000
   tickets:
     model_role: agent
@@ -282,7 +289,7 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 6
-      max_execution_s: 45
+      max_execution_s: 90
       max_tokens: 30000
   knowledge:
     model_role: agent
@@ -290,7 +297,7 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 12
-      max_execution_s: 45
+      max_execution_s: 90
       max_tokens: 30000
   alerts:
     model_role: agent
@@ -299,7 +306,7 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 10
-      max_execution_s: 45
+      max_execution_s: 90
       max_tokens: 30000
   k8s:
     model_role: agent
@@ -308,7 +315,7 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 8
-      max_execution_s: 45
+      max_execution_s: 90
       max_tokens: 30000
   metrics:
     model_role: agent
@@ -317,7 +324,7 @@ agents:
     limits:
       max_steps: 4
       max_tool_calls: 13
-      max_execution_s: 60
+      max_execution_s: 120
       max_tokens: 40000
   code:
     model_role: agent
@@ -325,5 +332,5 @@ agents:
     limits:
       max_steps: 6
       max_tool_calls: 10
-      max_execution_s: 60
+      max_execution_s: 120
       max_tokens: 40000

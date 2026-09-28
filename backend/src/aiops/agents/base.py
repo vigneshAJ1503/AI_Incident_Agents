@@ -38,7 +38,7 @@ from aiops.core.models import (
     ToolCall,
 )
 from aiops.core.prompts import Prompt, PromptLoader
-from aiops.llm.base import ChatMessage, LLMError, LLMProvider, ToolSpec
+from aiops.llm.base import ChatMessage, LLMError, LLMProvider, LLMToolCallError, ToolSpec
 from aiops.llm.structured import SUBMIT_TOOL, submit_tool
 from aiops.mcp.client import MCPClientError
 from aiops.mcp.registry import MCPRegistry
@@ -355,9 +355,32 @@ class BaseAgent(ABC):
         for step in range(1, run.limits.max_steps + 1):
             if run.usage.total_tokens >= run.limits.max_tokens:
                 return run.partial(f"Token budget ({run.limits.max_tokens}) reached.")
-            response = await self.deps.llm.generate(
-                messages, tools=tools, tool_choice="required", role=role
-            )
+            # Last step (or no tool budget left): only `submit` is offered, so a real model
+            # that keeps exploring still ends with an evidence-cited report.
+            final = step == run.limits.max_steps or len(run.tool_calls) >= run.limits.max_tool_calls
+            if final:
+                messages.append(
+                    ChatMessage.user(
+                        f"Final step: no more investigation. Call '{SUBMIT_TOOL}' now with your "
+                        "report, based only on the evidence ids you already have."
+                    )
+                )
+            try:
+                response = await self.deps.llm.generate(
+                    messages, tools=[submit] if final else tools, tool_choice="required", role=role
+                )
+            except LLMToolCallError as exc:
+                # The provider rejected the model's tool call (e.g. schema mismatch).
+                # Tell the model exactly what was wrong and let it try again.
+                self.emit("llm_called", run.task, step=step, tool_calls=0, rejected=True)
+                messages.append(
+                    ChatMessage.user(
+                        f"Your previous tool call was rejected: {exc}. Call the tool again with "
+                        f"arguments that match its JSON schema exactly (for '{SUBMIT_TOOL}': "
+                        "every finding needs 'kind', 'type' and 'description')."
+                    )
+                )
+                continue
             run.usage = run.usage + response.usage
             run.model = response.model or run.model
             self.emit("llm_called", run.task, step=step, tool_calls=len(response.tool_calls))

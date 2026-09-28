@@ -32,6 +32,7 @@ from aiops.llm.base import (
     LLMRateLimitError,
     LLMResponse,
     LLMToolCall,
+    LLMToolCallError,
     ToolChoice,
     ToolSpec,
 )
@@ -44,7 +45,18 @@ class OpenAICompatProvider:
         self._config = config
         self._require(config)
         # The SDK retries 408/409/429/5xx with exponential backoff (honours Retry-After).
-        self._client = self._build_client(config, http_client)
+        # With fallback keys (free tiers cap tokens per minute PER KEY), retry each key only
+        # briefly and rotate to the next key on a rate limit instead of sleeping.
+        keys = [config.api_key, *config.fallback_api_keys]
+        retries = config.max_retries if len(keys) == 1 else min(config.max_retries, 1)
+        self._clients = [
+            self._build_client(
+                config.model_copy(update={"api_key": key, "max_retries": retries}), http_client
+            )
+            for key in keys
+        ]
+        self._client = self._clients[0]
+        self._next = 0  # round-robin start, so load spreads across keys
 
     def _require(self, config: LLMConfig) -> None:
         if not config.base_url:
@@ -87,6 +99,8 @@ class OpenAICompatProvider:
             "temperature": self._config.temperature,
             "max_tokens": max_tokens,
         }
+        if self._config.extra:
+            request["extra_body"] = dict(self._config.extra)
         if tools:
             request["tools"] = [
                 {
@@ -103,12 +117,15 @@ class OpenAICompatProvider:
             request["tool_choice"] = "auto" if forced else tool_choice
         secret = self._config.api_key
         try:
-            completion = await self._client.chat.completions.create(**request)
+            completion = await self._create(request)
         except openai.RateLimitError as exc:
             raise LLMRateLimitError(
                 mask(f"{self.name}: rate limited after retries: {exc}", secret)
             ) from None
         except openai.APIStatusError as exc:
+            if exc.status_code == 400 and _is_tool_call_rejection(exc):
+                # Recoverable: the agent feeds this back to the model (schema mismatch).
+                raise LLMToolCallError(mask(_rejection_message(exc), secret)) from None
             raise LLMError(
                 mask(f"{self.name}: HTTP {exc.status_code}: {exc.message}", secret)
             ) from None
@@ -130,6 +147,20 @@ class OpenAICompatProvider:
             model=completion.model or model,
             finish_reason=choice.finish_reason,
         )
+
+    async def _create(self, request: dict[str, Any]) -> Any:
+        """One completion, rotating to the next API key when a key is rate-limited."""
+        order = [(self._next + i) % len(self._clients) for i in range(len(self._clients))]
+        self._next = (self._next + 1) % len(self._clients)
+        last: openai.RateLimitError | None = None
+        for index in order:
+            try:
+                return await self._clients[index].chat.completions.create(**request)
+            except openai.RateLimitError as exc:
+                log.warning("LLM key #%d rate-limited; trying the next key", index + 1)
+                last = exc
+        assert last is not None  # noqa: S101 - at least one client exists
+        raise last
 
 
 def _to_wire(message: ChatMessage) -> dict[str, Any]:
@@ -165,3 +196,23 @@ def _parse_tool_call(tool_call: Any) -> LLMToolCall:
         return LLMToolCall(
             id=tool_call.id, name=tool_call.function.name, raw_arguments=raw, parse_error=str(exc)
         )
+
+
+def _error_body(exc: openai.APIStatusError) -> dict[str, Any]:
+    body = exc.body if isinstance(exc.body, dict) else {}
+    inner = body.get("error", body)
+    return inner if isinstance(inner, dict) else {}
+
+
+def _is_tool_call_rejection(exc: openai.APIStatusError) -> bool:
+    """Groq/OpenAI-compatible servers validate tool arguments server-side ("tool_use_failed")."""
+    error = _error_body(exc)
+    code = str(error.get("code") or error.get("type") or "")
+    return code == "tool_use_failed" or "tool call validation failed" in str(
+        error.get("message", "")
+    )
+
+
+def _rejection_message(exc: openai.APIStatusError) -> str:
+    message = str(_error_body(exc).get("message") or exc.message)
+    return message[:1500]

@@ -14,6 +14,7 @@ no fixtures and is skipped (reported as a recoverable ``error`` event).
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from datetime import datetime, timedelta
@@ -26,6 +27,7 @@ from aiops.core.events import EventSink
 from aiops.core.models import AgentResult, AgentTask, Investigation, TimeRange
 from aiops.evals.replay import REPLAY_NOW, ReplayMeta, echo_responder
 from aiops.evals.scenario import Scenario
+from aiops.llm.base import LLMProvider
 from aiops.llm.fake import FakeLLMProvider
 from aiops.orchestrator.planner import PlanRequest
 
@@ -170,6 +172,8 @@ class ReplaySource:
     anchor_end: datetime = REPLAY_NOW
     #: Seconds each recorded tool call waits (Web UI replays; 0 = instant).
     tool_delay_s: float = 0.0
+    #: A real LLM for the agents (AIOPS_REPLAY_LLM=real); None = deterministic fake.
+    llm: LLMProvider | None = None
 
     @property
     def anchor_incident_start(self) -> datetime | None:
@@ -209,7 +213,7 @@ class ReplaySource:
     ) -> AgentDeps:
         return build_deps(
             settings,
-            llm=FakeLLMProvider(responder=echo_responder()),
+            llm=self.llm or FakeLLMProvider(responder=echo_responder()),
             replay_dir=self.fixture_dir(agent, service),
             replay_lenient=True,
             replay_delay_s=self.tool_delay_s,
@@ -237,3 +241,8 @@ def load_replay(
     if not paths.fixtures.is_dir():
         raise ReplayError(f"No recorded fixtures in {paths.fixtures}.")
     return ReplaySource(scenario=scenario, fixtures=paths.fixtures, anchor_end=anchor_end)
+
+
+def replay_llm_enabled() -> bool:
+    """AIOPS_REPLAY_LLM=real: replays reason with the configured LLM instead of the fake."""
+    return os.environ.get("AIOPS_REPLAY_LLM", "").strip().lower() in {"real", "1", "true", "yes"}

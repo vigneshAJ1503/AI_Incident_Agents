@@ -25,7 +25,15 @@ from typing import Any
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
 from aiops.agents.log_agent.analysis import DATA_SIGNALS, SIGNALS, LogAnalysis, analyze
 from aiops.agents.registry import AGENTS
-from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind, parse_timestamp
+from aiops.core.models import (
+    AgentResult,
+    AgentStatus,
+    ClaimKind,
+    Evidence,
+    EvidenceKind,
+    Finding,
+    parse_timestamp,
+)
 from aiops.llm.base import ToolSpec
 from aiops.providers.base import ToolRequest
 from aiops.providers.logs import LogScope, LogsProvider, LogTable, LogWindow, iso
@@ -246,13 +254,47 @@ class LogAgent(BaseAgent):
             llm_extra = set()
         signals = [s for s in SIGNALS if s in {*analysis.signals, *llm_extra}]
         status = result.status
+        updates: dict[str, Any] = {}
         if status is AgentStatus.NO_SIGNAL and analysis.anomalous:
+            # The model contradicted the data (e.g. a follow-up query failed and it concluded
+            # "no evidence"). The data wins, and so does the report text: never ship a summary
+            # that denies anomalies the deterministic analysis found.
             status = AgentStatus.SUCCESS
+            updates = self._data_override(result, analysis)
         link = self.logs().ui_link(scope, self.window(scope, run))
         evidence = [e if e.link else e.model_copy(update={"link": link}) for e in result.evidence]
         return result.model_copy(
-            update={"signals": signals, "status": status, "evidence": evidence}
+            update={"signals": signals, "status": status, "evidence": evidence, **updates}
         )
+
+    @staticmethod
+    def _data_override(result: AgentResult, analysis: LogAnalysis) -> dict[str, Any]:
+        def describe(delta: Any) -> str:
+            kind = "new" if delta.is_new else f"{delta.ratio:.0f}x normal"
+            pattern = delta.pattern
+            return (
+                f"'{pattern.template}' x{pattern.count} ({kind}, first seen {pattern.first_seen})"
+            )
+
+        patterns = "; ".join(describe(d) for d in analysis.anomalous[:3])
+        summary = (
+            f"{analysis.current_errors} errors in the incident window "
+            f"(baseline {analysis.baseline_errors} over the previous period). "
+            f"Anomalous patterns: {patterns}."
+        )
+        finding = Finding(
+            kind=ClaimKind.OBSERVATION,
+            type="error_pattern",
+            description=summary,
+            evidence_ids=[e.id for e in result.evidence[:3]],
+            confidence=0.9,
+        )
+        note = "Model summary overridden: it contradicted the deterministic log analysis."
+        return {
+            "summary": summary,
+            "findings": [finding],
+            "suggested_followups": [*result.suggested_followups, note],
+        }
 
 
 def _earliest(values: Iterable[Any]) -> datetime | None:

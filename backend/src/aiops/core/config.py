@@ -144,6 +144,8 @@ class LLMConfig(_Strict):
     api_key: SecretStr | None = None
     #: Azure OpenAI ``api-version`` query parameter (e.g. ``2024-10-21``).
     api_version: str | None = None
+    #: Extra keys for the same provider; used in turn when one is rate-limited (free tiers).
+    fallback_api_keys: list[SecretStr] = Field(default_factory=list)
     models: dict[ModelRole, str] = Field(default_factory=dict)
     timeout_s: float = Field(default=60.0, gt=0)
     max_retries: int = Field(default=4, ge=0)
@@ -202,6 +204,9 @@ class LLMConfig(_Strict):
         """``{"fast": ..., "agent": ..., "rca": ...}`` after the ``agent`` fallback."""
         agent = self.models.get("agent") or "-"
         return {role: self.models.get(role) or agent for role in ("fast", "agent", "rca")}
+    #: Provider-specific request parameters passed through as-is,
+    #: e.g. {"reasoning_effort": "low"} for reasoning models on Groq.
+    extra: dict[str, Any] = Field(default_factory=dict)
 
     def model_for(self, role: ModelRole) -> str:
         """Model for a role, falling back to ``agent`` when a role is not set."""

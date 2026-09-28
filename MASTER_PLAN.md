@@ -1445,6 +1445,12 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 - ✅ The injection suite passes; CI runs the security workflow.
 - 🏷 `v1.0.0` 🚀 demo-ready
 
+> **As built (PR-042a/b/c) ✅:** shipped as three PRs instead of one branch.
+> - **(a) Injection + redaction.** `core/guardrails/injection.py` flags `suspected_injection` on the tool call, the evidence, the audit log, SSE and the report. Every spelling of `<tool_output>` is escaped. Redaction covers private keys, connection strings, AWS/GCP/Azure, GitHub/GitLab/Slack/Atlassian/npm/Stripe and secret-named JSON keys, with `secrets`/`pii` groups; **secrets are on by default**. Tests (`backend/tests/security/`): a compromised-model FakeLLM suite and an e2e leak test (LLM, audit, store, SSE, API; Postgres variant too).
+> - **(b) API security + reliability.** `api/auth.py` adds `none`/`api_key`, **named keys as approver identities** and an OIDC slot for PR-045. Also: per-client rate limits, a 64 KB body limit, security headers/CSP, exact-origin CORS, fault endpoints behind flag **and** auth, `Idempotency-Key`, graceful shutdown, a stuck-investigation reaper and per-capability **circuit breakers** (`mcp/breaker.py`), so one source down gives PARTIAL with the source named.
+> - **(c) Supply chain.** `security.yml` runs pip-audit (every project), npm audit (high+) and Trivy (every image). Actions are pinned to SHAs, and Dependabot runs weekly, grouped. Python images use `python:3.12.13-slim-trixie` plus Debian security updates, and the web image drops npm/yarn. The threat model is in `docs/security/threat-model.md`.
+> - **Deviations:** OIDC itself stays in PR-045. Rate-limit and idempotency state is in-process (single API process), and a shared store is the multi-replica follow-up.
+
 ### Phase 12 — SaaS readiness (EPIC-015)
 
 #### PR-043 · Portability proof + onboarding + enterprise LLM providers
@@ -1557,7 +1563,8 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
    - tool output is wrapped as data
    - the system prompts forbid following instructions found in that data
    - write tools are unavailable during analysis steps
-   - covered by tests in PR-042
+   - covered by tests in PR-042 (`backend/tests/security/`, `docs/security/threat-model.md`)
+   - suspicious tool output is flagged `suspected_injection` and named in the report
 5. **Auditability:** every LLM call and tool call is logged with the investigation ID, user, arguments hash and duration.
 6. **Secrets:** `.env` locally (git-ignored); Kubernetes Secrets or External Secrets / Vault in companies. Never committed; detect-secrets runs in pre-commit.
 7. **Data residency:** the LLM provider is configurable (Bedrock/Vertex regions), so it can meet company policy.

@@ -1,0 +1,60 @@
+# Dependabot (PR-042): weekly, grouped so one PR per ecosystem and folder set, not one per
+# package. Security updates are raised as soon as advisories appear (independent of this).
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ["*"]
+    commit-message:
+      prefix: "ci"
+
+  - package-ecosystem: uv
+    directories:
+      - /backend
+      - /sample-services
+      - /mcp-servers/*
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      python-minor-patch:
+        update-types: [minor, patch]
+      python-major:
+        update-types: [major]
+    commit-message:
+      prefix: "deps"
+
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+      npm-major:
+        update-types: [major]
+    commit-message:
+      prefix: "deps(web)"
+
+  - package-ecosystem: docker
+    directories:
+      - /backend
+      - /frontend
+      - /sample-services
+      - /mcp-servers/*
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      base-images:
+        patterns: ["*"]
+    commit-message:
+      prefix: "deps(images)"

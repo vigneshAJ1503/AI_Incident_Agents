@@ -1,0 +1,5 @@
+# Accepted image vulnerabilities for Trivy (security.yml; HIGH/CRITICAL with a fix fail CI).
+# One id per line, then "# image; reason; owner; review-by YYYY-MM-DD". Prefer fixing:
+# bump the pinned base image (Dependabot "docker" updates) or upgrade the package.
+# Empty on purpose (PR-042, 2026-09-29): the fixable findings were fixed instead (Python images
+# on python:3.12.13-slim-trixie; the web image applies Alpine fixes and drops npm/yarn).

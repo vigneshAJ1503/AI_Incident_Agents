@@ -32,7 +32,13 @@ ENV NODE_ENV=production \
     PORT=3100 \
     AIOPS_API_INTERNAL_URL=http://aiops-api:8000
 # Numeric UID/GID (Kubernetes runAsNonRoot needs a number); files stay root-owned, read-only.
-RUN addgroup -g 10001 aiops && adduser -D -u 10001 -G aiops aiops
+# Security (PR-042, Trivy): apply Alpine security fixes, and drop the package managers the
+# standalone server never uses (npm/yarn/corepack bundle their own vulnerable dependencies).
+RUN apk upgrade --no-cache \
+    && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+       /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-* \
+       /usr/local/bin/yarn /usr/local/bin/yarnpkg \
+    && addgroup -g 10001 aiops && adduser -D -u 10001 -G aiops aiops
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 USER 10001:10001

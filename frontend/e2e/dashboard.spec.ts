@@ -40,7 +40,7 @@ test.describe("dashboard (demo mode)", () => {
     await page.keyboard.press("ControlOrMeta+k");
     await expect(page.getByRole("dialog")).toBeVisible();
     await page.keyboard.type("Dashboard");
-    await page.keyboard.press("Enter");
+    await page.getByRole("option", { name: /^Dashboard/ }).click();
     await expect(page).toHaveURL(/\/$/);
     await expect(page.getByRole("dialog")).toBeHidden();
     await page.keyboard.press("?");

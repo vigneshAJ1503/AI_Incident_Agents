@@ -7,6 +7,7 @@ Replay matches calls by tool name + canonical JSON of the arguments.
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any
 
@@ -54,7 +55,10 @@ class RecordingMCPClient(MCPClient):
 class ReplayMCPClient(MCPClient):
     """Serves tools/calls from a fixture file; unknown calls are an error (no silent live calls)."""
 
-    def __init__(self, name: str, path: Path) -> None:
+    def __init__(self, name: str, path: Path, *, lenient: bool = False) -> None:
+        """``lenient``: an unrecorded call is served by the most similar recorded call of
+        the same tool (word overlap of the arguments). Only for orchestrated replays,
+        where round-2 hints legitimately differ from the standalone recording."""
         super().__init__(name, "replay://")
         if not path.is_file():
             raise MCPClientError(f"Fixture not found: {path}")
@@ -64,6 +68,12 @@ class ReplayMCPClient(MCPClient):
             _key(c["tool"], c["arguments"]): MCPToolResult.model_validate(c["result"])
             for c in payload.get("calls", [])
         }
+        self._by_tool: dict[str, list[tuple[set[str], str]]] = {}
+        for c in payload.get("calls", []):
+            key = _key(c["tool"], c["arguments"])
+            self._by_tool.setdefault(c["tool"], []).append((_words(c["arguments"]), key))
+        self.lenient = lenient
+        self.approximate_calls = 0
         self.path = path
 
     async def connect(self) -> None:
@@ -81,7 +91,31 @@ class ReplayMCPClient(MCPClient):
         try:
             return self._responses[_key(name, arguments)]
         except KeyError:
+            nearest = self._nearest(name, arguments) if self.lenient else None
+            if nearest is not None:
+                self.approximate_calls += 1
+                return nearest
             raise MCPClientError(
                 f"No recorded response for {name}({json.dumps(arguments, sort_keys=True)}) "
                 f"in {self.path}. Re-record with --record."
             ) from None
+
+    def _nearest(self, tool: str, arguments: dict[str, Any]) -> MCPToolResult | None:
+        wanted = _words(arguments)
+        best: tuple[float, str] | None = None
+        for words, key in self._by_tool.get(tool, []):
+            union = wanted | words
+            score = len(wanted & words) / len(union) if union else 1.0
+            if best is None or score > best[0]:
+                best = (score, key)
+        return self._responses[best[1]] if best else None
+
+
+_WORDS = re.compile(r"[A-Za-z0-9_\-]+")
+
+
+def _words(arguments: dict[str, Any]) -> set[str]:
+    """Argument keys and value words, e.g. {"query": "db pool"} -> {query, db, pool}."""
+    return {
+        w.casefold() for w in _WORDS.findall(json.dumps(arguments, sort_keys=True, default=str))
+    }

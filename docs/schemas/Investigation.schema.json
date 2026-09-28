@@ -430,6 +430,83 @@
       "title": "IncidentContext",
       "type": "object"
     },
+    "InvestigationReport": {
+      "additionalProperties": false,
+      "description": "The response builder's output (docs/api/contract.md): what the UI shows first.",
+      "properties": {
+        "affected_services": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Affected Services",
+          "type": "array"
+        },
+        "confidence": {
+          "default": 0.0,
+          "maximum": 1,
+          "minimum": 0,
+          "title": "Confidence",
+          "type": "number"
+        },
+        "impact": {
+          "default": "",
+          "title": "Impact",
+          "type": "string"
+        },
+        "markdown": {
+          "default": "",
+          "title": "Markdown",
+          "type": "string"
+        },
+        "next_steps": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Next Steps",
+          "type": "array"
+        },
+        "open_questions": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Open Questions",
+          "type": "array"
+        },
+        "root_cause_hypothesis_id": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Root Cause Hypothesis Id"
+        },
+        "severity": {
+          "default": "none",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "none"
+          ],
+          "title": "Severity",
+          "type": "string"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "summary"
+      ],
+      "title": "InvestigationReport",
+      "type": "object"
+    },
     "InvestigationStatus": {
       "enum": [
         "pending",
@@ -718,6 +795,13 @@
   },
   "additionalProperties": false,
   "properties": {
+    "clarification_candidates": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Clarification Candidates",
+      "type": "array"
+    },
     "clarification_question": {
       "anyOf": [
         {
@@ -759,6 +843,18 @@
       "title": "Created At",
       "type": "string"
     },
+    "duration_ms": {
+      "anyOf": [
+        {
+          "type": "number"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Duration Ms"
+    },
     "hypotheses": {
       "items": {
         "$ref": "#/$defs/Hypothesis"
@@ -773,12 +869,33 @@
     "incident": {
       "$ref": "#/$defs/Incident"
     },
+    "mode": {
+      "default": "live",
+      "enum": [
+        "live",
+        "replay",
+        "demo"
+      ],
+      "title": "Mode",
+      "type": "string"
+    },
     "recommendations": {
       "items": {
         "$ref": "#/$defs/Recommendation"
       },
       "title": "Recommendations",
       "type": "array"
+    },
+    "report": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/InvestigationReport"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     },
     "results": {
       "items": {
@@ -804,6 +921,9 @@
       },
       "title": "Timeline",
       "type": "array"
+    },
+    "usage": {
+      "$ref": "#/$defs/TokenUsage"
     },
     "versions": {
       "additionalProperties": {

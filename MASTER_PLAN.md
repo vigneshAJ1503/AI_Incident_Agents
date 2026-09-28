@@ -1183,6 +1183,13 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 
 ### Phase 9 — Orchestration & RCA (EPIC-011, EPIC-012)
 
+> **As built (PR-030/031, ADR-0014):** the planner is deterministic first (catalog aliases,
+> regex time ranges and symptoms); the `fast` model is only a fallback when no service is
+> found. Gap analysis is a rule table (`signal -> follow-ups`, overridable in
+> `orchestrator.followups`), not an LLM call. `aiops investigate --replay S1` replays a whole
+> investigation from the agents' recorded fixtures (zero tokens). Code and k8s run in round
+> 1; knowledge and tickets in round 2 with round-1 findings.
+
 #### PR-030 · Orchestrator v1 (planner)
 - **Branch:** `feat/030-orchestrator-planner`
 - **Scope:**

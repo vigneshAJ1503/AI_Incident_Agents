@@ -205,6 +205,8 @@ class AlertAgent(BaseAgent):
         starts = [a.starts_at for a in firing if a.starts_at is not None]
         evidence.timestamp = min(starts) if starts else None
         evidence.link = self.ui_link(scope, labels)
+        # Structured for the orchestrator: the knowledge agent searches alert names.
+        evidence.data["alerts"] = sorted({a.alertname for a in firing})
 
     # -- investigation -------------------------------------------------------------------
 

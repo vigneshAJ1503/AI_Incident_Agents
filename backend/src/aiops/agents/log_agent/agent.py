@@ -18,13 +18,14 @@ to ``fields.service == <catalog logs.service_value>``.
 
 from __future__ import annotations
 
-from datetime import timedelta
+from collections.abc import Iterable
+from datetime import datetime, timedelta
 from typing import Any
 
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
 from aiops.agents.log_agent.analysis import DATA_SIGNALS, SIGNALS, LogAnalysis, analyze
 from aiops.agents.registry import AGENTS
-from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind
+from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind, parse_timestamp
 from aiops.llm.base import ToolSpec
 from aiops.providers.base import ToolRequest
 from aiops.providers.logs import LogScope, LogsProvider, LogTable, LogWindow, iso
@@ -152,6 +153,9 @@ class LogAgent(BaseAgent):
                 f"({len(new)} new vs baseline)"
             )
             patterns_ev.link = logs.ui_link(scope, window, levels=scope.pattern_levels)
+            # Structured for the orchestrator: the knowledge agent searches these templates.
+            patterns_ev.data["patterns"] = [d.pattern.template for d in analysis.anomalous]
+            patterns_ev.timestamp = _earliest(d.pattern.first_seen for d in analysis.anomalous)
             notes.append(f"[{patterns_ev.id}] patterns")
         if lifecycle_ev is not None:
             deploys = (
@@ -162,6 +166,7 @@ class LogAgent(BaseAgent):
                 f"New versions in window: {deploys}; restarts: {analysis.restarts}"
             )
             lifecycle_ev.link = logs.ui_link(scope, window)
+            lifecycle_ev.timestamp = _earliest(d.get("first_seen") for d in analysis.deployments)
             notes.append(f"[{lifecycle_ev.id}] versions")
 
         await self._trace_sample(run, scope, analysis, notes)
@@ -189,6 +194,7 @@ class LogAgent(BaseAgent):
         trace_ids = [r[columns.index("trace_id")] for r in rows if "trace_id" in columns]
         first = rows[0][columns.index("timestamp")] if rows and "timestamp" in columns else None
         evidence.summary = f"First occurrence of '{prefix}...' at {first}; trace ids {trace_ids}"
+        evidence.timestamp = parse_timestamp(first)
         evidence.link = logs.ui_link(scope, window, phrase=prefix)
         notes.append(
             f"[{evidence.id}] first occurrence {first}, trace ids: {', '.join(map(str, trace_ids))}"
@@ -247,6 +253,12 @@ class LogAgent(BaseAgent):
         return result.model_copy(
             update={"signals": signals, "status": status, "evidence": evidence}
         )
+
+
+def _earliest(values: Iterable[Any]) -> datetime | None:
+    """Earliest parseable timestamp (evidence timestamps feed the investigation timeline)."""
+    parsed = [ts for ts in (parse_timestamp(v) for v in values) if ts is not None]
+    return min(parsed) if parsed else None
 
 
 AGENTS.register(LogAgent)

@@ -1,0 +1,14 @@
+# Build context of backend/Dockerfile is the repo root: allow-list only what it copies.
+*
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/README.md
+!backend/src
+!backend/tests/fixtures
+!config
+!profiles
+!scenarios
+**/__pycache__
+**/*.pyc
+**/.env
+profiles/**/.env

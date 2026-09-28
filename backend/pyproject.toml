@@ -19,6 +19,8 @@ dependencies = [
     "sqlalchemy[asyncio]>=2.0.36",
     "alembic>=1.14",
     "aiosqlite>=0.20",
+    "fastapi>=0.120",
+    "uvicorn>=0.30",
 ]
 
 [project.scripts]
@@ -32,6 +34,7 @@ dev = [
     "ruff>=0.6",
     "mypy>=1.11",
     "types-pyyaml>=6.0.12.20260906",
+    "jsonschema>=4.23",
 ]
 
 [build-system]

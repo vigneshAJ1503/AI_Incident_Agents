@@ -227,7 +227,7 @@ def test_cancellation(settings: Settings) -> None:
         assert orch.cancel("inv-cancel")
         return (await task).status
 
-    assert asyncio.run(scenario()) is InvestigationStatus.FAILED
+    assert asyncio.run(scenario()) is InvestigationStatus.CANCELLED
     assert bus.history("inv-cancel")[-1].type == "investigation_finished"
 
 

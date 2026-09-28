@@ -1282,7 +1282,20 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - `POST /api/approvals/{id}`
   - `GET /api/services`, `/healthz`
   - OpenAPI and an API-key auth stub
-- ✅ `curl -N` streams the live events.
+- ✅ `curl -N` streams the live events. **Done (PR-035).**
+
+> **As built (PR-035, ADR-0015, docs/api/README.md):** FastAPI app `aiops.api`, served by
+> `aiops serve` / `make api` (container: `make api-up`, 127.0.0.1:8000, ~120 MiB). It
+> implements docs/api/contract.md exactly. **Deviations:** no `POST /api/incidents` (an
+> investigation carries its incident; the contract has no such endpoint); `/healthz` is
+> `GET /api/health`; approvals are `POST /api/approvals/{id}/approve|deny` (approve executes
+> through the existing `ApprovalExecutor`). Investigations run as background asyncio tasks
+> (per-process limit, HTTP 429 beyond it); events are persisted progressively so SSE replays
+> from the store (`Last-Event-ID` / `?last_event_id=`) then follows the in-process
+> `EventBus`, with a 15 s heartbeat. Mode `live` needs an LLM key and reachable
+> capabilities, else `replay` of a scenario named or matched by question/service.
+> Additive contract changes: `cancelled` status, approval `lifecycle_status`, health
+> `store`, create `{mode, scenario}`, scenario `injectable`.
 
 #### PR-036 · Web UI v1 scaffold
 - **Branch:** `feat/036-web-ui`

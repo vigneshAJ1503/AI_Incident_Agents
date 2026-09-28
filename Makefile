@@ -368,3 +368,25 @@ demo-export: ## Export contract-shaped demo JSON from real replays (default demo
 .PHONY: eval-investigations
 eval-investigations: ## Replay S0-S5 end to end and score the RCA against ground truth
 	cd $(BACKEND) && uv run aiops eval investigations
+
+# --- REST + SSE API (PR-035): `aiops serve`, docs/api/README.md ----------------------------
+APP_COMPOSE := docker compose --env-file $(if $(wildcard .env),.env,.env.example) -f deploy/compose/docker-compose.app.yml
+API_PORT ?= 8000
+
+.PHONY: api
+api: venv-fix ## Run the API on http://127.0.0.1:8000/api (docs /api/docs; RELOAD=1 for --reload)
+	cd $(BACKEND) && uv run --no-sync aiops serve --host 127.0.0.1 --port $(API_PORT) $(if $(RELOAD),--reload,)
+
+.PHONY: api-up
+api-up: ## Build and start the API container on 127.0.0.1:8000 (opt-in; needs make infra-up)
+	@./scripts/ensure-network.sh
+	$(COMPOSE) up -d --wait postgres
+	$(APP_COMPOSE) up -d --build --wait
+
+.PHONY: api-down
+api-down: ## Stop the API container
+	$(APP_COMPOSE) down
+
+.PHONY: api-logs
+api-logs: ## Tail the API container's JSON logs
+	$(APP_COMPOSE) logs -f --tail=100

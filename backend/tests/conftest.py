@@ -34,6 +34,9 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "TICKETS_MCP_URL",
         "TICKETS_PROJECT_KEY",
         "TICKETS_UI_URL",
+        "AIOPS_API_KEY",
+        "AIOPS_API_CORS_ORIGINS",
+        "AIOPS_ENABLE_FAULTS",
     ]:
         monkeypatch.delenv(var, raising=False)
     monkeypatch.setattr("aiops.core.config.load_dotenv", lambda *a, **k: False)

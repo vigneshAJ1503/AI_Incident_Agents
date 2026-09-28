@@ -143,6 +143,11 @@ class Orchestrator:
     async def plan(self, request: InvestigationRequest) -> Plan:
         return await self.planner.plan(self._plan_request(request))
 
+    def running(self, investigation_id: str) -> Investigation | None:
+        """The live (mutable) state of a running investigation, e.g. for the API's GET."""
+        run = self._runs.get(investigation_id)
+        return run.investigation if run else None
+
     def cancel(self, investigation_id: str) -> bool:
         run = self._runs.get(investigation_id)
         if run is None:
@@ -176,7 +181,7 @@ class Orchestrator:
         finally:
             self._runs.pop(run.id, None)
         if run.cancelled:
-            investigation.status = InvestigationStatus.FAILED
+            investigation.status = InvestigationStatus.CANCELLED
             self._publish(run, "error", message="Investigation cancelled", recoverable=False)
         return self._finish(run)
 

@@ -7,6 +7,9 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // The container (Dockerfile) sets NEXT_OUTPUT=standalone: a self-contained server.js with only
+  // the needed node_modules. Local `next start` (e2e) keeps the default output.
+  ...(process.env.NEXT_OUTPUT === "standalone" ? { output: "standalone" as const } : {}),
   reactStrictMode: true,
   poweredByHeader: false,
   typedRoutes: true,

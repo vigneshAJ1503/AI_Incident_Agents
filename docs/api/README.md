@@ -21,7 +21,8 @@ make api RELOAD=1             # auto-reload while developing
 uv run aiops serve --profile local-k8s --port 8001   # another profile / port
 ```
 
-As a container (opt-in, not part of `make infra-up`):
+The whole product (API + Web UI + seeded Postgres + mock tickets) in one command:
+`make demo` ([docs/setup/demo.md](../setup/demo.md)). As a container (opt-in, not part of `make infra-up`):
 
 ```bash
 make api-up                   # builds aiops/backend:0.1.0, starts aiops-api on 127.0.0.1:8000
@@ -45,6 +46,7 @@ Postgres by container name (`deploy/compose/docker-compose.app.yml`).
 | `health_cache_s` | | 30 | `/health` caches capability reachability |
 | | `AIOPS_ENABLE_FAULTS` | `0` | `1` enables `POST /api/scenarios/{id}/inject` and `/revert` (else 403) |
 | | `AIOPS_FAULTS_KUBE_CONTEXT` | `aiops` | kubectl context of the fault endpoints |
+| | `AIOPS_REPLAY_TOOL_DELAY_S` | `0` (compose: `0.5`) | Seconds per recorded tool call of a replay, so the Web UI's live view animates (max 10) |
 
 Ports bind to `127.0.0.1`. Keys are never returned (`/health` only says whether an LLM is
 configured). Logs never contain query strings (they may carry `api_key`).

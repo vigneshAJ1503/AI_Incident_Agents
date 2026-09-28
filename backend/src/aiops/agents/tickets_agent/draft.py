@@ -64,6 +64,10 @@ def load_results(payload: Any) -> tuple[list[AgentResult], str | None, str | Non
     raise ValueError("expected an AgentResult, a list of AgentResults or an Investigation")
 
 
+#: The deterministic preamble agents put before their summary; never a ticket title.
+COMPUTED_MARKER = "(computed for you, deterministic)"
+
+
 def _first_sentence(text: str) -> str:
     return _SENTENCE.split(text.strip(), maxsplit=1)[0].strip()
 
@@ -80,13 +84,21 @@ def draft_ticket(
     components: Sequence[str] = (),
     investigation_id: str | None = None,
     issue_type: str = "Bug",
+    headline: str | None = None,
 ) -> TicketDraft:
-    """Title, description (summary, findings, signals, evidence links) and labels."""
+    """Title, description (summary, findings, signals, evidence links) and labels.
+
+    ``headline``: the title's text (e.g. the RCA root cause); default: the first sentence of
+    the lead agent's summary."""
     if not results:
         raise ValueError("no agent results to draft a ticket from")
     relevant = [r for r in results if r.status is AgentStatus.SUCCESS] or list(results)
     lead = relevant[0]
-    headline = _first_sentence(lead.summary) or f"{lead.agent} findings"
+    headline = (
+        _first_sentence(headline or "")
+        or _first_sentence(lead.summary.removeprefix(COMPUTED_MARKER))
+        or f"{lead.agent} findings"
+    )
     prefix = f"[{service}] " if service else ""
     summary = f"{prefix}{headline}"
     if len(summary) > MAX_SUMMARY:

@@ -1338,6 +1338,8 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 - ✅ A clean machine with the prerequisites installed gets from `make setup demo` to the S1 RCA in the UI.
 - 🏷 `v0.6.0`
 
+> **As built (PR-039) ✅:** `make demo` (`scripts/demo.sh`, [docs/setup/demo.md](docs/setup/demo.md)) needs only Docker: Postgres + `aiops db upgrade` + `aiops demo seed --if-older-than 12` (inside the API image) + mock-tickets-mcp + the `api` and new `web` containers (`frontend/Dockerfile`: Next.js standalone, `node:24.19.0-alpine3.23`, UID 10001, read-only FS). Measured **292–326 MiB** in total. The browser only talks to `:3100`: a same-origin route handler proxies `/api/*` (REST + SSE) to `AIOPS_API_INTERNAL_URL`. **Deviation:** the golden scenario is a **replay** by default, not a live inject: steps 3–4 (inject S1, wait for the alert) need Minikube (2.2 GB) and an LLM key, so they moved to `make demo-live` (full stack + `AIOPS_ENABLE_FAULTS=1`, API on the host for kubectl; inject from the Scenarios page). Replays started from the UI are paced (`AIOPS_REPLAY_TOOL_DELAY_S`, default 0.5 s per recorded tool call) so the live view animates. Also: `make demo-down|demo-reset|demo-stats|demo-e2e` (Playwright against the real API; local, not CI), the demo seed's future timestamps fixed (run vs data offsets), a test that keeps the static UI dataset and the replays on the same story (S2 release corrected to `v2.3.0`), ticket titles from the RCA root cause, and UI polish (agent names wrap, 0-count labels on the By-service chart, capabilities shown as "not running" rather than "down" in replay mode).
+
 ### Phase 11 — Hardening (EPIC-014)
 
 #### PR-040 · Evaluation framework (full system)

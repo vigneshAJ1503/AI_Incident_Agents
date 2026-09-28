@@ -163,6 +163,8 @@ Every response was checked against the Web UI's zod schemas (`frontend/src/lib/a
 (SSE streams), `dashboard.json`, `services.json`, `agents.json`, `approvals.json`,
 `scenarios.json` and `manifest.json`; evidence data is trimmed to short excerpts. The UI's committed
 dataset (`frontend/src/demo/`, PR-036) has its own layout and generator (`make ui-demo-data`);
-this export is the backend-generated equivalent from real replay runs.
+this export is the backend-generated equivalent from real replay runs. **PR-039:** `make demo`
+serves the seeded store through the real API; `aiops demo seed --if-older-than H` keeps it
+idempotent, `--reset` also drops UI-started replays; every seeded timestamp is `<= now`.
 
 `aiops demo seed` (PR-034) runs full investigations in **replay** mode over scenarios S0–S5 (recorded fixtures, fake LLM, zero tokens). It stores them with `mode: "demo"`, plus a synthetic 14-day history (about 40 investigations spread over the services, with realistic statuses, severities and durations) so the dashboard has charts on first launch. The UI also ships a **static demo dataset** (`frontend/src/demo/*.json`, generated from the same contract), so it can run with no backend at all (`NEXT_PUBLIC_DEMO=1`).

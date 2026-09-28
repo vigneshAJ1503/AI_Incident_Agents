@@ -408,6 +408,15 @@ async def cancel(ctx: Ctx, investigation_id: str) -> m.InvestigationState:
     return m.InvestigationState(id=investigation_id, status=InvestigationStatus.CANCELLED)
 
 
+def _root_cause_statement(inv: Investigation) -> str | None:
+    """The RCA's root cause (else its summary): the ticket title of a finished investigation."""
+    report = inv.report
+    if report is None:
+        return None
+    top = next((h for h in inv.hypotheses if h.id == report.root_cause_hypothesis_id), None)
+    return top.statement if top else (report.summary or None)
+
+
 @router.post(
     "/investigations/{investigation_id}/tickets/draft",
     status_code=201,
@@ -442,6 +451,7 @@ async def draft_ticket_proposal(
         components=components,
         investigation_id=inv.id,
         issue_type=body.issue_type,
+        headline=_root_cause_statement(inv),
     )
     try:
         cap = ctx.settings.capability("tickets")

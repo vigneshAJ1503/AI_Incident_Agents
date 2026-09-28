@@ -276,3 +276,29 @@ def test_demo_history_is_deterministic_and_seeds_the_store(
     )
     events = json.loads((tmp_path / "export" / "events" / f"{one}.json").read_text())
     assert {e["type"] for e in events} <= set(INVESTIGATION_EVENT_TYPES)
+
+
+def test_demo_history_ends_now_and_every_timestamp_is_consistent(settings: Settings) -> None:
+    """Regression (PR-039): replays run 'now' on fixtures recorded earlier, so re-dating
+    the run with the data's delta pushed steps/tool calls/incident.created_at into the
+    future. Every timestamp must be <= now and inside the run it belongs to."""
+    data = asyncio.run(build_demo(settings, DEMO_NOW))
+    slack = timedelta(seconds=1)
+    for inv in data.investigations:
+        assert inv.completed_at is not None
+        assert inv.created_at <= inv.completed_at <= DEMO_NOW, inv.id
+        run = [inv.incident.created_at]
+        run += [t for s in inv.steps for t in (s.started_at, s.finished_at) if t is not None]
+        run += [c.started_at for r in inv.results for c in r.tool_calls]
+        for t in run:
+            assert inv.created_at - slack <= t <= inv.completed_at + slack, (inv.id, t)
+        data_times = [t.timestamp for t in inv.timeline]
+        data_times += [e.timestamp for r in inv.results for e in r.evidence if e.timestamp]
+        if inv.context is not None:
+            data_times.append(inv.context.time_range.end)
+        assert all(t <= inv.completed_at for t in data_times), inv.id
+        events = data.events.get(inv.id, [])
+        assert all(e.timestamp <= DEMO_NOW for e in events), inv.id
+        assert [e.timestamp for e in events] == sorted(e.timestamp for e in events)
+    newest = max(i.completed_at or i.created_at for i in data.investigations)
+    assert DEMO_NOW - timedelta(hours=2) <= newest <= DEMO_NOW

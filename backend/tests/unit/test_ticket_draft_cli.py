@@ -99,6 +99,15 @@ def test_draft_prefers_successful_results_and_truncates_title() -> None:
         draft_ticket([], service=None)
 
 
+def test_draft_title_is_the_headline_never_the_computed_marker() -> None:
+    marked = result().model_copy(
+        update={"summary": "(computed for you, deterministic)\nPool saturated at 10:10Z. More."}
+    )
+    assert draft_ticket([marked], service="svc").summary == "[svc] Pool saturated at 10:10Z."
+    titled = draft_ticket([marked], service="svc", headline="DB pool misconfigured. Details.")
+    assert titled.summary == "[svc] DB pool misconfigured."
+
+
 def test_load_results_formats() -> None:
     one = result()
     assert load_results(one.model_dump(mode="json"))[0][0].agent == "tickets"

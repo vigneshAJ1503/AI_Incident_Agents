@@ -23,6 +23,7 @@ def build_deps(
     record_dir: Path | None = None,
     replay_dir: Path | None = None,
     replay_lenient: bool = False,
+    replay_delay_s: float = 0.0,
 ) -> AgentDeps:
     return AgentDeps(
         settings=settings,
@@ -33,6 +34,7 @@ def build_deps(
             record_dir=record_dir,
             replay_dir=replay_dir,
             replay_lenient=replay_lenient,
+            replay_delay_s=replay_delay_s,
         ),
         prompts=PromptLoader(
             settings.config_dir / "prompts", overrides=settings.prompt_override_dirs()

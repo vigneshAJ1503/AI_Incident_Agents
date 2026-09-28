@@ -378,15 +378,40 @@ api: venv-fix ## Run the API on http://127.0.0.1:8000/api (docs /api/docs; RELOA
 	cd $(BACKEND) && uv run --no-sync aiops serve --host 127.0.0.1 --port $(API_PORT) $(if $(RELOAD),--reload,)
 
 .PHONY: api-up
-api-up: ## Build and start the API container on 127.0.0.1:8000 (opt-in; needs make infra-up)
+api-up: ## Build and start the API (127.0.0.1:8000) + Web UI (127.0.0.1:3100) containers
 	@./scripts/ensure-network.sh
 	$(COMPOSE) up -d --wait postgres
 	$(APP_COMPOSE) up -d --build --wait
 
 .PHONY: api-down
-api-down: ## Stop the API container
+api-down: ## Stop the API + Web UI containers
 	$(APP_COMPOSE) down
 
 .PHONY: api-logs
 api-logs: ## Tail the API container's JSON logs
 	$(APP_COMPOSE) logs -f --tail=100
+
+# --- The one-command demo (PR-039): docs/setup/demo.md ----------------------------------
+.PHONY: demo
+demo: ## THE demo: Postgres + seeded history + API + Web UI + mock tickets on http://localhost:3100 (~0.3 GB)
+	@./scripts/demo.sh up
+
+.PHONY: demo-live
+demo-live: ## Full stack: data stack + Minikube + MCP servers + fault injection from the Scenarios page (~2.9 GB)
+	@./scripts/demo.sh live
+
+.PHONY: demo-down
+demo-down: ## Stop everything the demo started, incl. Minikube (keeps the data)
+	@./scripts/demo.sh down
+
+.PHONY: demo-reset
+demo-reset: ## Wipe the demo investigations + approvals, reseed and start again
+	@./scripts/demo.sh reset
+
+.PHONY: demo-stats
+demo-stats: ## Memory of the running containers (docker stats) and the total
+	@./scripts/demo.sh stats
+
+.PHONY: demo-e2e
+demo-e2e: ## Playwright against the REAL API (needs make demo): seeded history, report, S1 replay, approval
+	cd $(UI) && E2E_BASE_URL=http://localhost:$(UI_PORT) npx playwright test -c playwright.real.config.ts

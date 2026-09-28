@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import asyncio
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
 import typer
@@ -30,19 +30,43 @@ def _now(value: datetime | None) -> datetime:
 
 @app.command("seed")
 @handle_errors
-def seed(now: datetime | None = NowOption, env: str | None = EnvOption) -> None:
+def seed(
+    now: datetime | None = NowOption,
+    if_older_than: float | None = typer.Option(
+        None,
+        "--if-older-than",
+        help="Hours. Skip when the newest demo investigation is younger (idempotent `make demo`).",
+    ),
+    reset: bool = typer.Option(
+        False, "--reset", help="Also delete replay investigations started from the UI."
+    ),
+    env: str | None = EnvOption,
+) -> None:
     """Store the demo investigations (mode 'demo'; replaces earlier demo data)."""
     settings = load_settings(env)
     store = open_store(settings)
     anchor = _now(now)
 
-    async def run() -> int:
+    async def run() -> int | None:
         try:
+            if if_older_than is not None and not reset:
+                newest = await store.search(mode="demo", limit=1)
+                age = datetime.now(UTC) - newest[0].created_at if newest else None
+                if age is not None and age < timedelta(hours=if_older_than):
+                    return None
+            if reset:
+                await store.delete_mode("replay")
             return await seed_demo(store, await build_demo(settings, anchor))
         finally:
             await store.close()
 
     count = asyncio.run(run())
+    if count is None:
+        console.print(
+            f"Demo data is fresh (newer than {if_older_than:g} h): kept it. "
+            "`make demo-reset` re-seeds."
+        )
+        return
     console.print(f"[green]Seeded {count} demo investigations[/green] (aiops history --mode demo)")
 
 

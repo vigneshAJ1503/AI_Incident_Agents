@@ -36,8 +36,8 @@ function LaneCard({ lane }: { lane: Lane }) {
       )}
       aria-label={`${meta.label}: ${lane.phase}`}
     >
-      <div className="flex items-center gap-2.5">
-        <span className="relative grid size-8 place-items-center rounded-lg bg-muted">
+      <div className="flex items-start gap-2.5">
+        <span className="relative grid size-8 shrink-0 place-items-center rounded-lg bg-muted">
           <Icon aria-hidden className="size-4" />
           {lane.phase === "running" && (
             <span
@@ -47,10 +47,13 @@ function LaneCard({ lane }: { lane: Lane }) {
           )}
         </span>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">{meta.label}</p>
-          <p className="truncate text-[11px] text-muted-foreground">{meta.tool}</p>
+          {/* The full name wraps instead of truncating ("Kubernetes agent" in a narrow lane). */}
+          <p className="text-sm leading-snug font-medium text-balance">{meta.label}</p>
+          <p className="truncate text-[11px] text-muted-foreground" title={meta.tool}>
+            {meta.tool}
+          </p>
         </div>
-        <StepBadge status={lane.phase} />
+        <StepBadge status={lane.phase} className="shrink-0" />
       </div>
       <p className="line-clamp-2 text-xs text-muted-foreground">{lane.summary ?? lane.objective}</p>
       {lane.phase === "running" && (

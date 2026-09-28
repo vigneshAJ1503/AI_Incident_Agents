@@ -40,10 +40,13 @@ def summary_of(inv: Investigation) -> dict[str, Any]:
         "id": inv.id,
         "incident": inv.incident.model_dump(mode="json"),
         "status": inv.status.value,
-        "report": {
-            "summary": report.summary if report else None,
-            "severity": report.severity if report else None,
-            "confidence": report.confidence if report else None,
+        # null until the RCA phase finished (the UI treats a missing report as "no report yet")
+        "report": None
+        if report is None
+        else {
+            "summary": report.summary,
+            "severity": report.severity,
+            "confidence": report.confidence,
         },
         "affected_services": report.affected_services if report else [],
         "created_at": inv.created_at.isoformat(),
@@ -328,8 +331,10 @@ class InvestigationStore:
         limit: int = 50,
         before: datetime | None = None,
         since: datetime | None = None,
+        before_id: str | None = None,
     ) -> list[Investigation]:
-        """Newest first. ``before`` = cursor (created_at of the last item of a page)."""
+        """Newest first. ``before`` = cursor (created_at of the last item of a page); with
+        ``before_id`` ties on ``created_at`` are broken by id (a stable keyset cursor)."""
         query = sa.select(t.investigation.c.document).order_by(
             t.investigation.c.created_at.desc(), t.investigation.c.id.desc()
         )
@@ -351,7 +356,14 @@ class InvestigationStore:
                     sa.func.lower(sa.func.coalesce(column.root_cause, "")).like(like),
                 )
             )
-        if before is not None:
+        if before is not None and before_id is not None:
+            query = query.where(
+                sa.or_(
+                    column.created_at < before,
+                    sa.and_(column.created_at == before, column.id < before_id),
+                )
+            )
+        elif before is not None:
             query = query.where(column.created_at < before)
         if since is not None:
             query = query.where(column.created_at >= since)

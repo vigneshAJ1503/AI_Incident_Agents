@@ -235,6 +235,17 @@ storage:
   approvals: file              # file (guardrails.approvals_path) | postgres
   audit: jsonl                 # jsonl (guardrails.audit_log_path) | postgres (JSONL fallback)
 
+# ------------------------------------------------------------------------------ api
+# The REST + SSE API for the Web UI (PR-035, docs/api/README.md: `aiops serve`). All optional.
+api:
+  # Browser origins allowed by CORS, comma-separated (the Web UI's dev server).
+  cors_origins: ${AIOPS_API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
+  # Optional shared secret: every /api route except /api/health then needs `X-API-Key`.
+  api_key: ${AIOPS_API_KEY:-}
+  max_running_investigations: 2   # per API process; more -> HTTP 429
+  heartbeat_s: 15                 # SSE keep-alive
+  health_cache_s: 30              # GET /health caches capability reachability
+
 # ------------------------------------------------------------------------------ orchestrator
 # How ONE investigation is planned and run (PR-030/031, ADR-0014). All optional.
 orchestrator:

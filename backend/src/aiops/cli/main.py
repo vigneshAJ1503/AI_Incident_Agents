@@ -21,6 +21,7 @@ from aiops.cli import (
     prompts_cmd,
     schemas_cmd,
     seed_cmd,
+    serve_cmd,
     tickets_cmd,
 )
 from aiops.cli.common import console
@@ -51,6 +52,7 @@ app.command("plan")(investigate_cmd.plan)
 app.command("investigate")(investigate_cmd.investigate)
 app.command("history")(history_cmd.history)
 app.command("show")(history_cmd.show)
+app.command("serve")(serve_cmd.serve)
 
 
 @app.callback()

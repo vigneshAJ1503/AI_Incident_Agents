@@ -26,7 +26,15 @@ from typing import Any, Literal
 
 import yaml
 from dotenv import load_dotenv
-from pydantic import BaseModel, ConfigDict, Field, SecretStr, ValidationError, model_validator
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    Field,
+    SecretStr,
+    ValidationError,
+    field_validator,
+    model_validator,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -191,6 +199,38 @@ class StorageConfig(_Strict):
     audit: Literal["jsonl", "postgres"] = "jsonl"
 
 
+class ApiConfig(_Strict):
+    """The REST + SSE API (PR-035, docs/api/README.md). Defaults suit the local stack."""
+
+    #: Browser origins allowed by CORS (the Web UI). Comma-separated in env vars.
+    cors_origins: list[str] = Field(
+        default_factory=lambda: [
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "http://localhost:3100",
+            "http://127.0.0.1:3100",
+        ]
+    )
+    #: Optional shared secret: when set, every /api route except /api/health requires the
+    #: ``X-API-Key`` header (SSE also accepts ``?api_key=``, EventSource can't set headers).
+    api_key: SecretStr | None = None
+    #: Investigations running at the same time in one API process (more -> HTTP 429).
+    max_running_investigations: int = Field(default=2, gt=0)
+    #: SSE keep-alive interval.
+    heartbeat_s: float = Field(default=15.0, gt=0)
+    #: ``GET /health`` caches capability reachability (cheap TCP checks) this long.
+    health_cache_s: float = Field(default=30.0, ge=0)
+    #: Timeout of one capability reachability check.
+    health_timeout_s: float = Field(default=1.0, gt=0)
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _split_origins(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            return [o.strip() for o in value.split(",") if o.strip()]
+        return value
+
+
 class ProfileMetadata(_Strict):
     """Who this profile is for. Informational; never inherited through ``extends``."""
 
@@ -209,6 +249,7 @@ class Settings(_Strict):
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
     orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
     storage: StorageConfig = Field(default_factory=StorageConfig)
+    api: ApiConfig = Field(default_factory=ApiConfig)
     service_catalog: str = "local"
 
     # Set by the loader, not by YAML.

@@ -90,6 +90,7 @@ class InvestigationStatus(StrEnum):
     COMPLETED = "completed"
     PARTIAL = "partial"
     FAILED = "failed"
+    CANCELLED = "cancelled"  # POST /investigations/{id}/cancel (contract addendum)
 
 
 class StepStatus(StrEnum):

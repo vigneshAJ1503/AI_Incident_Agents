@@ -33,6 +33,9 @@ jobs:
         run: uv run mypy
       - name: Unit tests
         run: uv run pytest --cov=aiops --cov-report=term-missing
+      - name: Docker build (API image, context = repo root)
+        working-directory: .
+        run: docker build -f backend/Dockerfile -t aiops/backend:ci .
 
   discover-mcp-servers:
     name: discover MCP servers

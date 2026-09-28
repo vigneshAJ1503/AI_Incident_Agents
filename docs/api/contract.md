@@ -3,7 +3,7 @@
 The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the **Web UI** (PR-036–039) build against in parallel. JSON field names follow the Pydantic models in `backend/src/aiops/core/models.py` (JSON Schemas in `docs/schemas/`). If you need a change, update this file in the same PR and note it in the PR description.
 
 - Base URL: `http://localhost:8000/api` (the UI reads `NEXT_PUBLIC_API_URL`).
-- Auth: none locally. An API-key header `X-API-Key` is reserved for PR-035+.
+- Auth: none locally. An optional API-key header `X-API-Key` (PR-035: `AIOPS_API_KEY`; off by default).
 - Times: ISO-8601 UTC. IDs are strings (`inv-…`, `INC-…`, `ev-…`).
 - Errors: `{"error": {"code": "not_found", "message": "…"}}` with the matching HTTP status.
 
@@ -115,6 +115,45 @@ Backwards compatible; the UI treats all of them as optional.
 - Investigation `status` may be `cancelled` after `POST /investigations/{id}/cancel` (the final `investigation_finished` event carries `{status: "cancelled"}`).
 - SSE resume: besides the `Last-Event-ID` header (sent by the browser on its own reconnects), accept `?last_event_id=<seq>` on `/events`; `EventSource` can't set headers when the UI reopens a closed stream.
 - SSE framing: the UI listens to both unnamed (`data:` only) and named (`event: <type>`) messages; send `id: <seq>` on every event.
+
+## As built by the API (PR-035)
+Backwards compatible additions and clarifications (run/curl guide: [`README.md`](README.md)).
+Every response was checked against the Web UI's zod schemas (`frontend/src/lib/api/schemas.ts`).
+
+- **Status codes:** `POST /investigations` and `/clarify` → `202`, `/cancel` → `202`,
+  `/tickets/draft` → `201`, `/scenarios/revert` → `202` (runs in the background). Error codes
+  per status are listed in the README.
+- `InvestigationStatus` gained `cancelled` (also in `docs/schemas/Investigation.schema.json`).
+- `InvestigationSummary.report` is `null` until the RCA phase finished (was an object of
+  nulls).
+- `GET /investigations`: also `mode=live|replay|demo`; `service` accepts catalog aliases;
+  `next_cursor` is an opaque keyset cursor (`created_at` + `id`), `null` on the last page.
+- `POST /investigations`: optional `scenario: "S1"` (replay that scenario). Response adds
+  `mode: "live|replay"` and `scenario`. Without an LLM key (or with a capability down) the
+  investigation is a replay of the scenario matching the question/service, else
+  `422 no_matching_scenario`; `mode: "live"` then answers `409 live_unavailable`.
+- `POST /investigations/{id}/clarify` re-runs the investigation with the same id; its events
+  continue the same `seq` (the stream of the first run ended with
+  `investigation_finished {status: "needs_clarification"}`).
+- `POST /investigations/{id}/cancel` → `{id, status: "cancelled"}`; `409 not_running` when it
+  already finished. An investigation waiting for a clarification is closed as `cancelled`.
+- `POST /investigations/{id}/tickets/draft`: optional body `{comment_on?, issue_type?,
+  requested_by?}`; response adds `status` and `summary` (the drafted title). A policy
+  rejection answers `422 policy_rejected`.
+- **Approvals:** the framework's `rejected` (policy) and `expired` (TTL) are reported as
+  `status: "denied"` with the exact value in the new `lifecycle_status`; also `expires_at`,
+  `error`, `policy_reason`. `comment` = the approver's note. `?status=` filters by the exact
+  lifecycle value.
+- `GET /health` adds `store: "ok|down"`; `status` is `degraded` when the store is down.
+  Capabilities come from a cheap cached TCP check (`aiops doctor` is the thorough one).
+- `GET /agents` adds `runs_7d` and `enabled` (capabilities enabled in this profile).
+- `GET /scenarios` adds `injectable` (S0 has no fault). `inject` → `{scenario, status:
+  "injected", message}`; `404` unknown, `422 not_injectable`, `409 fault_error` (e.g. the
+  cluster lock is held or another scenario is active).
+- **SSE:** `heartbeat` carries the `seq` of the last event sent (it isn't stored, and the UI's
+  seq de-duplication drops it). `Last-Event-ID` and `?last_event_id=` both work (the larger
+  wins). With an API key configured, `/events` also accepts `?api_key=`.
+- `approval_requested` is only published while the investigation is still running.
 
 ## Demo data
 

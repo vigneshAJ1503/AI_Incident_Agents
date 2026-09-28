@@ -155,6 +155,12 @@ class EventBus:
 
         return unsubscribe
 
+    def restore(self, investigation_id: str, events: list[InvestigationEvent]) -> None:
+        """Seed the history of an investigation (e.g. from the store after a restart) so
+        new events continue its ``seq`` numbering (a clarification resumes a stream)."""
+        if investigation_id not in self._history:
+            self._history[investigation_id] = sorted(events, key=lambda e: e.seq)
+
     def forget(self, investigation_id: str) -> None:
         self._history.pop(investigation_id, None)
         self._listeners.pop(investigation_id, None)

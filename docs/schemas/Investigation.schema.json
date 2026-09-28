@@ -514,7 +514,8 @@
         "running",
         "completed",
         "partial",
-        "failed"
+        "failed",
+        "cancelled"
       ],
       "title": "InvestigationStatus",
       "type": "string"

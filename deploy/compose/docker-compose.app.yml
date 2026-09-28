@@ -1,0 +1,58 @@
+# The aiops API (PR-035) as a container. Opt-in: NOT started by `make infra-up`.
+#   make api-up     (needs make infra-up; the MCP servers for live mode: make mcp-up)
+#   make api-down
+# Joins the network created by docker-compose.infra.yml; port bound to 127.0.0.1 only.
+# Inside the network, capabilities are reached by container name, not localhost.
+
+name: aiops-app
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: backend/Dockerfile
+    image: aiops/backend:0.1.0
+    container_name: aiops-api
+    environment:
+      - AIOPS_PROFILE=${AIOPS_PROFILE:-local}
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-aiops}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-aiops-local-only}
+      - POSTGRES_DB=${POSTGRES_DB:-aiops}
+      - LOGS_MCP_URL=http://aiops-elasticsearch-mcp:8101/mcp
+      - METRICS_MCP_URL=http://aiops-prometheus-mcp:8103/mcp
+      - ALERTS_MCP_URL=http://aiops-alertmanager-mcp:8105/mcp
+      - K8S_MCP_URL=http://aiops-kubernetes-mcp:8106/mcp
+      - CODE_MCP_URL=http://aiops-git-mcp:8107/mcp
+      - KNOWLEDGE_MCP_URL=http://aiops-knowledge-mcp:8108/mcp
+      - TICKETS_MCP_URL=${TICKETS_MCP_URL_IN_NETWORK:-http://aiops-mock-tickets-mcp:8109/mcp}
+      # Optional: a hosted LLM key enables live mode (else replays; docs/api/README.md).
+      - LLM_PROVIDER=${LLM_PROVIDER:-openai_compat}
+      - OPENAI_COMPAT_BASE_URL=${OPENAI_COMPAT_BASE_URL:-https://api.groq.com/openai/v1}
+      - OPENAI_COMPAT_API_KEY=${OPENAI_COMPAT_API_KEY:-}
+      - LLM_MODEL_FAST=${LLM_MODEL_FAST:-}
+      - LLM_MODEL_AGENT=${LLM_MODEL_AGENT:-}
+      - LLM_MODEL_RCA=${LLM_MODEL_RCA:-}
+      - AIOPS_API_KEY=${AIOPS_API_KEY:-}
+      - AIOPS_API_CORS_ORIGINS=${AIOPS_API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
+    ports:
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    volumes:
+      - api-data:/app/.data   # file-based approvals + audit log (profile guardrails.*)
+    mem_limit: 320m   # measured ~120 MiB idle and after a replay investigation
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    restart: unless-stopped
+
+volumes:
+  api-data:
+
+networks:
+  default:
+    name: aiops
+    external: true   # created by scripts/ensure-network.sh (make infra-up)

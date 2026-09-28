@@ -52,8 +52,9 @@ Tokens live in `src/app/globals.css` (light + dark):
 - Text on glass keeps WCAG AA (axe runs in every e2e spec).
 
 Visual regression: `e2e/visual.spec.ts` (`toHaveScreenshot`, dashboard/report/chat × light/dark,
-1.5% tolerance). Baselines are Linux-only (CI); `make ui-visual-update` regenerates them in the
-pinned Playwright container.
+1.5% tolerance). Rendering differs per OS, so baselines are generated and compared only in the
+pinned Playwright container (`mcr.microsoft.com/playwright:v1.63.0-noble`): CI runs it after the
+e2e step, and `make ui-visual-update` regenerates them. Plain `npx playwright test` skips them.
 
 ## Configuration
 

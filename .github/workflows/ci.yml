@@ -181,6 +181,13 @@ jobs:
         run: npx playwright test
         env:
           CI: "1"
+      # Screenshot baselines depend on fonts/rendering, so compare them in the same pinned
+      # Playwright image that generated them (make ui-visual-update); reuses this job's build.
+      - name: Visual regression (pinned Playwright container)
+        run: >-
+          docker run --rm --ipc=host -v "$PWD:/work" -w /work -e CI=1 -e VISUAL=1
+          -e NEXT_TELEMETRY_DISABLED=1 mcr.microsoft.com/playwright:v1.63.0-noble
+          npx playwright test visual
       - name: Docker build (web image, make demo)
         run: docker build -t aiops/web:ci .
       - name: Upload Playwright report

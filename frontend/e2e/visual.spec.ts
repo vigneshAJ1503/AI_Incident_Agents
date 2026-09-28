@@ -1,14 +1,11 @@
 import { expect, test, type Page } from "@playwright/test";
 
 /**
- * Visual regression (dashboard, report, chat; light + dark). Font rendering differs per OS, so the
- * baselines are Linux-only: CI (ubuntu) compares them, and `make ui-visual-update` regenerates them
- * inside the pinned Playwright container. Elsewhere these tests skip unless VISUAL=1.
+ * Visual regression (dashboard, report, chat; light + dark). Font rendering differs per OS and
+ * distro, so the baselines come from, and are compared in, the pinned Playwright container:
+ * CI runs `VISUAL=1` there, `make ui-visual-update` regenerates them. Skipped without VISUAL=1.
  */
-test.skip(
-  process.platform !== "linux" && !process.env.VISUAL,
-  "visual baselines are Linux-only (make ui-visual-update)",
-);
+test.skip(!process.env.VISUAL, "run in the Playwright container: make ui-visual-update / CI");
 test.use({ viewport: { width: 1280, height: 860 } });
 
 // the demo dataset is anchored to "today": freeze the clock so dates and "x hours ago" are stable

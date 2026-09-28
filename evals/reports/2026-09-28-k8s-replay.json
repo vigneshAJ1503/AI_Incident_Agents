@@ -1,0 +1,553 @@
+{
+  "agent": "k8s",
+  "mode": "replay",
+  "environment": "local",
+  "generated_at": "2026-09-28T14:36:45.814504Z",
+  "anchor": "2026-09-25T10:30:00+00:00",
+  "results": [
+    {
+      "scenario": "S0",
+      "title": "Healthy baseline (no incident)",
+      "healthy": true,
+      "status": "no_signal",
+      "signals": [
+        "healthy"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got no_signal, expected one of ['no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:pod_restarts",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:crash_loop",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:replicas_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:probe_failures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:recent_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:nothing abnormal in Kubernetes",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "2/2 findings cite existing evidence"
+        }
+      ],
+      "findings": 2,
+      "valid_findings": 2,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 3.33,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S1",
+      "title": "DB connection pool misconfiguration (payment-service v1.8.2)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "recent_rollout",
+        "healthy"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:recent_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:crash_loop",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:replicas_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:pod_restarts",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:v1.8.2",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:tune db pool",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:revision",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "3/3 findings cite existing evidence"
+        }
+      ],
+      "findings": 3,
+      "valid_findings": 3,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.49,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S2",
+      "title": "Memory leak -> OOM restarts (order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "pod_restarts",
+        "oom_killed",
+        "crash_loop",
+        "replicas_unavailable",
+        "probe_failures",
+        "recent_rollout"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:pod_restarts",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:OOMKilled",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:restart",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "7/7 findings cite existing evidence"
+        }
+      ],
+      "findings": 7,
+      "valid_findings": 7,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.52,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S3",
+      "title": "Slow downstream dependency (inventory-service -> order-service)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "dependency_rollout",
+        "healthy"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success', 'no_signal']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:dependency_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:pod_restarts",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:crash_loop",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:replicas_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:probe_failures",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:recent_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:inventory-service",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:v1.4.2",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "3/3 findings cite existing evidence"
+        }
+      ],
+      "findings": 3,
+      "valid_findings": 3,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.14,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S4",
+      "title": "Bad deployment (user-service image cannot be pulled)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "image_pull_error",
+        "replicas_unavailable",
+        "recent_rollout"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:replicas_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "signal:recent_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:ImagePullBackOff",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:v3.2.0",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "4/4 findings cite existing evidence"
+        }
+      ],
+      "findings": 4,
+      "valid_findings": 4,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.54,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    },
+    {
+      "scenario": "S5",
+      "title": "Cache outage (Redis down)",
+      "healthy": false,
+      "status": "success",
+      "signals": [
+        "dependency_unavailable"
+      ],
+      "checks": [
+        {
+          "name": "status",
+          "passed": true,
+          "detail": "got success, expected one of ['success']"
+        },
+        {
+          "name": "min_evidence",
+          "passed": true,
+          "detail": "4 evidence items (min 4)"
+        },
+        {
+          "name": "signal:dependency_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:oom_killed",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:crash_loop",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:image_pull_error",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:replicas_unavailable",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:recent_rollout",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "no_signal:healthy",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:redis",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "mentions:scaled to 0",
+          "passed": true,
+          "detail": ""
+        },
+        {
+          "name": "evidence_citations",
+          "passed": true,
+          "detail": "2/2 findings cite existing evidence"
+        }
+      ],
+      "findings": 2,
+      "valid_findings": 2,
+      "evidence": 4,
+      "tool_calls": 4,
+      "llm_calls": 1,
+      "tokens": 0,
+      "latency_ms": 2.32,
+      "model": "fake",
+      "prompt_version": "k8s/v1@19dad1dee16e",
+      "error": null,
+      "passed": true,
+      "false_positive": false
+    }
+  ],
+  "summary": {
+    "scenarios": 6,
+    "passed": 6,
+    "pass_rate": 1.0,
+    "healthy_scenarios": 1,
+    "false_positives": 0,
+    "false_positive_rate": 0.0,
+    "findings": 21,
+    "valid_findings": 21,
+    "citation_validity": 1.0,
+    "avg_tool_calls": 4.0,
+    "avg_llm_calls": 1.0,
+    "avg_tokens": 0.0,
+    "total_tokens": 0,
+    "avg_latency_ms": 2.56,
+    "p50_latency_ms": 2.5
+  }
+}

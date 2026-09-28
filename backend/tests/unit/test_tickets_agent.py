@@ -76,8 +76,9 @@ def test_s1_finds_ops_12_as_known_issue() -> None:
     assert "KNOWN ISSUES (open, same service, symptom match):" in user
     assert "OPS-12 | Open | Bug | High | payment-service" in user
     system = llm.requests[0]["messages"][0].content
-    assert "Jira project `OPS`" in system and "`known_issue_open`" in system
-    assert result.prompt_version and result.prompt_version.startswith("tickets/v1@")
+    assert "(project `OPS`)" in system and "`known_issue_open`" in system
+    assert "`jira_search` with JQL that stays inside project `OPS`" in system  # jira fragment
+    assert result.prompt_version and result.prompt_version.startswith("tickets/v2@")
 
 
 def test_s0_llm_cannot_claim_a_known_issue() -> None:

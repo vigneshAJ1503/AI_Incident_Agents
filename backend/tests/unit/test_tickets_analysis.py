@@ -9,13 +9,12 @@ from aiops.agents.tickets_agent.analysis import (
     ServiceScope,
     TicketAnalysis,
     assess,
-    jql_value,
-    keyword_jql,
     load_terms,
     mentions,
     symptom_terms,
 )
 from aiops.mcp.tickets import Ticket
+from aiops.providers.tickets.jira import jql_value, keyword_jql
 
 NOW = datetime(2026, 9, 25, 10, 30, tzinfo=UTC)
 PAYMENTS = ServiceScope("payment-service", ("payments",), ("payment-service",))
@@ -61,7 +60,7 @@ def test_mentions_is_word_based() -> None:
 def test_jql_quoting_and_keyword_query() -> None:
     assert jql_value('a "b" \\c') == '"a \\"b\\" \\\\c"'
     latency = next(t for t in DEFAULT_TERMS if t.name == "latency")
-    assert keyword_jql("OPS", [latency], NOW) == (
+    assert keyword_jql("OPS", latency.search, NOW) == (
         'project = "OPS" AND (text ~ "slow" OR text ~ "latency") AND '
         '(statusCategory != Done OR resolved >= "2026-09-25") ORDER BY updated DESC'
     )

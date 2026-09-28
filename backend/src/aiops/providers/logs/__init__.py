@@ -19,7 +19,9 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from typing import Any, ClassVar
 
-from aiops.providers.base import Provider, ToolRequest
+from aiops.providers.base import Provider, ToolRequest, iso
+
+__all__ = ["LogScope", "LogTable", "LogWindow", "LogsProvider", "iso", "literal_prefix"]
 
 
 @dataclass(frozen=True)
@@ -59,10 +61,6 @@ class LogTable:
 
     def as_dict(self) -> dict[str, Any]:
         return {"columns": self.columns, "rows": self.rows}
-
-
-def iso(ts: datetime) -> str:
-    return ts.isoformat().replace("+00:00", "Z")
 
 
 def literal_prefix(template_text: str, min_len: int = 8) -> str | None:

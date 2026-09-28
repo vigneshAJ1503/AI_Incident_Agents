@@ -13,7 +13,13 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any, ClassVar
+
+
+def iso(ts: datetime) -> str:
+    """UTC timestamps as tools expect them: ``2026-09-25T10:00:00Z``."""
+    return ts.isoformat().replace("+00:00", "Z")
 
 
 @dataclass(frozen=True)

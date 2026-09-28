@@ -69,7 +69,7 @@ server. "Implemented" = works today by configuration only. "Planned" = named in 
 | Capability | Implemented ✓ | Planned | MCP server (implemented) |
 |------------|---------------|---------|--------------------------|
 | logs | `elasticsearch` ✓ (self-managed or Elastic Cloud, ES\|QL) | `opensearch`, `loki`, `splunk`, `datadog` | `mcp-servers/elasticsearch-mcp` |
-| metrics | `prometheus` ✓ (any Prometheus-compatible API: Prometheus, Thanos, Mimir, VictoriaMetrics, AMP, GMP) | `datadog` | `mcp-servers/prometheus-mcp` |
+| metrics | `prometheus` ✓ (adapter in a later wave) (any Prometheus-compatible API: Prometheus, Thanos, Mimir, VictoriaMetrics, AMP, GMP) | `datadog` | `mcp-servers/prometheus-mcp` |
 | alerts | `alertmanager` ✓ | `pagerduty`, `opsgenie` | `mcp-servers/alertmanager-mcp` |
 | k8s | `kubernetes` ✓ (EKS, GKE, AKS, OpenShift, Minikube) | – | `mcp-servers/kubernetes-mcp` |
 | code | `git` ✓ (read-only clones of GitHub/GitLab/Bitbucket repos) | `github`, `gitlab` (API) | `mcp-servers/git-mcp` |
@@ -262,14 +262,14 @@ change.
 | ~~`agents/log_agent/agent.py:31-35` (`DEFAULT_FIELDS`), `:110`~~ | Elasticsearch/ECS field conventions as defaults | ✅ **P2:** `ElasticsearchLogs.default_fields` / `fields()` |
 | ~~`agents/log_agent/agent.py:87`, `:136-143`~~ | UI links built from **KQL** | ✅ **P2:** `ElasticsearchLogs.ui_link(levels=..., phrase=...)` |
 | ~~`agents/log_agent/patterns.py:39-40`~~ | `like_prefix` for an ES\|QL `LIKE` | ✅ **P2:** `providers/logs.literal_prefix` + `esql_like` in the adapter |
-| `agents/tickets_agent/analysis.py:115-145` (`jql_value`, `recency_clause`, `scope_jql`, `keyword_jql`) | the Tickets agent writes **JQL** | a tickets query builder (JQL; ServiceNow/Linear later) |
-| `mcp/tickets.py:17-26` (`jira_search`, `jira_get_issue`, ... `TICKET_FIELDS`) | the mcp-atlassian tool names and Jira field names | stays the contract for jira/mock; other providers map to it in their adapter |
-| `agents/alert_agent/agent.py:56` (`matcher_filter`), `:117` (`list_alerts` args) | Alertmanager matcher syntax and tool arguments | alerts adapter (PagerDuty/Opsgenie use service ids, not labels) |
-| `agents/alert_agent/analysis.py:30` | "Alertmanager keeps no history" caveat text | provider capability flag (`has_history`) |
-| `agents/code_agent/agent.py:160`, `:176`, `:246` | git-mcp tool names (`list_releases`, `search_commits`, `get_diff`) | code adapter (GitHub/GitLab APIs) |
-| `agents/k8s_agent/agent.py:160-180` | kubernetes-mcp tool names | fine for every Kubernetes; only the MCP server varies |
-| `core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`) | only OpenAI-compatible LLMs | `anthropic`, `bedrock` providers |
-| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager) | prompts teach one query language | ✅ **P2 (logs):** `logs/v3.md` is vendor-neutral; ES\|QL guidance in `providers/logs/elasticsearch/v1.md` via `$provider_guidance`. Tickets/alerts: per-provider fragments |
+| ~~`agents/tickets_agent/analysis.py:115-145` (`jql_value`, `recency_clause`, `scope_jql`, `keyword_jql`)~~ | the Tickets agent writes **JQL** | ✅ **P2:** `providers/tickets/jira.py` (`scope_search`, `keyword_search`); `mock` subclasses it |
+| `mcp/tickets.py:17-26` (`jira_search`, `jira_get_issue`, ... `TICKET_FIELDS`) | the mcp-atlassian tool names and Jira field names | ✅ **P2:** used only by the jira/mock adapter (reads) and the approval executor (writes, `tickets_agent/draft.py`); `Ticket` is the neutral model |
+| ~~`agents/alert_agent/agent.py:56` (`matcher_filter`), `:117` (`list_alerts` args)~~ | Alertmanager matcher syntax and tool arguments | ✅ **P2:** `providers/alerts/alertmanager.py` (`alerts_for`, `silences_for`, `ui_link`) |
+| ~~`agents/alert_agent/analysis.py:30`~~ | "Alertmanager keeps no history" caveat text | ✅ **P2:** `AlertsProvider.has_history` / `history_note` |
+| ~~`agents/code_agent/agent.py:160`, `:176`, `:246`~~ | git-mcp tool names (`list_releases`, `search_commits`, `get_diff`) | ✅ **P2:** `providers/code/git.py` (`releases_of`, `commits_touching`, `diff_of`) |
+| `agents/k8s_agent/agent.py:160-180` | kubernetes-mcp tool names | kept: one Kubernetes API everywhere. `providers/k8s/kubernetes.py` is thin (describes the contract for the registry/`validate`); `knowledge/postgres_fts` likewise |
+| `core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`) | only OpenAI-compatible LLMs | `anthropic`, `bedrock` providers (moved to PR-P4) |
+| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager) | prompts teach one query language | ✅ **P2:** `logs/v3`, `tickets/v2`, `alerts/v2`, `code/v2` are vendor-neutral; guidance in `config/prompts/providers/{logs/elasticsearch,tickets/jira,alerts/alertmanager,code/git}/v1.md` via `$provider_guidance` |
 | `evals/runner.py:308`, `:349` | local seeding defaults `http://localhost:9093` / `:9200` (env-overridable) | test harness only; fine |
 
 Not couplings (already configuration): field names, index patterns, label and metric names,

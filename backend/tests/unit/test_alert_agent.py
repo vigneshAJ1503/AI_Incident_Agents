@@ -100,7 +100,7 @@ def test_s1_details() -> None:
     assert "runbook: knowledge-base/runbooks/database-connection-pool.md" in user
     assert "First alert to fire: DatabaseConnectionPoolExhausted" in user
     assert "never present an alert as the root cause" in user
-    assert result.prompt_version and result.prompt_version.startswith("alerts/v1@")
+    assert result.prompt_version and result.prompt_version.startswith("alerts/v2@")
 
 
 def respond_with(

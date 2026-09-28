@@ -1046,7 +1046,7 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - vendor-coupling audit (file:line table in docs/portability.md)
 - ✅ Existing tests, fixtures and evals pass unchanged; `_template` validates; `init` → `validate` works.
 
-#### PR-P2 · Provider adapters (in progress)
+#### PR-P2 · Provider adapters ✅ (metrics pending)
 - **Scope:** move the audited couplings (ES|QL/KQL in the Log agent, JQL in the Tickets agent,
   Alertmanager matchers, tool names) behind per-capability adapters selected by `provider`;
   per-provider prompt fragments; `anthropic` / `bedrock` LLM providers.
@@ -1058,6 +1058,11 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   (`config/prompts/providers/<cap>/<provider>/vN.md` → `$provider_guidance`, `logs/v3`),
   "How to add a provider" in docs/portability.md. Zero behavior change: all 39 replay runs
   (159 tool calls) byte-identical before/after; evals 6/6.
+- **Delivered (P2b):** `tickets/jira` + `tickets/mock` (JQL, mcp-atlassian contract),
+  `alerts/alertmanager` (tools, matcher links, `has_history`/`history_note`), `code/git`
+  (git-mcp tools), thin `k8s/kubernetes` and `knowledge/postgres_fts` (contract only). Prompts
+  `tickets/v2`, `alerts/v2`, `code/v2` vendor-neutral with fragments. The static matrix keeps
+  only planned rows (+ metrics). Again 39/39 replay runs byte-identical, evals 6/6.
 - **Deviation:** split into P2a (framework + logs) and P2b (tickets, alerts, code, k8s,
   knowledge). `metrics` is adapted in a later wave (PR-022 in progress); the
   `anthropic`/`bedrock` LLM providers move to PR-P4.

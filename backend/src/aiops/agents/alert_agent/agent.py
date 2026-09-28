@@ -10,8 +10,10 @@ Investigation loop:
      hide an alert), "no active alerts" is always said explicitly, and an alert is never
      reported as a root cause.
 
-Vendor-neutral: alert label identifiers from the service catalog (``alerts.labels``),
-label names, severities and the UI link template from the ``alerts`` capability settings.
+Vendor-neutral: the ``alerts`` provider adapter (``capabilities.alerts.provider``,
+ADR-0012) names the tools and builds UI links; alert label identifiers come from the
+service catalog (``alerts.labels``), label names, severities and the UI link template
+from the ``alerts`` capability settings.
 """
 
 from __future__ import annotations
@@ -20,7 +22,6 @@ import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any
-from urllib.parse import quote
 
 from aiops.agents.alert_agent.analysis import (
     NO_ALERTS_PHRASE,
@@ -35,6 +36,7 @@ from aiops.agents.registry import AGENTS
 from aiops.core.config import ConfigError
 from aiops.core.models import AgentResult, AgentStatus, ClaimKind, Evidence, EvidenceKind
 from aiops.llm.base import ToolSpec
+from aiops.providers.alerts import AlertsProvider
 
 DEFAULT_CRITICAL = ["critical"]
 SERVICE_ALERT_LIMIT = 50
@@ -51,12 +53,6 @@ class AlertScope:
     dependencies: dict[str, dict[str, str]]  # name -> alert labels
     critical_severities: list[str]
     link_template: str | None
-
-
-def matcher_filter(labels: dict[str, str]) -> str:
-    """Alertmanager UI filter syntax: {service="payment-service",namespace="prod"}."""
-    inner = ",".join(f'{k}="{v}"' for k, v in sorted(labels.items()))
-    return "{" + inner + "}"
 
 
 class AlertAgent(BaseAgent):
@@ -95,10 +91,11 @@ class AlertAgent(BaseAgent):
             link_template=settings.get("ui_link_template"),
         )
 
+    def alerting(self) -> AlertsProvider:
+        return self.provider("alerts", AlertsProvider)
+
     def ui_link(self, scope: AlertScope, labels: dict[str, str]) -> str | None:
-        if not scope.link_template:
-            return None
-        return scope.link_template.format(filter=quote(matcher_filter(labels), safe=""))
+        return self.alerting().ui_link(scope.link_template, labels)
 
     def incident_start(self, run: AgentRun) -> tuple[datetime, str]:
         window = run.task.context.time_range
@@ -113,10 +110,9 @@ class AlertAgent(BaseAgent):
     async def _list(
         self, run: AgentRun, labels: dict[str, str], limit: int, summary: str
     ) -> tuple[Any, Evidence | None, str | None]:
-        outcome, evidence = await run.call_tool(
-            "list_alerts", {"labels": labels, "state": "all", "limit": limit}, summary=summary
-        )
-        return outcome.data, evidence, outcome.tool_call.error
+        request = self.alerting().alerts_for(labels, limit)
+        outcome, evidence = await run.call_tool(request.tool, request.arguments, summary=summary)
+        return self.alerting().alerts(outcome.data), evidence, outcome.tool_call.error
 
     async def deterministic(
         self, run: AgentRun, scope: AlertScope
@@ -142,9 +138,11 @@ class AlertAgent(BaseAgent):
             dependency_data[dep] = data
             dependency_ev[dep] = evidence
 
+        alerting = self.alerting()
+        request = alerting.silences_for(scope.labels, SILENCE_LIMIT)
         outcome, silences_ev = await run.call_tool(
-            "list_silences",
-            {"labels": scope.labels, "state": "active", "limit": SILENCE_LIMIT},
+            request.tool,
+            request.arguments,
             summary=f"Active silences that could apply to {scope.service}",
         )
         if silences_ev is None:
@@ -154,13 +152,14 @@ class AlertAgent(BaseAgent):
         analysis = analyze(
             service_data,
             dependency_data,
-            outcome.data if silences_ev else None,
+            alerting.silences(outcome.data) if silences_ev else None,
             service=scope.service,
             window=run.task.context.time_range,
             incident_start=start,
             incident_start_source=source,
             critical_severities=scope.critical_severities,
             failed_scopes=failed,
+            history_note=None if alerting.has_history else alerting.history_note,
         )
 
         # Evidence summaries, links and timestamps now that the alerts are classified.

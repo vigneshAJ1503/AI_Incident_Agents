@@ -1,16 +1,17 @@
-"""Tickets (Jira) Agent: related tickets and known issues for an incident (UC-03).
+"""Tickets Agent: related tickets and known issues for an incident (UC-03).
 
 Investigation:
-  1. deterministic JQL (1-2 searches): the service's (and its dependencies') components
+  1. deterministic searches (1-2): the service's (and its dependencies') components
      and labels from the service catalog, plus symptom terms from the question, symptoms
      and hints; open issues and issues resolved within the look-back window;
   2. deterministic relevance: same service / dependency / other x symptom match ->
      known issue, similar past incident, context; signals decided here;
-  3. bounded LLM follow-ups (e.g. jira_get_issue for comments) + an evidence-cited report;
+  3. bounded LLM follow-ups (e.g. reading a ticket's comments) + an evidence-cited report;
   4. deterministic signals and status are authoritative (the LLM can't claim a known issue).
 
-Vendor-neutral: tool names/shapes are the ``tickets`` capability contract (aiops.mcp.tickets);
-project key, link template and look-back come from ``capabilities.tickets.settings``.
+Vendor-neutral: the ``tickets`` provider adapter (``capabilities.tickets.provider``,
+ADR-0012) writes the tracker's query language and tool calls; project key, link template
+and look-back come from ``capabilities.tickets.settings``.
 """
 
 from __future__ import annotations
@@ -26,16 +27,14 @@ from aiops.agents.tickets_agent.analysis import (
     ServiceScope,
     TicketAnalysis,
     assess,
-    keyword_jql,
     load_terms,
-    scope_jql,
     symptom_terms,
 )
 from aiops.core.config import ConfigError
 from aiops.core.models import AgentResult, AgentStatus, Evidence, EvidenceKind
 from aiops.llm.base import ToolSpec
-from aiops.mcp import tickets
-from aiops.mcp.tickets import Ticket
+from aiops.providers.base import ToolRequest
+from aiops.providers.tickets import Ticket, TicketsProvider
 
 DEFAULT_LOOKBACK_DAYS = 90
 DEFAULT_PROJECT = "OPS"
@@ -94,24 +93,25 @@ class TicketsAgent(BaseAgent):
             cutoff=ctx.time_range.end - lookback,
         )
 
+    def tracker(self) -> TicketsProvider:
+        return self.provider("tickets", TicketsProvider)
+
     def ui_link(self, key: str) -> str | None:
         template = self._settings().get("ui_link_template")
         return str(template).format(key=key) if template else None
 
     # -- deterministic phase ---------------------------------------------------------------
 
+    def _limit(self) -> int:
+        return self.deps.settings.capability("tickets").limits.max_results
+
     async def _search(
-        self, run: AgentRun, jql: str, summary: str
+        self, run: AgentRun, request: ToolRequest, summary: str
     ) -> tuple[list[Ticket], Evidence | None, str | None]:
-        limit = self.deps.settings.capability("tickets").limits.max_results
-        outcome, evidence = await run.call_tool(
-            tickets.SEARCH,
-            {"jql": jql, "fields": tickets.TICKET_FIELDS, "limit": limit},
-            summary=summary,
-        )
+        outcome, evidence = await run.call_tool(request.tool, request.arguments, summary=summary)
         if evidence is None:
             return [], None, outcome.tool_call.error
-        return tickets.parse_search(outcome.data, outcome.text), evidence, None
+        return self.tracker().tickets(outcome.data, outcome.text), evidence, None
 
     async def deterministic(self, run: AgentRun, analysis: TicketAnalysis) -> list[str]:
         """Run the searches and assess every ticket. Returns evidence notes for the LLM."""
@@ -121,18 +121,23 @@ class TicketsAgent(BaseAgent):
         if scopes:
             components = list(dict.fromkeys(c for s in scopes for c in s.components))
             labels = list(dict.fromkeys(label for s in scopes for label in s.labels))
-            jql = scope_jql(analysis.project, components, labels, analysis.cutoff)
+            tracker = self.tracker()
+            request = tracker.scope_search(
+                analysis.project, components, labels, analysis.cutoff, self._limit()
+            )
             hits, evidence, error = await self._search(
-                run, jql, "Tickets for the service and its dependencies"
+                run, request, "Tickets for the service and its dependencies"
             )
             if evidence is None and components:
-                # Real Jira rejects unknown component names; retry with labels only.
+                # Trackers may reject unknown component names; retry with labels only.
                 analysis.notes.append(
                     f"Component search failed ({error}); retried with labels only."
                 )
-                jql = scope_jql(analysis.project, [], labels, analysis.cutoff)
+                request = tracker.scope_search(
+                    analysis.project, [], labels, analysis.cutoff, self._limit()
+                )
                 hits, evidence, error = await self._search(
-                    run, jql, "Tickets for the service (labels)"
+                    run, request, "Tickets for the service (labels)"
                 )
             if evidence is None:
                 analysis.notes.append(f"Service ticket search failed: {error}")
@@ -141,8 +146,13 @@ class TicketsAgent(BaseAgent):
                 notes.append(f"[{evidence.id}] scope_search")
                 found.update((t.key, t) for t in hits)
         if analysis.terms:
-            jql = keyword_jql(analysis.project, analysis.terms, analysis.cutoff)
-            hits, evidence, error = await self._search(run, jql, "Tickets mentioning the symptoms")
+            words = [s for t in analysis.terms for s in t.search]
+            request = self.tracker().keyword_search(
+                analysis.project, words, analysis.cutoff, self._limit()
+            )
+            hits, evidence, error = await self._search(
+                run, request, "Tickets mentioning the symptoms"
+            )
             if evidence is None:
                 analysis.notes.append(f"Symptom ticket search failed: {error}")
             else:
@@ -169,7 +179,7 @@ class TicketsAgent(BaseAgent):
         return run.add_evidence(
             Evidence(
                 kind=EvidenceKind.TICKET,
-                source=f"tickets.{tickets.SEARCH}",
+                source=f"tickets.{self.tracker().search_tool}",
                 summary=f"{t.key} [{t.status}, {state}] {t.summary}",
                 link=self.ui_link(t.key) or t.url,
                 timestamp=t.created,

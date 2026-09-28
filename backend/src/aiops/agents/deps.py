@@ -22,11 +22,18 @@ def build_deps(
     events: EventSink | None = None,
     record_dir: Path | None = None,
     replay_dir: Path | None = None,
+    replay_lenient: bool = False,
 ) -> AgentDeps:
     return AgentDeps(
         settings=settings,
         llm=llm or create_provider(settings.llm),
-        mcp=mcp or MCPRegistry(settings, record_dir=record_dir, replay_dir=replay_dir),
+        mcp=mcp
+        or MCPRegistry(
+            settings,
+            record_dir=record_dir,
+            replay_dir=replay_dir,
+            replay_lenient=replay_lenient,
+        ),
         prompts=PromptLoader(
             settings.config_dir / "prompts", overrides=settings.prompt_override_dirs()
         ),

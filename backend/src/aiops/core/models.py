@@ -27,6 +27,19 @@ def utcnow() -> datetime:
     return datetime.now(UTC)
 
 
+def parse_timestamp(value: Any) -> datetime | None:
+    """ISO-8601 text ('2026-09-25T10:10:07.571Z') or a datetime -> aware UTC; else None."""
+    if isinstance(value, datetime):
+        return value if value.tzinfo else value.replace(tzinfo=UTC)
+    if not isinstance(value, str) or not value.strip():
+        return None
+    try:
+        parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    return (parsed if parsed.tzinfo else parsed.replace(tzinfo=UTC)).astimezone(UTC)
+
+
 def parse_duration(text: str) -> timedelta:
     """'30m' -> 30 minutes. Supports s, m, h, d, w."""
     match = _DURATION.match(text)
@@ -283,6 +296,24 @@ class InvestigationStep(_Model):
     finished_at: datetime | None = None
 
 
+Severity = Literal["critical", "high", "medium", "low", "none"]
+InvestigationMode = Literal["live", "replay", "demo"]
+
+
+class InvestigationReport(_Model):
+    """The response builder's output (docs/api/contract.md): what the UI shows first."""
+
+    summary: str
+    root_cause_hypothesis_id: str | None = None  # None = no root cause identified
+    confidence: float = Field(default=0.0, ge=0, le=1)
+    impact: str = ""
+    affected_services: list[str] = Field(default_factory=list)
+    severity: Severity = "none"
+    next_steps: list[str] = Field(default_factory=list)
+    open_questions: list[str] = Field(default_factory=list)
+    markdown: str = ""
+
+
 class Investigation(_Model):
     id: str = Field(default_factory=lambda: new_id("inv"))
     incident: Incident
@@ -293,17 +324,23 @@ class Investigation(_Model):
     hypotheses: list[Hypothesis] = Field(default_factory=list)
     recommendations: list[Recommendation] = Field(default_factory=list)
     timeline: list[TimelineEvent] = Field(default_factory=list)
+    report: InvestigationReport | None = None  # None until the RCA phase finished
     clarification_question: str | None = None
+    clarification_candidates: list[str] = Field(default_factory=list)
     versions: dict[str, str] = Field(default_factory=dict)  # model / prompt / agent versions
+    #: Aggregated tokens of the whole investigation (agents + planner + RCA).
+    usage: TokenUsage = Field(default_factory=TokenUsage)
+    duration_ms: float | None = None
     created_at: datetime = Field(default_factory=utcnow)
     completed_at: datetime | None = None
+    mode: InvestigationMode = "live"  # where the data came from
 
     @property
     def evidence(self) -> list[Evidence]:
         return [e for r in self.results for e in r.evidence]
 
-    @property
-    def usage(self) -> TokenUsage:
+    def results_usage(self) -> TokenUsage:
+        """Tokens spent by the agents (``usage`` also counts the planner and the RCA)."""
         total = TokenUsage()
         for result in self.results:
             total = total + result.usage
@@ -315,6 +352,7 @@ SCHEMA_MODELS: tuple[type[BaseModel], ...] = (
     Incident,
     IncidentContext,
     Investigation,
+    InvestigationReport,
     InvestigationStep,
     AgentTask,
     AgentResult,

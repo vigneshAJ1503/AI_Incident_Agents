@@ -254,6 +254,24 @@ capabilities:
       search_k: 8
       top_docs: 3
 
+# ------------------------------------------------------------------------------ orchestrator
+# How ONE investigation is planned and run (PR-030/031, ADR-0014). All optional.
+orchestrator:
+  default_window: 30m          # look-back when the question names no time
+  max_concurrency: 4           # agents running at the same time
+  # step_timeout_s: 75         # default: the agent's max_execution_s + 15 s
+  max_rounds: 2                # 1 = round 1 only (no gap analysis / follow-ups)
+  max_tokens: 200000           # token budget of one investigation (agents + planner + RCA)
+  round2_agents: [knowledge, tickets]   # need round-1 findings as input
+  llm_planner_fallback: true   # fast model only when the rules find no service
+  llm_rca: true                # rca model ranks/phrases the rule-based hypotheses
+  # Gap analysis: extra/overriding "signal -> follow-ups" rules (defaults in
+  # backend/src/aiops/orchestrator/gaps.py). target: incident | dependency.
+  # followups:
+  #   db_timeout_errors_up:
+  #     - { agent: metrics, objective: "Check DB connection pool saturation" }
+  #     - { agent: knowledge, objective: "", keywords: [connection pool] }
+
 # ------------------------------------------------------------------------------ agents
 # Per-agent overrides: enabled, prompt_version (null = latest), model_role (fast|agent|rca),
 # limits. Omitted agents use the defaults and the global limits above.

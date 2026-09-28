@@ -146,6 +146,38 @@ class GuardrailsConfig(_Strict):
     approval_ttl_hours: float = Field(default=24.0, gt=0)
 
 
+class FollowupRule(_Strict):
+    """Gap analysis (round 2): a round-1 signal -> a targeted follow-up step."""
+
+    agent: str
+    objective: str
+    #: ``incident`` = the investigated service; ``dependency`` = the catalog dependency
+    #: named by round-1 evidence (e.g. the slow downstream service).
+    target: Literal["incident", "dependency"] = "incident"
+    keywords: list[str] = Field(default_factory=list)  # extra search terms (knowledge)
+
+
+class OrchestratorConfig(_Strict):
+    """How investigations are planned and executed (defaults suit the local stack)."""
+
+    default_window: str = "30m"
+    max_concurrency: int = Field(default=4, gt=0)
+    #: Wall-clock cap per step; default = the agent's max_execution_s + 15 s.
+    step_timeout_s: float | None = Field(default=None, gt=0)
+    max_rounds: int = Field(default=2, ge=1, le=2)
+    #: Token budget of ONE investigation (agents + planner + RCA). Steps that would start
+    #: after it is spent are skipped and the investigation becomes PARTIAL.
+    max_tokens: int = Field(default=200_000, gt=0)
+    #: Agents that need round-1 findings as input (hints/symptoms) run in round 2.
+    round2_agents: list[str] = Field(default_factory=lambda: ["knowledge", "tickets"])
+    #: Extra/overriding gap-analysis rules: signal -> follow-ups (merged over the defaults).
+    followups: dict[str, list[FollowupRule]] = Field(default_factory=dict)
+    #: Use the LLM ("fast" role) when deterministic parsing can't find a service.
+    llm_planner_fallback: bool = True
+    #: Let the LLM ("rca" role) rank and phrase the deterministic hypotheses.
+    llm_rca: bool = True
+
+
 class ProfileMetadata(_Strict):
     """Who this profile is for. Informational; never inherited through ``extends``."""
 
@@ -162,6 +194,7 @@ class Settings(_Strict):
     limits: AgentLimits = Field(default_factory=AgentLimits)
     agents: dict[str, AgentConfig] = Field(default_factory=dict)
     guardrails: GuardrailsConfig = Field(default_factory=GuardrailsConfig)
+    orchestrator: OrchestratorConfig = Field(default_factory=OrchestratorConfig)
     service_catalog: str = "local"
 
     # Set by the loader, not by YAML.

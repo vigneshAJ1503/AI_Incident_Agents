@@ -11,6 +11,7 @@ from aiops.cli import (
     doctor_cmd,
     eval_cmd,
     fault_cmd,
+    investigate_cmd,
     knowledge_cmd,
     llm_cmd,
     mcp_cmd,
@@ -42,6 +43,8 @@ app.add_typer(approvals_cmd.app, name="approvals")
 app.add_typer(tickets_cmd.app, name="tickets")
 app.add_typer(fault_cmd.app, name="fault")
 app.command("doctor")(doctor_cmd.doctor)
+app.command("plan")(investigate_cmd.plan)
+app.command("investigate")(investigate_cmd.investigate)
 
 
 @app.callback()

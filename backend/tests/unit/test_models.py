@@ -119,8 +119,9 @@ def test_investigation_aggregates_usage_and_evidence() -> None:
     inv = Investigation(
         incident=Incident(title="Payment API 500"), context=ctx, results=[result, result]
     )
-    assert inv.usage.total_tokens == 240
-    assert inv.usage.calls == 2
+    assert inv.results_usage().total_tokens == 240
+    assert inv.results_usage().calls == 2
+    assert inv.usage.total_tokens == 0  # set by the orchestrator (agents + planner + RCA)
     assert len(inv.evidence) == 2
 
 

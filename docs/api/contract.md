@@ -37,6 +37,7 @@ The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the *
     "markdown": "# Incident report …"             // full rendered report (for copy/export/Jira)
   },
   "clarification_question": null,
+  "clarification_candidates": [],               // NEW (PR-030): catalog services to pick from
   "versions": { "model": "…", "prompts": "…" },
   "usage": { "input_tokens": 0, "output_tokens": 0, "calls": 0 },   // aggregated (NEW, serialized)
   "duration_ms": 8420,                                               // NEW

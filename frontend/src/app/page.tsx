@@ -6,6 +6,7 @@ import {
   BotIcon,
   CircleDotIcon,
   GaugeIcon,
+  SparklesIcon,
   TargetIcon,
   TimerIcon,
   type LucideIcon,
@@ -102,11 +103,18 @@ export default function DashboardPage() {
         title="Dashboard"
         description="Investigations, root causes and agent health over the last 14 days."
         actions={
-          <Button asChild variant="outline">
-            <Link href="/investigations">
-              All investigations <ArrowRightIcon />
-            </Link>
-          </Button>
+          <>
+            <Button asChild variant="outline">
+              <Link href="/investigations">
+                All investigations <ArrowRightIcon />
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href="/investigations/new">
+                <SparklesIcon /> New investigation
+              </Link>
+            </Button>
+          </>
         }
       />
       <SystemStatusStrip />

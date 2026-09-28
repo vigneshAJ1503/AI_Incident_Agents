@@ -1,4 +1,10 @@
-import { BotIcon, LayoutDashboardIcon, ListChecksIcon, type LucideIcon } from "lucide-react";
+import {
+  BotIcon,
+  LayoutDashboardIcon,
+  ListChecksIcon,
+  MessageSquarePlusIcon,
+  type LucideIcon,
+} from "lucide-react";
 import type { Route } from "next";
 
 export interface NavItem {
@@ -11,6 +17,12 @@ export interface NavItem {
 }
 
 export const NAV: NavItem[] = [
+  {
+    href: "/investigations/new",
+    label: "New investigation",
+    icon: MessageSquarePlusIcon,
+    match: (p) => p === "/investigations/new",
+  },
   {
     href: "/",
     label: "Dashboard",

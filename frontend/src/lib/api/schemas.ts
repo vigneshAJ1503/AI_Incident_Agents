@@ -201,6 +201,8 @@ export const Investigation = z.object({
   timeline: z.array(TimelineEvent).default([]),
   report: Report.nullable().optional(),
   clarification_question: nullableStr,
+  /** PR-030: catalog services to pick from when the planner needs a clarification. */
+  clarification_candidates: z.array(z.string()).default([]),
   versions: z.record(z.string(), z.string()).default({}),
   usage: TokenUsage.default({ input_tokens: 0, output_tokens: 0, calls: 0 }),
   duration_ms: z.number().nullable().optional(),

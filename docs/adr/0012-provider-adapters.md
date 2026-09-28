@@ -55,5 +55,7 @@ PagerDuty or GitHub would have had to edit agents.
   with a second logs backend).
 - Provider methods are coarse by design; a new agent question means adding a method to the
   interface and to every provider of that capability.
-- The metrics capability (PR-022, in progress) will be adapted in a later wave; until
-  then its matrix row stays static.
+- The metrics capability (PR-022) was adapted in PR-P2c: `providers/metrics` asks one
+  question per SLI (`SLIS`) and gets neutral series; `metrics/prometheus` owns PromQL,
+  tool names and links. Same acceptance test (12 metrics replay runs, 120 tool calls,
+  byte-identical); its static matrix row is gone.

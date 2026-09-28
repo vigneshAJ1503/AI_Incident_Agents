@@ -55,14 +55,13 @@ _STATIC_PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
         "datadog": ProviderSpec("planned", "datadog-mcp", required=("site",)),
     },
     "metrics": {
-        # Adapter pending (the Metrics agent, PR-022, is adapted in a later wave).
-        "prometheus": ProviderSpec(
-            "implemented",
-            "mcp-servers/prometheus-mcp",
-            agent_tools=("query", "query_range"),
-            note="any Prometheus-compatible API (Thanos, Mimir, VictoriaMetrics)",
+        # prometheus: registered adapter (aiops.providers.metrics.prometheus).
+        "datadog": ProviderSpec(
+            "planned",
+            "datadog-mcp",
+            required=("site",),
+            note="skeleton: providers/metrics/_skeleton.py",
         ),
-        "datadog": ProviderSpec("planned", "datadog-mcp", required=("site",)),
     },
     "alerts": {
         "pagerduty": ProviderSpec("planned", "pagerduty-mcp", required=("service_ids",)),

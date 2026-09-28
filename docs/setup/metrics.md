@@ -71,9 +71,9 @@ There is no Grafana MCP. Evidence links are built from two templates:
 
 ## The Metrics agent (UC-05, PR-022)
 
-`backend/src/aiops/agents/metrics_agent/` (agent `metrics`, capability `metrics`, evidence kind `metric`, prompt `config/prompts/metrics/v1.md`):
+`backend/src/aiops/agents/metrics_agent/` (agent `metrics`, capability `metrics`, evidence kind `metric`, prompt `config/prompts/metrics/v2.md` + the provider fragment `config/prompts/providers/metrics/prometheus/v1.md`):
 
-1. **PromQL library** (`promql.py`), built only from settings: requests/s, 5xx ratio, p95/p99 latency, DB pool utilisation and waiters, cache up, process RSS, container restarts and OOM kills (kube-state-metrics joined on `label_app`). Each query covers the service **and its catalog dependencies** (`service=~"a|b|c"`), so there are 10 `query_range` calls over `[window start − baseline_minutes, window end]` at 30 s.
+1. **One provider question per SLI** (`aiops.providers.metrics.SLIS`: requests/s, 5xx ratio, p95/p99 latency, DB pool utilisation and waiters, cache up, process RSS, container restarts and OOM kills). The `prometheus` provider (`providers/metrics/prometheus.py`, PR-P2c / ADR-0012) turns each into PromQL built only from settings (kube-state-metrics joined on `label_app` for the pod-level SLIs). Each query covers the service **and its catalog dependencies** (`service=~"a|b|c"`), so there are 10 `query_range` calls over `[window start − baseline_minutes, window end]` at 30 s.
 2. **Deterministic anomaly detection** (`analysis.py`): the baseline is the median before the window. A change point is the first point of a sustained deviation (3 of 4 points, about 1.5 min). Magnitude is the median and peak during the anomaly, ratio and z-score. Rules are per metric (e.g. error ratio +2 points and ×3, latency +200 ms and ×2, pool ≥ 90 %, cache 0).
 3. **Evidence** per metric: `{metric, baseline, current, start_time, window, query, services{…}, series{…} (≤ 40 points each, for charts)}` with a Grafana panel link (or a Prometheus query link).
 4. **Signals** (authoritative, data-derived): `error_rate_up`, `latency_up`, `traffic_drop`, `traffic_spike`, `db_pool_saturated`, `memory_pressure`, `cache_down`, `dependency_latency_up`, `no_anomaly`.
@@ -83,7 +83,7 @@ A series with **no data before the window** (Prometheus or the service just star
 
 ### Portability (another company = configuration only)
 
-Nothing vendor-specific is in the agent code. Everything it queries comes from `capabilities.metrics.settings` (defaults in `promql.py`), plus label values from the service catalog:
+Nothing vendor-specific is in the agent code: it asks the provider selected by `capabilities.metrics.provider` for neutral series (`{service: [(ts, value)]}` per SLI), and the provider owns PromQL, the prometheus-mcp tool names, the step/points cap and the Grafana/Prometheus links. A non-Prometheus vendor (Datadog, ...) = a new provider module (template: `providers/metrics/_skeleton.py`) + prompt fragment, no agent change (docs/portability.md, "How to add a provider"). Everything the `prometheus` provider queries comes from `capabilities.metrics.settings` (defaults in `providers/metrics/prometheus.py`), plus label values from the service catalog:
 
 | Setting | Default | Change it when |
 |---------|---------|----------------|
@@ -92,7 +92,7 @@ Nothing vendor-specific is in the agent code. Everything it queries comes from `
 | `error_status_regex`, `rate_window`, `step`, `baseline_minutes` | `5..`, `2m`, `30s`, `15` | a slower scrape interval needs a wider `rate_window` (≥ 4 scrapes) |
 | `ui_link_template`, `explore_link_template`, `panels` | local Grafana / Prometheus UI | your Grafana dashboard uid and panel ids |
 
-The queries are plain PromQL over the standard HTTP query API (`/api/v1/query_range`), so any **Prometheus-compatible** backend works by pointing `METRICS_PROM_URL` at it: Prometheus, Thanos Query, Grafana Mimir / Grafana Cloud Metrics (the `/prometheus` path prefix), VictoriaMetrics (auth: `PROM_BEARER_TOKEN` or `PROM_USERNAME`/`PROM_PASSWORD` on prometheus-mcp). Metrics a company doesn't have (e.g. no DB pool gauges) simply return no series and are reported as "no data", never as anomalies. Detection thresholds (`RULES` in `analysis.py`) are unit-based (ratios, seconds, bytes), not vendor-based.
+The queries are plain PromQL over the standard HTTP query API (`/api/v1/query_range`), so any **Prometheus-compatible** backend works by pointing `METRICS_PROM_URL` at it: Prometheus, Thanos Query, Grafana Mimir / Grafana Cloud Metrics (the `/prometheus` path prefix), VictoriaMetrics (auth: `METRICS_PROM_BEARER_TOKEN` or `METRICS_PROM_USERNAME`/`METRICS_PROM_PASSWORD`, passed to prometheus-mcp as `PROM_*`; multi-tenant Mimir/Cortex: `METRICS_PROM_ORG_ID` → `X-Scope-OrgID`). Metrics a company doesn't have (e.g. no DB pool gauges) simply return no series and are reported as "no data", never as anomalies. Detection thresholds (`RULES` in `analysis.py`) are unit-based (ratios, seconds, bytes), not vendor-based.
 
 **Fixtures are recorded live**, not seeded: `make record-metrics S=S1` runs `aiops fault run S1 -- python -m tests.fixtures.record_metrics`. It waits until 6 minutes after the injection (the fault stays active meanwhile), then records a 15-minute window plus the 15-minute baseline before it. The window is stored in `backend/tests/fixtures/metrics/<S>/meta.json` (`start`, `end`, `incident_start`), and the replay task is rebuilt from it. `S=S0` records the healthy baseline (it takes the cluster lock itself). Record when the cluster has been quiet for ~15 minutes (30 for S0), or the baseline includes someone else's fault.
 

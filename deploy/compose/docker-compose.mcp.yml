@@ -157,6 +157,12 @@ services:
     container_name: aiops-prometheus-mcp
     environment:
       - PROM_URL=${METRICS_PROM_URL:-http://aiops-prometheus:9090}
+      # Prometheus-compatible backends (Thanos, Mimir, Grafana Cloud, VictoriaMetrics):
+      # bearer token OR basic auth, plus the tenant header for multi-tenant Mimir/Cortex.
+      - PROM_BEARER_TOKEN=${METRICS_PROM_BEARER_TOKEN:-}
+      - PROM_USERNAME=${METRICS_PROM_USERNAME:-}
+      - PROM_PASSWORD=${METRICS_PROM_PASSWORD:-}
+      - PROM_ORG_ID=${METRICS_PROM_ORG_ID:-}
       - QUERY_TIMEOUT_S=${METRICS_QUERY_TIMEOUT_S:-20}
       - MAX_RANGE_HOURS=${METRICS_MAX_RANGE_HOURS:-24}
       - MAX_POINTS=${METRICS_MAX_POINTS:-1100}

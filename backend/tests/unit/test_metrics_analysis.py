@@ -1,4 +1,4 @@
-"""Deterministic metric anomaly detection and the PromQL library (no MCP, no LLM)."""
+"""Deterministic metric anomaly detection (no MCP, no LLM). PromQL: tests/unit/test_providers.py."""
 
 from __future__ import annotations
 
@@ -13,10 +13,8 @@ from aiops.agents.metrics_agent.analysis import (
     downsample,
     fmt,
     oom_stats,
-    parse_series,
     restarts_stats,
 )
-from aiops.agents.metrics_agent.promql import PromQLLibrary, regex_alternation
 from aiops.core.models import TimeRange
 
 T0 = datetime(2026, 9, 25, 10, 0, tzinfo=UTC)
@@ -144,52 +142,6 @@ def test_signals() -> None:
     assert analysis.signals == []  # a failed query is not an all-clear
 
 
-def test_parse_and_downsample() -> None:
-    data = {
-        "series": [
-            {"labels": {"service": "a"}, "values": [[1, 0.5], [2, None], [3, "x"]]},
-            {"labels": {"other": "b"}, "values": [[1, 1.0]]},
-        ]
-    }
-    assert parse_series(data, "service") == {"a": [(1.0, 0.5), (2.0, None), (3.0, None)]}
+def test_downsample() -> None:
     points = downsample(series([float(i) for i in range(181)]))
     assert len(points) <= 42 and points[-1][1] == 180.0
-
-
-def test_promql_library_from_settings() -> None:
-    library = PromQLLibrary.from_settings(
-        {
-            "labels": {"service": "app"},
-            "metrics": {"requests": "requests_count"},
-            "rate_window": "5m",
-        }
-    )
-    queries = {
-        q.key: q
-        for q in library.queries(
-            ["payment-service", "user.svc"], {"namespace": "prod"}, ["payment-service"]
-        )
-    }
-    assert set(queries) == {
-        "rps",
-        "error_rate",
-        "latency_p95",
-        "latency_p99",
-        "db_pool_utilization",
-        "db_pool_pending",
-        "cache_up",
-        "memory_rss",
-        "restarts",
-        "oom_killed",
-    }
-    assert queries["rps"].query == (
-        'sum by (app) (rate(requests_count{app=~"payment-service|user\\\\.svc",namespace="prod"}[5m]))'
-    )
-    assert (
-        'status=~"5.."' in queries["error_rate"].query and " * 0) / " in queries["error_rate"].query
-    )
-    assert queries["restarts"].group_label == "label_app"
-    assert 'reason="OOMKilled"' in queries["oom_killed"].query
-    assert regex_alternation(["a+b"]) == '"a\\\\+b"'
-    no_k8s = library.queries(["x"], {}, [])
-    assert len(no_k8s) == 8

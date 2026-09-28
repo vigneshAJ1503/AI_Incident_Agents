@@ -84,6 +84,11 @@ class CapabilityLimits(_Strict):
     max_results: int = Field(default=500, gt=0)
     max_time_range_hours: int = Field(default=168, gt=0)
     query_timeout_s: float = Field(default=30.0, gt=0)
+    #: Circuit breaker (PR-042): after this many consecutive failures (connect errors,
+    #: timeouts, transport errors) the capability is skipped for ``breaker_reset_s``; then
+    #: ONE probe is let through (half-open). Skipped = a PARTIAL evidence gap, not a timeout.
+    breaker_failures: int = Field(default=3, ge=1)
+    breaker_reset_s: float = Field(default=30.0, gt=0)
 
 
 class CapabilityConfig(_Strict):
@@ -380,6 +385,30 @@ class StorageConfig(_Strict):
     audit: Literal["jsonl", "postgres"] = "jsonl"
 
 
+_RATE = re.compile(r"^\s*(\d+)\s*/\s*(second|minute|hour|s|m|h)\s*$")
+_RATE_UNITS = {"second": 1, "s": 1, "minute": 60, "m": 60, "hour": 3600, "h": 3600}
+RATE_LIMIT_GROUPS = frozenset({"investigations", "approvals", "scenarios"})
+
+
+def parse_rate(value: str) -> tuple[int, float]:
+    """``"10/minute"`` -> ``(10, 60.0)`` (requests, per seconds)."""
+    match = _RATE.match(value)
+    if not match:
+        raise ValueError(f"invalid rate {value!r}: use e.g. '10/minute', '5/s', '100/hour'")
+    return int(match.group(1)), float(_RATE_UNITS[match.group(2)])
+
+
+class OIDCConfig(_Strict):
+    """OIDC bearer tokens (PR-045: multi-tenancy + RBAC + SSO). Declared now so profiles can
+    be written; ``api.auth: oidc`` is refused until the token validator lands."""
+
+    issuer: str
+    audience: str
+    jwks_url: str | None = None  # default: <issuer>/.well-known/jwks.json
+    subject_claim: str = "sub"
+    roles_claim: str = "roles"
+
+
 class ApiConfig(_Strict):
     """The REST + SSE API (PR-035, docs/api/README.md). Defaults suit the local stack."""
 
@@ -395,6 +424,30 @@ class ApiConfig(_Strict):
     #: Optional shared secret: when set, every /api route except /api/health requires the
     #: ``X-API-Key`` header (SSE also accepts ``?api_key=``, EventSource can't set headers).
     api_key: SecretStr | None = None
+    #: Named keys (``{name: key}``; env: ``"alice:KEY,bob:KEY"``). A named key is an
+    #: authenticated identity: approvals are recorded as decided by that name.
+    api_keys: dict[str, SecretStr] = Field(default_factory=dict)
+    #: ``auto`` = ``api_key`` when a key is configured, else ``none``; ``oidc`` = PR-045.
+    auth: Literal["auto", "none", "api_key", "oidc"] = "auto"
+    oidc: OIDCConfig | None = None
+    #: Per-client limits (client = authenticated name, else the peer IP): ``N/second|
+    #: minute|hour``. ``investigations`` = POST /investigations + clarify; ``approvals`` =
+    #: approve/deny/ticket drafts; ``scenarios`` = fault inject/revert.
+    rate_limits: dict[str, str] = Field(
+        default_factory=lambda: {
+            "investigations": "10/minute",
+            "approvals": "30/minute",
+            "scenarios": "6/minute",
+        }
+    )
+    #: Largest accepted request body (HTTP 413 above).
+    max_body_bytes: int = Field(default=65_536, gt=0)
+    #: How long an ``Idempotency-Key`` of POST /investigations is remembered.
+    idempotency_ttl_s: float = Field(default=86_400.0, gt=0)
+    #: Stuck-investigation reaper: ``running``/``pending`` with no event for this long and
+    #: not running in this process -> ``failed`` (reason in an ``error`` event). 0 = off.
+    stuck_after_s: float = Field(default=900.0, ge=0)
+    reaper_interval_s: float = Field(default=60.0, gt=0)
     #: Investigations running at the same time in one API process (more -> HTTP 429).
     max_running_investigations: int = Field(default=2, gt=0)
     #: SSE keep-alive interval.
@@ -410,6 +463,66 @@ class ApiConfig(_Strict):
         if isinstance(value, str):
             return [o.strip() for o in value.split(",") if o.strip()]
         return value
+
+    @field_validator("cors_origins")
+    @classmethod
+    def _no_wildcard(cls, value: list[str]) -> list[str]:
+        bad = [o for o in value if o == "*" or not re.match(r"^https?://[^/\s*]+$", o)]
+        if bad:
+            raise ValueError(
+                f"cors_origins must be exact origins like http://localhost:3100 (no '*', no "
+                f"path): {bad}"
+            )
+        return value
+
+    @field_validator("api_keys", mode="before")
+    @classmethod
+    def _split_keys(cls, value: Any) -> Any:
+        if isinstance(value, str):
+            parsed = {}
+            for pair in (p.strip() for p in value.split(",")):
+                if not pair:
+                    continue
+                name, sep, key = pair.partition(":")
+                if not sep or not name.strip() or len(key.strip()) < 16:
+                    raise ValueError(
+                        "api_keys: use 'name:KEY,name2:KEY2' with keys of 16+ characters"
+                    )
+                parsed[name.strip()] = key.strip()
+            return parsed
+        return value
+
+    @field_validator("rate_limits")
+    @classmethod
+    def _valid_rates(cls, value: dict[str, str]) -> dict[str, str]:
+        unknown = sorted(set(value) - RATE_LIMIT_GROUPS)
+        if unknown:
+            raise ValueError(f"unknown rate limit groups {unknown}: {sorted(RATE_LIMIT_GROUPS)}")
+        for rate in value.values():
+            parse_rate(rate)
+        return value
+
+    @model_validator(mode="after")
+    def _auth_mode(self) -> ApiConfig:
+        if self.auth == "oidc":
+            raise ValueError(
+                "api.auth 'oidc' is reserved for PR-045 (multi-tenancy + RBAC + SSO); use "
+                "'api_key' with api.api_keys for named identities until then"
+            )
+        if self.auth == "api_key" and not self.key_auth_configured:
+            raise ValueError("api.auth 'api_key' needs api.api_key or api.api_keys")
+        return self
+
+    @property
+    def key_auth_configured(self) -> bool:
+        shared = self.api_key is not None and bool(self.api_key.get_secret_value())
+        return shared or any(k.get_secret_value() for k in self.api_keys.values())
+
+    @property
+    def auth_mode(self) -> Literal["none", "api_key", "oidc"]:
+        if self.auth == "auto":
+            return "api_key" if self.key_auth_configured else "none"
+        return self.auth
 
 
 class ProfileMetadata(_Strict):

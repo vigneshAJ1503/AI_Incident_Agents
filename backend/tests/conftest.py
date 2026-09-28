@@ -70,6 +70,7 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "AIOPS_API_CORS_ORIGINS",
         "AIOPS_ENABLE_FAULTS",
         "LLM_REASONING_EFFORT",
+        "AIOPS_API_KEYS",
     ]:
         monkeypatch.delenv(var, raising=False)
     # No test may read a developer's .env (it can hold a real LLM key). Block every
@@ -89,6 +90,14 @@ def _restore_environ() -> Iterator[None]:
     yield
     os.environ.clear()
     os.environ.update(snapshot)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_circuit_breakers() -> None:
+    """Circuit breakers are process-wide: each test starts with every circuit closed."""
+    from aiops.mcp.breaker import BREAKERS
+
+    BREAKERS.reset()
 
 
 def write_config(tmp_path: Path, env_yaml: str, catalog_yaml: str = "services: []\n") -> Path:

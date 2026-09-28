@@ -40,6 +40,7 @@ services:
       # real = replays reason with the configured LLM (recorded data, real reasoning)
       - AIOPS_REPLAY_LLM=${AIOPS_REPLAY_LLM:-}
       - AIOPS_API_KEY=${AIOPS_API_KEY:-}
+      - AIOPS_API_KEYS=${AIOPS_API_KEYS:-}
       # Replays started from the Web UI: seconds per recorded tool call, so the live view
       # unfolds at a watchable pace (0 = instant). make demo: docs/setup/demo.md
       - AIOPS_REPLAY_TOOL_DELAY_S=${AIOPS_REPLAY_TOOL_DELAY_S:-0.5}
@@ -69,6 +70,9 @@ services:
       # make demo-live runs the API on the host (fault injection needs kubectl):
       # AIOPS_API_INTERNAL_URL=http://host.docker.internal:8000
       - AIOPS_API_INTERNAL_URL=${AIOPS_API_INTERNAL_URL:-http://aiops-api:8000}
+      # Server-side X-API-Key the proxy adds when the API requires one (never sent to the
+      # browser). Use a named key (AIOPS_API_KEYS=name:KEY) so UI approvals have an identity.
+      - AIOPS_UI_API_KEY=${AIOPS_UI_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"   # Linux; Docker Desktop provides it already
     ports:

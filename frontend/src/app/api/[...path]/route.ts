@@ -14,10 +14,31 @@ export const dynamic = "force-dynamic";
 
 const UPSTREAM = (process.env.AIOPS_API_INTERNAL_URL ?? "http://127.0.0.1:8000").replace(/\/$/, "");
 
+/**
+ * Server-side API credential (PR-042), read at runtime and never sent to the browser. When the
+ * API requires X-API-Key (make demo-live), the Web UI is the authenticated client: use a NAMED
+ * key (AIOPS_API_KEYS=name:KEY on the API) so approvals made in the UI carry that identity.
+ */
+const SERVER_API_KEY = process.env.AIOPS_UI_API_KEY ?? "";
+
 /** Request headers worth forwarding (no cookies, no hop-by-hop headers). */
-const FORWARD_REQUEST = ["accept", "content-type", "last-event-id", "x-api-key", "x-request-id"];
+const FORWARD_REQUEST = [
+  "accept",
+  "content-type",
+  "last-event-id",
+  "x-api-key",
+  "x-request-id",
+  "idempotency-key",
+];
 /** Response headers worth returning (the body is re-streamed, so no length/encoding). */
-const FORWARD_RESPONSE = ["content-type", "cache-control", "x-request-id", "content-disposition"];
+const FORWARD_RESPONSE = [
+  "content-type",
+  "cache-control",
+  "x-request-id",
+  "content-disposition",
+  "retry-after",
+  "idempotent-replayed",
+];
 
 async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }> }) {
   const { path } = await ctx.params;
@@ -27,6 +48,7 @@ async function proxy(req: NextRequest, ctx: { params: Promise<{ path: string[] }
     const value = req.headers.get(name);
     if (value) headers.set(name, value);
   }
+  if (SERVER_API_KEY && !headers.has("x-api-key")) headers.set("x-api-key", SERVER_API_KEY);
   const hasBody = req.method !== "GET" && req.method !== "HEAD";
   let upstream: Response;
   try {

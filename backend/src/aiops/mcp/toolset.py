@@ -22,6 +22,7 @@ from aiops.core.guardrails.injection import InjectionHit, neutralize_delimiters,
 from aiops.core.guardrails.redaction import Redactor
 from aiops.core.models import ToolCall, new_id
 from aiops.llm.base import ToolSpec
+from aiops.mcp.breaker import CircuitBreaker
 from aiops.mcp.client import MCPClient, MCPClientError
 
 log = logging.getLogger(__name__)
@@ -77,6 +78,7 @@ class Toolset:
         investigation_id: str | None = None,
         allowlist: Iterable[str] | None = None,
         watch_tools: Iterable[str] = (),
+        breaker: CircuitBreaker | None = None,
     ) -> None:
         """``allowlist`` overrides ``config.tool_allowlist``; only the approval executor
         passes one (``config.write_allowlist``, see MCPRegistry.write_toolset).
@@ -90,6 +92,7 @@ class Toolset:
         self._investigation_id = investigation_id
         self._allowed = set(config.tool_allowlist if allowlist is None else allowlist)
         self._watch_tools = sorted({*watch_tools, *config.write_allowlist})
+        self._breaker = breaker
 
     async def specs(self) -> list[ToolSpec]:
         """Tool definitions for the LLM — only allowlisted tools the server actually has."""
@@ -155,16 +158,28 @@ class Toolset:
                 "blocked",
                 f"tool '{tool}' is not allowed for capability '{self.capability}' (allowed: {allowed})",
             )
+        breaker = self._breaker
+        if breaker is not None and not breaker.allow():
+            return failed(
+                "error",
+                f"capability '{self.capability}' is unavailable (circuit open after "
+                f"{breaker.failures} consecutive failures); not called",
+            )
         try:
             result = await self._client.call_tool(
                 tool, arguments, timeout_s=self.config.limits.query_timeout_s
             )
         except TimeoutError:
-            return failed(
-                "timeout", f"tool '{tool}' timed out after {self.config.limits.query_timeout_s}s"
-            )
+            message = f"tool '{tool}' timed out after {self.config.limits.query_timeout_s}s"
+            if breaker is not None:
+                breaker.record_failure(message)
+            return failed("timeout", message)
         except MCPClientError as exc:
+            if breaker is not None:
+                breaker.record_failure(str(exc))
             return failed("error", str(exc))
+        if breaker is not None:
+            breaker.record_success()  # a tool-level error is still a live server
 
         data: Any = result.structured
         if data is None:

@@ -23,6 +23,7 @@ _HTTP_CODES = {
     404: "not_found",
     405: "method_not_allowed",
     409: "conflict",
+    413: "payload_too_large",
     422: "validation_error",
     429: "too_many_requests",
     503: "unavailable",
@@ -32,18 +33,23 @@ _HTTP_CODES = {
 class ApiError(Exception):
     """An expected failure with an HTTP status, a stable code and a human message."""
 
-    def __init__(self, status: int, code: str, message: str) -> None:
+    def __init__(
+        self, status: int, code: str, message: str, headers: dict[str, str] | None = None
+    ) -> None:
         super().__init__(message)
         self.status = status
         self.code = code
         self.message = message
+        self.headers = headers or {}
 
 
 def not_found(what: str, ident: str) -> ApiError:
     return ApiError(404, "not_found", f"{what} '{ident}' not found")
 
 
-def error_response(status: int, code: str, message: str, **headers: str) -> JSONResponse:
+def error_response(
+    status: int, code: str, message: str, headers: dict[str, str] | None = None
+) -> JSONResponse:
     return JSONResponse(
         {"error": {"code": code, "message": message}}, status_code=status, headers=headers or None
     )
@@ -60,7 +66,7 @@ def _validation_message(exc: RequestValidationError) -> str:
 def install_error_handlers(app: FastAPI) -> None:
     async def api_error(_: Request, exc: Exception) -> JSONResponse:
         assert isinstance(exc, ApiError)  # noqa: S101 (registered for ApiError only)
-        return error_response(exc.status, exc.code, exc.message)
+        return error_response(exc.status, exc.code, exc.message, exc.headers)
 
     async def http_error(_: Request, exc: Exception) -> JSONResponse:
         assert isinstance(exc, StarletteHTTPException)  # noqa: S101

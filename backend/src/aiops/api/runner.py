@@ -5,6 +5,11 @@ the API process (at most ``api.max_running_investigations`` at a time). Its even
 the shared ``EventBus`` (live SSE subscribers) and, batched every few hundred ms, to the
 evidence store together with snapshots of the investigation, so ``GET`` and SSE work for
 another process or after a restart too. The final investigation is saved when it ends.
+
+Reliability (PR-042): on API shutdown every run is cancelled with a reason and saved; the
+reaper (``reap_stuck``) marks investigations ``failed`` that are ``pending``/``running`` in
+the store, not running here, and have had no event for ``api.stuck_after_s`` (e.g. the
+process that ran them crashed), with the reason in an ``error`` event.
 """
 
 from __future__ import annotations
@@ -15,7 +20,7 @@ import logging
 import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 from typing import Literal
 
 from aiops.api.errors import ApiError
@@ -117,6 +122,7 @@ class InvestigationRunner:
         self.flush_interval_s = flush_interval_s
         self.retain_s = retain_s
         self._active: dict[str, RunHandle] = {}
+        self.shutting_down = False
 
     # -- queries -----------------------------------------------------------------------------
 
@@ -150,6 +156,8 @@ class InvestigationRunner:
         history: list[InvestigationEvent] | None = None,
     ) -> RunHandle:
         """Save a pending investigation and run it in the background."""
+        if self.shutting_down:
+            raise ApiError(503, "shutting_down", "The API is shutting down; retry shortly.")
         if len(self._active) >= self.max_running:
             raise ApiError(
                 429,
@@ -192,21 +200,79 @@ class InvestigationRunner:
         )
         return handle
 
-    def cancel(self, investigation_id: str) -> bool:
+    def cancel(self, investigation_id: str, reason: str | None = None) -> bool:
         handle = self._active.get(investigation_id)
         if handle is None or handle.result is not None:
             return False
+        if reason:
+            self.bus.publish("error", investigation_id, message=reason, recoverable=False)
         if not handle.orchestrator.cancel(investigation_id) and handle.task is not None:
             handle.task.cancel()  # not started yet: stop the task itself
         return True
 
-    async def shutdown(self) -> None:
-        """Cancel what still runs (API shutdown); each run saves its final state."""
+    async def shutdown(self, grace_s: float = 10.0) -> None:
+        """Graceful stop (API shutdown): refuse new runs, cancel running ones with a reason,
+        and wait up to ``grace_s`` for each to save its final (``cancelled``) state."""
+        self.shutting_down = True
         tasks = [h.task for h in self._active.values() if h.task is not None]
         for inv_id in list(self._active):
-            self.cancel(inv_id)
+            self.cancel(inv_id, "Cancelled: the API is shutting down.")
         if tasks:
-            await asyncio.wait(tasks, timeout=10)
+            _, pending = await asyncio.wait(tasks, timeout=grace_s)
+            for task in pending:
+                log.warning("investigation task %s did not stop in %.0fs", task.get_name(), grace_s)
+
+    async def reap_stuck(self, now: datetime | None = None) -> list[str]:
+        """Fail stored ``pending``/``running`` investigations that no process advances."""
+        stuck_after = self.settings.api.stuck_after_s
+        if stuck_after <= 0:
+            return []
+        now = now or utcnow()
+        open_ones = [
+            *await self.store.search(status=InvestigationStatus.RUNNING.value, limit=500),
+            *await self.store.search(status=InvestigationStatus.PENDING.value, limit=500),
+        ]
+        reaped = []
+        for inv in open_ones:
+            if self.is_live(inv.id):
+                continue
+            events = await self.store.events(inv.id)
+            last = max([e.timestamp for e in events], default=inv.created_at)
+            if last.tzinfo is None:  # SQLite hands back naive UTC
+                last = last.replace(tzinfo=UTC)
+            idle = now - last
+            if idle < timedelta(seconds=stuck_after):
+                continue
+            reason = (
+                f"Marked failed by the reaper: no progress for {idle.total_seconds() / 60:.0f} "
+                "min and not running in this API process (the process that ran it probably "
+                "stopped or crashed). Start it again."
+            )
+            seq = max([e.seq for e in events], default=0)
+            await self.store.save_events(
+                [
+                    InvestigationEvent(
+                        type="error",
+                        investigation_id=inv.id,
+                        timestamp=now,
+                        seq=seq + 1,
+                        data={"message": reason, "recoverable": False, "reason": "stuck"},
+                    ),
+                    InvestigationEvent(
+                        type="investigation_finished",
+                        investigation_id=inv.id,
+                        timestamp=now,
+                        seq=seq + 2,
+                        data={"status": "failed", "duration_ms": None},
+                    ),
+                ]
+            )
+            await self.store.save(
+                inv.model_copy(update={"status": InvestigationStatus.FAILED, "completed_at": now})
+            )
+            log.warning("reaped stuck investigation %s: %s", inv.id, reason)
+            reaped.append(inv.id)
+        return reaped
 
     # -- internals ---------------------------------------------------------------------------
 

@@ -111,7 +111,9 @@ async def test_health_reports_profile_llm_and_capabilities_without_secrets(
     settings: Settings, store: InvestigationStore, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setenv("AIOPS_ENABLE_FAULTS", "1")
-    ctx = make_context(with_llm_key(settings), store)
+    keyed = with_llm_key(settings)
+    keyed = keyed.model_copy(update={"api": ApiConfig(api_key=SecretStr(FAKE_API_KEY))})
+    ctx = make_context(keyed, store)
     async with api_client(ctx) as client:
         body = (await client.get("/api/health")).json()
     assert body["status"] == "ok" and body["store"] == "ok"
@@ -119,8 +121,8 @@ async def test_health_reports_profile_llm_and_capabilities_without_secrets(
     assert body["llm"] == {"provider": "openai_compat", "configured": True}
     assert set(body["capabilities"]) == set(settings.capabilities)
     assert set(body["capabilities"].values()) == {"ok"}
-    assert body["faults_enabled"] is True
-    assert FAKE_LLM_KEY not in json.dumps(body)
+    assert body["faults_enabled"] is True  # env flag AND API auth (PR-042)
+    assert FAKE_LLM_KEY not in json.dumps(body) and FAKE_API_KEY not in json.dumps(body)
 
 
 @pytest.mark.parametrize(
@@ -629,8 +631,10 @@ async def test_fault_endpoints_when_enabled(
 ) -> None:
     monkeypatch.setenv("AIOPS_ENABLE_FAULTS", "1")
     faults = FakeFaults()
-    ctx = make_context(settings, store, faults=faults)
+    keyed = settings.model_copy(update={"api": ApiConfig(api_key=SecretStr(FAKE_API_KEY))})
+    ctx = make_context(keyed, store, faults=faults)
     async with api_client(ctx) as client:
+        client.headers["X-API-Key"] = FAKE_API_KEY
         injected = await client.post("/api/scenarios/s1/inject")
         active = (await client.get("/api/scenarios")).json()
         busy = await client.post("/api/scenarios/S2/inject")

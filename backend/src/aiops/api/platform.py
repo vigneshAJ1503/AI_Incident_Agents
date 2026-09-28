@@ -17,7 +17,7 @@ from aiops.agents.registry import AGENTS
 from aiops.api import models as m
 from aiops.api.context import ApiContext
 from aiops.api.health import llm_configured, llm_missing
-from aiops.api.scenarios import faults_enabled
+from aiops.api.scenarios import faults_available
 from aiops.core.events import InvestigationEvent
 from aiops.core.models import Investigation, InvestigationStatus, utcnow
 from aiops.orchestrator.dashboard import agent_stats
@@ -63,7 +63,7 @@ async def health_of(ctx: ApiContext) -> m.HealthResponse:
         profile=ctx.settings.profile,
         llm=m.LLMHealth(provider=llm.provider, configured=llm_configured(ctx.settings)),
         capabilities=await ctx.health.status(),  # type: ignore[arg-type]
-        faults_enabled=faults_enabled(),
+        faults_enabled=faults_available(ctx.settings.api.auth_mode),
         store="ok" if store_ok else "down",
     )
 

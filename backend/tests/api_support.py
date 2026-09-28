@@ -87,6 +87,7 @@ def make_context(
     orchestrator_factory: OrchestratorFactory = default_orchestrator,
     faults: FakeFaults | None = None,
     executor_factory: ExecutorFactory | None = None,
+    reaper: bool = False,
 ) -> ApiContext:
     return build_context(
         settings,
@@ -96,6 +97,7 @@ def make_context(
         faults=faults or FakeFaults(),
         health=CapabilityHealth(settings, probe=always_up),
         executor_factory=executor_factory or FakeExecutor,  # type: ignore[arg-type]
+        reaper=reaper,
     )
 
 
@@ -109,8 +111,7 @@ async def api_client(ctx: ApiContext) -> AsyncIterator[httpx2.AsyncClient]:
         async with httpx2.AsyncClient(transport=transport, base_url="http://test") as client:
             yield client
     finally:
-        await ctx.runner.shutdown()
-        await ctx.store.close()
+        await ctx.shutdown()
 
 
 def parse_sse(text: str) -> list[dict[str, Any]]:

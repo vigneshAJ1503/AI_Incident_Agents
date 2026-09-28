@@ -3,13 +3,14 @@
 Run it with ``aiops serve`` (or ``make api``). The profile comes from ``AIOPS_PROFILE``;
 nothing here is vendor-specific. OpenAPI: ``/api/docs`` and ``/api/openapi.json``.
 
-Middleware, outermost first: CORS (``api.cors_origins``) -> request id + structured access
-log -> optional ``X-API-Key`` guard (``api.api_key``; off by default locally).
+Middleware, outermost first: CORS (``api.cors_origins``, exact origins only) -> request id
++ structured access log -> security headers -> request-size limit (``api.max_body_bytes``)
+-> authentication (``api.auth``: none | api_key; OIDC in PR-045, see ``api/auth.py``).
+Rate limits and idempotency keys are per route (``api/security.py``).
 """
 
 from __future__ import annotations
 
-import hmac
 import json
 import logging
 import re
@@ -18,23 +19,28 @@ import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
-from urllib.parse import parse_qs
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from aiops import __version__
+from aiops.api.auth import PUBLIC_PATHS, AuthMiddleware, build_authenticator
 from aiops.api.context import ApiContext, build_context
 from aiops.api.errors import install_error_handlers
 from aiops.api.routes import router
+from aiops.api.security import (
+    BodySizeLimitMiddleware,
+    IdempotencyStore,
+    RateLimiter,
+    SecurityHeadersMiddleware,
+)
 
 access_log = logging.getLogger("aiops.api.access")
 
 REQUEST_ID_HEADER = "x-request-id"
 _VALID_REQUEST_ID = re.compile(r"^[A-Za-z0-9._:-]{1,128}$")
-#: Reachable without the API key (liveness probes, the docs).
-PUBLIC_PATHS = {"/api/health", "/api/docs", "/api/openapi.json", "/api/docs/oauth2-redirect"}
+__all__ = ["PUBLIC_PATHS", "RequestContextMiddleware", "create_app"]
 
 
 class RequestContextMiddleware:
@@ -85,48 +91,6 @@ class RequestContextMiddleware:
             )
 
 
-class ApiKeyMiddleware:
-    """When ``api.api_key`` is set: ``X-API-Key`` on every /api route except PUBLIC_PATHS
-    (SSE may pass ``?api_key=``: ``EventSource`` can't set headers)."""
-
-    def __init__(self, app: ASGIApp, api_key: str) -> None:
-        self.app = app
-        self.api_key = api_key.encode()
-
-    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
-        path = scope.get("path", "")
-        if (
-            scope["type"] != "http"
-            or scope.get("method") == "OPTIONS"
-            or not path.startswith("/api")
-            or path in PUBLIC_PATHS
-        ):
-            await self.app(scope, receive, send)
-            return
-        headers = dict(scope.get("headers") or [])
-        supplied = headers.get(b"x-api-key", b"")
-        if not supplied and path.endswith("/events"):
-            query = parse_qs(scope.get("query_string", b"").decode("latin-1"))
-            supplied = (query.get("api_key") or [""])[0].encode()
-        if supplied and hmac.compare_digest(supplied, self.api_key):
-            await self.app(scope, receive, send)
-            return
-        body = json.dumps(
-            {"error": {"code": "unauthorized", "message": "Missing or invalid X-API-Key."}}
-        ).encode()
-        await send(
-            {
-                "type": "http.response.start",
-                "status": 401,
-                "headers": [
-                    (b"content-type", b"application/json"),
-                    (b"content-length", str(len(body)).encode()),
-                ],
-            }
-        )
-        await send({"type": "http.response.body", "body": body})
-
-
 def create_app(ctx: ApiContext | None = None) -> FastAPI:
     """The app; ``ctx`` defaults to the production wiring of ``$AIOPS_PROFILE``."""
     context = ctx or build_context()
@@ -149,18 +113,28 @@ def create_app(ctx: ApiContext | None = None) -> FastAPI:
         lifespan=lifespan,
     )
     app.state.ctx = context
+    api = context.settings.api
+    app.state.limiter = RateLimiter.from_config(api)
+    app.state.idempotency = IdempotencyStore(api.idempotency_ttl_s)
     install_error_handlers(app)
     app.include_router(router)
 
-    api = context.settings.api
-    if api.api_key is not None and api.api_key.get_secret_value():
-        app.add_middleware(ApiKeyMiddleware, api_key=api.api_key.get_secret_value())
+    app.add_middleware(AuthMiddleware, authenticator=build_authenticator(api))
+    app.add_middleware(BodySizeLimitMiddleware, limit=api.max_body_bytes)
+    app.add_middleware(SecurityHeadersMiddleware)
     app.add_middleware(RequestContextMiddleware)
     cors: dict[str, Any] = {
         "allow_origins": list(api.cors_origins),
         "allow_methods": ["GET", "POST", "OPTIONS"],
-        "allow_headers": ["Content-Type", "X-API-Key", "Last-Event-ID", "X-Request-ID"],
-        "expose_headers": ["X-Request-ID"],
+        "allow_headers": [
+            "Content-Type",
+            "X-API-Key",
+            "Last-Event-ID",
+            "X-Request-ID",
+            "Idempotency-Key",
+        ],
+        "allow_credentials": False,
+        "expose_headers": ["X-Request-ID", "Retry-After", "Idempotent-Replayed"],
         "max_age": 600,
     }
     app.add_middleware(CORSMiddleware, **cors)

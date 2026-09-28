@@ -32,6 +32,11 @@ def faults_enabled() -> bool:
     return os.environ.get(FAULTS_ENV, "").strip().lower() in {"1", "true", "yes", "on"}
 
 
+def faults_available(settings_auth: str) -> bool:
+    """Fault endpoints are double-guarded (PR-042): the env flag AND API authentication."""
+    return faults_enabled() and settings_auth != "none"
+
+
 def _words(text: str) -> set[str]:
     return {w for w in _WORD.findall(text.casefold()) if w not in _STOP}
 

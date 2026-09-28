@@ -9,11 +9,12 @@ import logging
 from datetime import UTC, datetime, timedelta
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, Header, Query, Request
+from fastapi import APIRouter, Depends, Header, Query, Request, Response
 from fastapi.responses import PlainTextResponse, StreamingResponse
 
 from aiops.agents.tickets_agent.draft import ACTIONS, draft_ticket
 from aiops.api import models as m
+from aiops.api.auth import Principal, principal_of
 from aiops.api.context import ApiContext
 from aiops.api.errors import ApiError, not_found
 from aiops.api.platform import (
@@ -26,6 +27,7 @@ from aiops.api.platform import (
 )
 from aiops.api.runner import RunMode
 from aiops.api.scenarios import faults_enabled, injectable
+from aiops.api.security import IDEMPOTENCY_HEADER, IdempotencyStore, RateLimiter, retry_after
 from aiops.api.sse import event_stream
 from aiops.core.guardrails.approvals import (
     ActionProposal,
@@ -55,8 +57,50 @@ def get_ctx(request: Request) -> ApiContext:
 
 Ctx = Annotated[ApiContext, Depends(get_ctx)]
 ERRORS: dict[int | str, dict[str, Any]] = {
-    code: {"model": m.ErrorResponse} for code in (400, 401, 403, 404, 409, 422, 429, 503)
+    code: {"model": m.ErrorResponse} for code in (400, 401, 403, 404, 409, 413, 422, 429, 503)
 }
+
+
+def client_id(request: Request) -> str:
+    """Rate-limit/idempotency scope: the authenticated name, else the peer address."""
+    principal = principal_of(request)
+    if principal.authenticated:
+        return f"{principal.method}:{principal.subject}"
+    return f"ip:{request.client.host if request.client else 'unknown'}"
+
+
+def rate_limited(group: str) -> Any:
+    """Dependency: one token of ``api.rate_limits[group]`` per request, else HTTP 429."""
+
+    async def check(request: Request) -> None:
+        limiter: RateLimiter = request.app.state.limiter
+        wait = limiter.check(group, client_id(request))
+        if wait is not None:
+            raise ApiError(
+                429,
+                "rate_limited",
+                f"Too many {group} requests ({limiter.describe(group)} per client); "
+                f"retry in {retry_after(wait)}s.",
+                headers={"Retry-After": retry_after(wait)},
+            )
+
+    return Depends(check)
+
+
+def decided_by(request: Request, claimed: str) -> str:
+    """The approver. With auth on, the authenticated name (never the body's ``by``); a
+    shared key has no identity, so it can't approve (PR-042)."""
+    principal: Principal = principal_of(request)
+    if not principal.authenticated:
+        return claimed  # auth off (local): self-declared, as before
+    if not principal.identified:
+        raise ApiError(
+            403,
+            "approver_identity_required",
+            "Approvals need an authenticated identity: call with a named key "
+            "(api.api_keys / AIOPS_API_KEYS=name:KEY), not the shared api_key.",
+        )
+    return principal.subject
 
 
 # --------------------------------------------------------------------------- health + catalog
@@ -202,10 +246,41 @@ def _aware(value: datetime | None) -> datetime | None:
     response_model=m.CreatedInvestigation,
     responses=ERRORS,
     tags=["investigations"],
+    dependencies=[rate_limited("investigations")],
 )
-async def create_investigation(ctx: Ctx, body: m.CreateInvestigation) -> m.CreatedInvestigation:
-    """Start an investigation in the background; follow it on ``/events``."""
-    return await _start(ctx, body)
+async def create_investigation(
+    ctx: Ctx,
+    body: m.CreateInvestigation,
+    request: Request,
+    response: Response,
+    idempotency_key: Annotated[str | None, Header(alias=IDEMPOTENCY_HEADER)] = None,
+) -> m.CreatedInvestigation:
+    """Start an investigation in the background; follow it on ``/events``. With an
+    ``Idempotency-Key`` header, a retry (same key, same body) returns the same investigation
+    (``Idempotent-Replayed: true``) instead of starting a second one."""
+    if idempotency_key is None:
+        return await _start(ctx, body)
+    store: IdempotencyStore = request.app.state.idempotency
+    if not store.valid(idempotency_key):
+        raise ApiError(
+            400, "invalid_idempotency_key", "Idempotency-Key: 8-128 chars of [A-Za-z0-9._:-]."
+        )
+    client = client_id(request)
+    fingerprint = store.fingerprint(body.model_dump(mode="json"))
+    async with store.lock(client, idempotency_key):
+        seen = store.get(client, idempotency_key)
+        if seen is not None:
+            if seen.fingerprint != fingerprint:
+                raise ApiError(
+                    422,
+                    "idempotency_key_reused",
+                    "This Idempotency-Key was used with a different request body.",
+                )
+            response.headers["Idempotent-Replayed"] = "true"
+            return m.CreatedInvestigation.model_validate(seen.response)
+        created = await _start(ctx, body)
+        store.remember(client, idempotency_key, fingerprint, created.model_dump(mode="json"))
+        return created
 
 
 async def _start(ctx: ApiContext, body: m.CreateInvestigation) -> m.CreatedInvestigation:
@@ -301,6 +376,7 @@ async def events(
     response_model=m.CreatedInvestigation,
     responses=ERRORS,
     tags=["investigations"],
+    dependencies=[rate_limited("investigations")],
 )
 async def clarify(
     ctx: Ctx, investigation_id: str, body: m.ClarifyRequest
@@ -382,9 +458,10 @@ async def cancel(ctx: Ctx, investigation_id: str) -> m.InvestigationState:
     response_model=m.TicketDraftResponse,
     responses=ERRORS,
     tags=["approvals"],
+    dependencies=[rate_limited("approvals")],
 )
 async def draft_ticket_proposal(
-    ctx: Ctx, investigation_id: str, body: m.TicketDraftRequest | None = None
+    ctx: Ctx, investigation_id: str, request: Request, body: m.TicketDraftRequest | None = None
 ) -> m.TicketDraftResponse:
     """Draft a ticket from the findings as an approval PROPOSAL; nothing is written until
     a human approves it (``POST /approvals/{id}/approve``)."""
@@ -432,7 +509,7 @@ async def draft_ticket_proposal(
         tool=tool,
         arguments=arguments,
         reason=reason,
-        requested_by=body.requested_by,
+        requested_by=requester(request, body.requested_by),
         risk=risk,
         investigation_id=inv.id,
     )
@@ -508,6 +585,11 @@ async def ask(ctx: Ctx, body: m.AskRequest) -> m.AskResponse:
 # --------------------------------------------------------------------------- approvals
 
 
+def requester(request: Request, claimed: str) -> str:
+    principal = principal_of(request)
+    return principal.subject if principal.identified else claimed
+
+
 def _approval_state(status: ActionStatus) -> Any:
     return {ActionStatus.REJECTED: "denied", ActionStatus.EXPIRED: "denied"}.get(
         status, status.value
@@ -557,14 +639,19 @@ async def list_approvals(ctx: Ctx, status: ActionStatus | None = None) -> list[m
     response_model=m.ApprovalOut,
     responses=ERRORS,
     tags=["approvals"],
+    dependencies=[rate_limited("approvals")],
 )
-async def approve(ctx: Ctx, approval_id: str, body: m.DecisionRequest) -> m.ApprovalOut:
+async def approve(
+    ctx: Ctx, approval_id: str, body: m.DecisionRequest, request: Request
+) -> m.ApprovalOut:
     """Approve and EXECUTE through ``ApprovalExecutor`` (the only write path). A failed
-    execution is returned with ``status: failed`` and ``error``."""
+    execution is returned with ``status: failed`` and ``error``. With auth on, the approver
+    is the authenticated identity (``by`` is ignored)."""
+    by = decided_by(request, body.by)
     try:
-        await asyncio.to_thread(ctx.approvals.approve, approval_id, body.by, body.comment or "")
+        await asyncio.to_thread(ctx.approvals.approve, approval_id, by, body.comment or "")
         executor = ctx.executor_factory(ctx.approvals)
-        proposal = await executor.execute(approval_id, body.by)
+        proposal = await executor.execute(approval_id, by)
     except ApprovalError as exc:
         raise _approval_error(exc) from exc
     return approval_out(proposal)
@@ -575,12 +662,14 @@ async def approve(ctx: Ctx, approval_id: str, body: m.DecisionRequest) -> m.Appr
     response_model=m.ApprovalOut,
     responses=ERRORS,
     tags=["approvals"],
+    dependencies=[rate_limited("approvals")],
 )
-async def deny(ctx: Ctx, approval_id: str, body: m.DecisionRequest) -> m.ApprovalOut:
+async def deny(
+    ctx: Ctx, approval_id: str, body: m.DecisionRequest, request: Request
+) -> m.ApprovalOut:
+    by = decided_by(request, body.by)
     try:
-        proposal = await asyncio.to_thread(
-            ctx.approvals.deny, approval_id, body.by, body.comment or ""
-        )
+        proposal = await asyncio.to_thread(ctx.approvals.deny, approval_id, by, body.comment or "")
     except ApprovalError as exc:
         raise _approval_error(exc) from exc
     return approval_out(proposal)
@@ -589,13 +678,20 @@ async def deny(ctx: Ctx, approval_id: str, body: m.DecisionRequest) -> m.Approva
 # --------------------------------------------------------------------------- scenarios
 
 
-def _require_faults() -> None:
+def _require_faults(request: Request) -> None:
     if not faults_enabled():
         raise ApiError(
             403,
             "faults_disabled",
             "Fault injection is disabled. Start the API with AIOPS_ENABLE_FAULTS=1 (local "
             "demo clusters only).",
+        )
+    if not principal_of(request).authenticated:
+        raise ApiError(
+            403,
+            "faults_need_auth",
+            "Fault injection also needs API authentication: set AIOPS_API_KEY (or "
+            "AIOPS_API_KEYS) and call with X-API-Key (make demo-live does this).",
         )
 
 
@@ -624,10 +720,11 @@ async def scenarios(ctx: Ctx) -> list[m.ScenarioOut]:
     response_model=m.FaultResult,
     responses=ERRORS,
     tags=["scenarios"],
+    dependencies=[rate_limited("scenarios")],
 )
-async def revert_scenarios(ctx: Ctx) -> m.FaultResult:
+async def revert_scenarios(ctx: Ctx, request: Request) -> m.FaultResult:
     """Restore the healthy baseline (runs in the background: rollouts take minutes)."""
-    _require_faults()
+    _require_faults(request)
     active = await asyncio.to_thread(ctx.faults.active)
     try:
         await asyncio.to_thread(ctx.faults.revert)
@@ -643,10 +740,11 @@ async def revert_scenarios(ctx: Ctx) -> m.FaultResult:
     response_model=m.FaultResult,
     responses=ERRORS,
     tags=["scenarios"],
+    dependencies=[rate_limited("scenarios")],
 )
-async def inject_scenario(ctx: Ctx, scenario_id: str) -> m.FaultResult:
+async def inject_scenario(ctx: Ctx, scenario_id: str, request: Request) -> m.FaultResult:
     """Inject a scenario's fault into the local cluster (one at a time, cluster lock)."""
-    _require_faults()
+    _require_faults(request)
     scenario = ctx.scenarios.get(scenario_id)
     if scenario is None:
         raise not_found("Scenario", scenario_id)

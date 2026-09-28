@@ -312,11 +312,22 @@ storage:
 api:
   # Browser origins allowed by CORS, comma-separated (the Web UI's dev server).
   cors_origins: ${AIOPS_API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
-  # Optional shared secret: every /api route except /api/health then needs `X-API-Key`.
+  # Authentication (PR-042, docs/api/README.md#security). auto = api_key when a key is set.
+  auth: auto
+  # Shared secret: every /api route except /api/health then needs `X-API-Key` (no identity).
   api_key: ${AIOPS_API_KEY:-}
+  # Named keys "name:KEY,name2:KEY2": each is an identity; approvals are recorded under it.
+  api_keys: ${AIOPS_API_KEYS:-}
   max_running_investigations: 2   # per API process; more -> HTTP 429
   heartbeat_s: 15                 # SSE keep-alive
   health_cache_s: 30              # GET /health caches capability reachability
+  rate_limits:                    # per client (key name, else IP); HTTP 429 + Retry-After
+    investigations: 10/minute     # POST /investigations, clarify
+    approvals: 30/minute          # approve, deny, ticket drafts
+    scenarios: 6/minute           # fault inject/revert
+  max_body_bytes: 65536           # HTTP 413 above
+  idempotency_ttl_s: 86400        # Idempotency-Key memory for POST /investigations
+  stuck_after_s: 900              # reaper: running with no events this long -> failed (0 = off)
 
 # ------------------------------------------------------------------------------ orchestrator
 # How ONE investigation is planned and run (PR-030/031, ADR-0014). All optional.

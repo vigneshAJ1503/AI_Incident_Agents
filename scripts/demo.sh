@@ -88,16 +88,21 @@ live() {
   "${APP[@]}" rm -f api >/dev/null 2>&1 || true
   stop_host_api
   mkdir -p .data
-  say "API on the host with AIOPS_ENABLE_FAULTS=1 (log: $HOST_API_LOG)"
+  # Fault endpoints are double-guarded (PR-042): the flag AND API auth. A one-off named key
+  # (never written to disk) authenticates the Web UI's server-side proxy as "demo-operator".
+  local ui_key
+  ui_key=${AIOPS_UI_API_KEY:-$(openssl rand -hex 24)}
+  say "API on the host with AIOPS_ENABLE_FAULTS=1 + API key auth (log: $HOST_API_LOG)"
   (
     cd backend
-    AIOPS_ENABLE_FAULTS=1 AIOPS_PROFILE=${AIOPS_PROFILE:-local-k8s} nohup uv run --no-sync \
+    AIOPS_ENABLE_FAULTS=1 AIOPS_API_KEYS="demo-operator:$ui_key${AIOPS_API_KEYS:+,$AIOPS_API_KEYS}" \
+      AIOPS_PROFILE=${AIOPS_PROFILE:-local-k8s} nohup uv run --no-sync \
       aiops serve --host 127.0.0.1 --port "${API_PORT:-8000}" >"../$HOST_API_LOG" 2>&1 &
     echo $! >"../$HOST_API_PID"
   )
   wait_http "http://127.0.0.1:${API_PORT:-8000}/api/health" 90
   say "Web UI -> host API"
-  AIOPS_API_INTERNAL_URL=http://host.docker.internal:${API_PORT:-8000} \
+  AIOPS_API_INTERNAL_URL=http://host.docker.internal:${API_PORT:-8000} AIOPS_UI_API_KEY="$ui_key" \
     "${APP[@]}" up -d --wait --no-deps web
   if ! grep -Eq '^OPENAI_COMPAT_API_KEY=.+' "$ENV_FILE" 2>/dev/null; then
     echo "    No LLM key in $ENV_FILE: investigations run in REPLAY mode (docs/setup/demo.md)."

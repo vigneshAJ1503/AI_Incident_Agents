@@ -39,17 +39,53 @@ Postgres by container name (`deploy/compose/docker-compose.app.yml`).
 
 | Setting (profile `api:`) | Env var | Default | What |
 |---|---|---|---|
-| `cors_origins` | `AIOPS_API_CORS_ORIGINS` | `http://localhost:3000`, `:3100` (+127.0.0.1) | Browser origins (the Web UI) |
-| `api_key` | `AIOPS_API_KEY` | empty = off | Require `X-API-Key` on every `/api` route except `/api/health` and the docs; SSE also accepts `?api_key=` |
+| `cors_origins` | `AIOPS_API_CORS_ORIGINS` | `http://localhost:3000`, `:3100` (+127.0.0.1) | Browser origins (the Web UI). Exact origins only: `*` or paths are refused |
+| `auth` | | `auto` | `auto` (= `api_key` when a key is set, else `none`), `none`, `api_key`; `oidc` is reserved for PR-045 |
+| `api_key` | `AIOPS_API_KEY` | empty = off | Shared secret: `X-API-Key` on every `/api` route except `/api/health` and the docs; SSE also accepts `?api_key=`. No identity |
+| `api_keys` | `AIOPS_API_KEYS` | empty | Named keys `name:KEY,...` (16+ chars): each is an identity (approvals, rate limits) |
+| `rate_limits` | | investigations `10/minute`, approvals `30/minute`, scenarios `6/minute` | Token bucket per client (key name, else peer IP) -> `429 rate_limited` + `Retry-After` |
+| `max_body_bytes` | | 65536 | Larger bodies -> `413 payload_too_large` |
+| `idempotency_ttl_s` | | 86400 | How long an `Idempotency-Key` of `POST /investigations` is remembered |
+| `stuck_after_s` / `reaper_interval_s` | | 900 / 60 | Reaper: `pending`/`running`, not running here, no event for 15 min -> `failed` (reason in an `error` event); 0 = off |
 | `max_running_investigations` | | 2 | Per API process; more -> `429 too_many_investigations` |
 | `heartbeat_s` | | 15 | SSE keep-alive |
 | `health_cache_s` | | 30 | `/health` caches capability reachability |
-| | `AIOPS_ENABLE_FAULTS` | `0` | `1` enables `POST /api/scenarios/{id}/inject` and `/revert` (else 403) |
+| | `AIOPS_ENABLE_FAULTS` | `0` | `1` enables `POST /api/scenarios/{id}/inject` and `/revert` (else 403). Also needs API auth (double guard) |
+| | `AIOPS_UI_API_KEY` | empty | Web UI container: the `X-API-Key` its server-side proxy adds (never reaches the browser) |
 | | `AIOPS_FAULTS_KUBE_CONTEXT` | `aiops` | kubectl context of the fault endpoints |
 | | `AIOPS_REPLAY_TOOL_DELAY_S` | `0` (compose: `0.5`) | Seconds per recorded tool call of a replay, so the Web UI's live view animates (max 10) |
 
 Ports bind to `127.0.0.1`. Keys are never returned (`/health` only says whether an LLM is
 configured). Logs never contain query strings (they may carry `api_key`).
+
+## Security
+
+The threat model is `docs/security/threat-model.md`. The API's part of the boundary (PR-042):
+
+- **Authentication** (`api/auth.py`): one `Authenticator` interface. It returns a
+  `Principal(subject, method, identified, tenant, roles)`. `none` (local) and `api_key` exist
+  today. `OIDCAuthenticator` is the PR-045 slot (a bearer JWT verified against JWKS, `iss`,
+  `aud` and `exp`, which becomes a Principal with tenant and roles). `api.oidc` can already
+  be written, but `api.auth: oidc` is refused until PR-045.
+- **Approvals need an identity** when auth is on:
+  - Only a *named* key (`AIOPS_API_KEYS`) may approve or deny.
+  - `decided_by` / `requested_by` are the key's name, and the body's `by` is ignored.
+  - The shared `api_key` gets `403 approver_identity_required`.
+  - With auth off (local), the self-declared `by` is kept.
+- **Fault endpoints** need `AIOPS_ENABLE_FAULTS=1` **and** an authenticated caller.
+  `/health` reports `faults_enabled: true` only when both hold. `make demo-live` generates
+  a one-off named key for the Web UI's proxy.
+- **Rate limits, body size, idempotency**: see the table above. `POST /investigations`
+  with `Idempotency-Key: <8-128 of [A-Za-z0-9._:-]>` is safe to retry:
+  - the same key and body return the same investigation (`Idempotent-Replayed: true`);
+  - a different body returns `422 idempotency_key_reused`.
+- **Headers** on every response: `X-Content-Type-Options: nosniff`,
+  `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, `Cache-Control: no-store`
+  (SSE: `no-cache`) and a CSP of `default-src 'none'; frame-ancestors 'none'`
+  (`/api/docs` may load Swagger UI from jsDelivr). The Web UI sends its own CSP
+  (`frontend/next.config.ts`).
+- **In-process state**: rate-limit buckets and idempotency keys live in the API process.
+  One API process per deployment today; a shared store is the multi-replica follow-up.
 
 ## Live or replay?
 
@@ -122,13 +158,15 @@ Always `{"error": {"code": "...", "message": "..."}}` with the HTTP status:
 | Status | Codes |
 |---|---|
 | 400 | `invalid_cursor` |
+| 400 | `invalid_idempotency_key` |
 | 401 | `unauthorized` (API key) |
-| 403 | `faults_disabled` |
+| 403 | `faults_disabled`, `faults_need_auth`, `approver_identity_required` |
+| 413 | `payload_too_large` |
 | 404 | `not_found`, `unknown_scenario` |
 | 409 | `live_unavailable`, `already_running`, `not_running`, `not_waiting_for_clarification`, `report_not_ready`, `nothing_to_draft`, `invalid_state` (approval), `fault_error`, `capability_disabled` |
-| 422 | `validation_error`, `no_matching_scenario`, `policy_rejected`, `not_injectable` |
-| 429 | `too_many_investigations` |
-| 503 | `store_unavailable` (Postgres down; `/health` says `degraded`) |
+| 422 | `validation_error`, `no_matching_scenario`, `policy_rejected`, `not_injectable`, `idempotency_key_reused` |
+| 429 | `too_many_investigations`, `rate_limited` (with `Retry-After`) |
+| 503 | `store_unavailable` (Postgres down; `/health` says `degraded`), `shutting_down` |
 
 Every response carries `X-Request-ID` (sent back when the caller supplies a sane one).
 

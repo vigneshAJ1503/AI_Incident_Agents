@@ -8,7 +8,8 @@ from pathlib import Path
 
 from aiops.core.config import Settings
 from aiops.core.guardrails.audit import AuditSink, JsonlAuditSink
-from aiops.mcp.client import MCPClient, ServerTarget
+from aiops.mcp.breaker import BREAKERS, CircuitBreaker
+from aiops.mcp.client import MCPClient, MCPClientError, ServerTarget
 from aiops.mcp.fixtures import RecordingMCPClient, ReplayMCPClient
 from aiops.mcp.toolset import Toolset
 
@@ -76,6 +77,40 @@ class MCPRegistry:
             return RecordingMCPClient(client, self._record_dir / f"{capability}.json")
         return client
 
+    def breaker(self, capability: str) -> CircuitBreaker | None:
+        """The capability's process-wide circuit breaker (none for replays: recorded data
+        can't be "down")."""
+        if self._replay_dir is not None:
+            return None
+        config = self.settings.capability(capability)
+        target = self._overrides.get(capability)
+        if target is None:
+            key = config.mcp.url or " ".join([config.mcp.command or "", *config.mcp.args])
+        else:  # in-process test servers: one breaker per server object
+            key = target if isinstance(target, str) else f"in-process:{id(target)}"
+        return BREAKERS.get(capability, key, config.limits)
+
+    @asynccontextmanager
+    async def _connected(self, capability: str) -> AsyncIterator[MCPClient]:
+        """A connected client, guarded by the circuit breaker (PR-042): an open circuit
+        fails at once; connect errors count as failures, a connect as a success."""
+        breaker = self.breaker(capability)
+        if breaker is not None:
+            breaker.check()
+        client = self.client(capability)
+        try:
+            await client.connect()
+        except MCPClientError as exc:
+            if breaker is not None:
+                breaker.record_failure(str(exc))
+            raise
+        if breaker is not None:
+            breaker.record_success()
+        try:
+            yield client
+        finally:
+            await client.close()
+
     @asynccontextmanager
     async def write_toolset(
         self, capability: str, *, actor: str, investigation_id: str | None = None
@@ -83,7 +118,7 @@ class MCPRegistry:
         """Toolset over ``write_allowlist`` ONLY (no read tools). Used exclusively by the
         approval executor for APPROVED proposals; agents never get one."""
         config = self.settings.capability(capability)
-        async with self.client(capability) as client:
+        async with self._connected(capability) as client:
             yield Toolset(
                 capability,
                 config,
@@ -100,7 +135,7 @@ class MCPRegistry:
         self, capability: str, *, agent: str, investigation_id: str | None = None
     ) -> AsyncIterator[Toolset]:
         config = self.settings.capability(capability)
-        async with self.client(capability) as client:
+        async with self._connected(capability) as client:
             yield Toolset(
                 capability,
                 config,
@@ -110,4 +145,5 @@ class MCPRegistry:
                 audit=self.audit,
                 investigation_id=investigation_id,
                 watch_tools=self.write_tools(),
+                breaker=self.breaker(capability),
             )

@@ -48,6 +48,8 @@ class ApiContext:
     executor_factory: ExecutorFactory
     store_ok: bool = True
     background: set[asyncio.Task[None]] = field(default_factory=set)
+    #: Start the stuck-investigation reaper on startup (tests start it by hand).
+    reaper: bool = True
     #: The chat box's intent classifier (PR-041); built on first use.
     intent: IntentClassifier | None = None
 
@@ -73,8 +75,25 @@ class ApiContext:
         except StoreError as exc:
             log.error("evidence store unavailable: %s", exc)
             self.store_ok = False
+        if self.reaper and self.settings.api.stuck_after_s > 0:
+            task = asyncio.create_task(self._reap_forever(), name="stuck-investigation-reaper")
+            self.background.add(task)
+            task.add_done_callback(self.background.discard)
+
+    async def _reap_forever(self) -> None:
+        """Reap once at startup (orphans of a crashed process), then every interval."""
+        while True:
+            try:
+                await self.runner.reap_stuck()
+            except Exception as exc:  # the store may be down; try again next time
+                log.warning("stuck-investigation reaper failed: %s", exc)
+            await asyncio.sleep(self.settings.api.reaper_interval_s)
 
     async def shutdown(self) -> None:
+        for task in list(self.background):
+            task.cancel()
+        if self.background:
+            await asyncio.wait(list(self.background), timeout=5)
         await self.runner.shutdown()
         await self.store.close()
 
@@ -88,6 +107,7 @@ def build_context(
     faults: FaultController | None = None,
     health: CapabilityHealth | None = None,
     executor_factory: ExecutorFactory | None = None,
+    reaper: bool = True,
 ) -> ApiContext:
     """The production wiring (``AIOPS_PROFILE``); tests override pieces."""
     settings = settings or load_settings()
@@ -104,4 +124,5 @@ def build_context(
         health=health or CapabilityHealth(settings),
         faults=faults or KubectlFaultController(settings.config_dir.parent),
         executor_factory=executor_factory or default_executor_factory(settings),
+        reaper=reaper,
     )

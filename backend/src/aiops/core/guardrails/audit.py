@@ -24,6 +24,9 @@ class AuditRecord(BaseModel):
     investigation_id: str | None = None
     tool_call: ToolCall  # arguments are already redacted
     redactions: dict[str, int] = Field(default_factory=dict)
+    #: Prompt-injection heuristics that fired on the tool output: kind -> matched text
+    #: (from the redacted output). The attempt is recorded; the output stayed data.
+    suspected_injection: dict[str, str] = Field(default_factory=dict)
 
 
 class AuditSink(Protocol):

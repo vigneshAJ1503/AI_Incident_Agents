@@ -247,6 +247,9 @@ class ToolCall(_Model):
     duration_ms: float = 0.0
     result_chars: int = 0
     error: str | None = None
+    #: Prompt-injection heuristics that fired on the output (PR-042), e.g.
+    #: ``["ignore_instructions"]``. The output was still treated as data only.
+    suspected_injection: list[str] = Field(default_factory=list)
 
 
 class AgentTask(_Model):

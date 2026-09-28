@@ -524,6 +524,11 @@ class Orchestrator:
                 tool=event.data.get("tool"),
                 status=event.data.get("status"),
                 duration_ms=event.data.get("duration_ms"),
+                **(
+                    {"suspected_injection": event.data["suspected_injection"]}
+                    if event.data.get("suspected_injection")
+                    else {}
+                ),
             )
 
     # -- finishing ---------------------------------------------------------------------------

@@ -54,6 +54,10 @@ class MCPRegistry:
         path = Path(settings.guardrails.audit_log_path)
         return path if path.is_absolute() else settings.config_dir.parent / path
 
+    def write_tools(self) -> list[str]:
+        """Every write tool of the profile (data that names one is flagged, PR-042)."""
+        return sorted({t for c in self.settings.capabilities.values() for t in c.write_allowlist})
+
     def client(self, capability: str) -> MCPClient:
         config = self.settings.capability(capability)
         if self._replay_dir is not None:
@@ -105,4 +109,5 @@ class MCPRegistry:
                 guardrails=self.settings.guardrails,
                 audit=self.audit,
                 investigation_id=investigation_id,
+                watch_tools=self.write_tools(),
             )

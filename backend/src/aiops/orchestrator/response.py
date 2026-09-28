@@ -10,6 +10,7 @@ from __future__ import annotations
 from collections.abc import Sequence
 from datetime import timedelta
 
+from aiops.agents.base import SUSPECTED_INJECTION
 from aiops.agents.rca_agent import RCAOutcome
 from aiops.core.config import SeverityRules
 from aiops.core.models import (
@@ -139,8 +140,25 @@ def affected_services(inv: Investigation, outcome: RCAOutcome) -> list[str]:
     return services
 
 
+def security_notes(inv: Investigation) -> list[str]:
+    """Evidence whose raw data looked like instructions to the model (PR-042): named in
+    the report so a human knows the monitored data tried to steer the investigation."""
+    notes = []
+    for result in inv.results:
+        for evidence in result.evidence:
+            flagged = evidence.data.get(SUSPECTED_INJECTION)
+            if isinstance(flagged, dict) and flagged:
+                notes.append(
+                    f"Security: suspected prompt injection in {evidence.source} output "
+                    f"(`{evidence.id}`, {result.agent} agent): {', '.join(sorted(flagged))}. "
+                    "It was treated as data only; review the source."
+                )
+    return notes
+
+
 def open_questions(inv: Investigation, outcome: RCAOutcome, missing: Sequence[str]) -> list[str]:
     questions = [f"Not checked / incomplete: {m}" for m in missing]
+    questions += security_notes(inv)
     if outcome.root_cause is None and outcome.hypotheses:
         questions.append(
             "Evidence is too weak for a root cause: which additional data would confirm "

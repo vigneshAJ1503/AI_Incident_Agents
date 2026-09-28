@@ -574,7 +574,7 @@ limits:
   agent_max_tool_calls: 12
   max_rounds: 2
 guardrails:
-  redact: [emails, ip_addresses, jwt, api_keys, credit_cards]
+  redact: [secrets, pii]      # groups; see core/guardrails/redaction.py (PR-042)
   read_only: true
 ```
 

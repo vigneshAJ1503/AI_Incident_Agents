@@ -48,6 +48,8 @@ from aiops.providers import PROVIDER_REGISTRY, Provider
 log = logging.getLogger(__name__)
 
 EVIDENCE_DATA_CHARS = 4_000
+#: Evidence ``data`` key of tool output flagged by the injection heuristics (PR-042).
+SUSPECTED_INJECTION = "suspected_injection"
 
 
 class AgentSpec(BaseModel):
@@ -141,21 +143,28 @@ class AgentRun:
         toolset = self._tool_index.get(tool) or next(iter(self.toolsets.values()))
         outcome = await toolset.call(tool, arguments)  # unknown tools come back "blocked"
         self.tool_calls.append(outcome.tool_call)
+        flags = outcome.tool_call.suspected_injection
         self.agent.emit(
             "tool_called",
             self.task,
             tool=tool,
             status=outcome.tool_call.status,
             duration_ms=outcome.tool_call.duration_ms,
+            **({"suspected_injection": flags} if flags else {}),
         )
         if not outcome.ok:
             return outcome, None
+        data = _evidence_data(outcome)
+        if outcome.injection:
+            # Kept as evidence (it IS what the system contains) but marked, so the report
+            # can say this data tried to steer the investigation (PR-042).
+            data[SUSPECTED_INJECTION] = dict(outcome.injection)
         evidence = Evidence(
             kind=self.agent.spec.evidence_kind,
             source=f"{toolset.capability}.{tool}",
             summary=summary or f"{tool} result",
             query=json.dumps(arguments, sort_keys=True, default=str),
-            data=_evidence_data(outcome),
+            data=data,
         )
         self.evidence.append(evidence)
         return outcome, evidence

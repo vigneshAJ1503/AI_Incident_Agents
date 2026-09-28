@@ -97,7 +97,10 @@ def test_s1_details() -> None:
         in user
     )
     assert "| NEW |" in user and "Deployment detected: version v1.8.2" in user
-    assert result.prompt_version and result.prompt_version.startswith("logs/v2@")
+    assert result.prompt_version and result.prompt_version.startswith("logs/v3@")
+    # Vendor query guidance comes from the provider's prompt fragment (ADR-0012).
+    assert "+providers/logs/elasticsearch/v1@" in result.prompt_version
+    assert "`execute_esql`: breakdowns. Always `FROM payment-prod-*`" in system
     assert result.findings[0].kind is ClaimKind.OBSERVATION
 
 

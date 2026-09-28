@@ -78,7 +78,9 @@ server. "Implemented" = works today by configuration only. "Planned" = named in 
 | LLM | `openai_compat` ✓ (Groq, Gemini, OpenAI, Azure OpenAI, LiteLLM/vLLM gateways) | `anthropic`, `bedrock` | – |
 
 The matrix is code too: `backend/src/aiops/core/profiles.py` (`PROVIDERS`) lists each
-provider's status, required settings and the tools its agent calls, and `validate` uses it:
+provider's status, required settings and the tools its agent calls. Implemented rows come
+from the **provider adapter registry** (`backend/src/aiops/providers/`, ADR-0012), so a
+provider is "implemented" only when an adapter class exists; `validate` uses it:
 
 ```
 error: capability logs: provider 'loki' needs setting 'labels.service' (capabilities.logs.settings.labels.service)
@@ -193,7 +195,59 @@ credentials). Ask for **read-only** access only:
        evidence stakeholders need.
 11. [ ] Start read-only, one team, behind SSO (PR-045/047).
 
-## Known vendor couplings to remove in P2
+## How to add a provider
+
+Agents say **what** they need; a **provider adapter** says **how** to get it from one
+vendor (ADR-0012). Adding a vendor = one adapter module + one prompt fragment + profile
+settings. Agent code never changes.
+
+```
+backend/src/aiops/providers/
+  base.py                  Provider (class attributes for the matrix), ToolRequest
+  registry.py              PROVIDER_REGISTRY: (capability, provider) -> adapter class
+  logs/__init__.py         the logs interface (LogsProvider) + neutral shapes (LogScope, LogWindow, LogTable)
+  logs/elasticsearch.py    ES|QL + Kibana KQL links            (registered)
+  logs/_skeleton.py        copy-me template                   (NOT registered: leading "_")
+config/prompts/providers/<capability>/<provider>/v1.md       query guidance for the LLM
+```
+
+1. **Implement the interface.** Copy `providers/<capability>/_skeleton.py` (logs has one) to
+   `providers/<capability>/<provider>.py`. Each method is one question the agent asks and
+   returns a `ToolRequest(tool, arguments, columns=...)`: the MCP tool to call and its
+   arguments in the vendor's language. Results must come back in the capability's
+   **neutral shape**; for logs, a `LogTable` whose columns are the names listed in
+   `providers/logs/__init__.py` (`window`, `level`, `count`, `msg`, `first_seen`, ...).
+   Alias columns in the query, or map vendor names with `ToolRequest.columns`, or override
+   `table()`. Also implement the neutral deep link (`ui_link`) and, if useful,
+   `scope_note` (extra prompt text, e.g. how to filter a shared index).
+2. **Describe it** with class attributes: `capability`, `name` (the value of
+   `capabilities.<cap>.provider`), `mcp` (the MCP server), `required` (dotted settings keys
+   `validate` insists on), `agent_tools` (tools the agent calls itself; `validate` warns if
+   they're not in `tool_allowlist`), `note`, `prompt_fragment`, and vendor field defaults
+   (`default_fields` for logs).
+3. **Register it:** `PROVIDER_REGISTRY.register(MyProvider)` at the bottom of the module.
+   `aiops.providers` imports every non-`_` module, so nothing else needs editing. The matrix
+   row flips from "planned" to "implemented" (remove the static planned row in
+   `core/profiles.py`).
+4. **Prompt fragment:** `config/prompts/providers/<capability>/<provider>/v1.md` with the tool
+   names and 2-3 query examples in the vendor's language. It's rendered with the agent's
+   prompt variables (e.g. `$index`, `$project_key`) into the agent prompt's
+   `$provider_guidance`, and its ref is recorded with the run
+   (`logs/v3@<sha>+providers/logs/<provider>/v1@<sha>`). A company can override it in
+   `profiles/<company>/prompts/providers/...` like any prompt.
+5. **Profile settings:** `capabilities.<cap>.provider: <name>`, the MCP server's `mcp.url`,
+   a read-only `tool_allowlist`, and the provider's settings (field names, labels, link
+   templates). Add the settings to `profiles/_template/profile.yaml` and the table above;
+   `aiops profile validate <company>` reports missing `required` keys.
+6. **Contract tests** (`backend/tests/unit/test_providers.py` shows the pattern): golden
+   queries for each method, result normalization into the neutral shape, deep links, and
+   the registry/matrix/fragment checks (run for every registered provider automatically).
+   Then record fixtures against the real backend
+   (`backend/tests/fixtures/<capability>-<provider>/S*/`, with a `meta.json` window) and
+   replay the agent's scenarios through the new provider: the evals must pass with **zero
+   agent change** (PR-P4 does this for a second logs backend).
+
+## Known vendor couplings (P1 audit; P2 progress)
 
 Audit of `backend/src/aiops/{agents,core,mcp,evals}` and `config/prompts` (PR-P1). These are
 the places where code, not configuration, still assumes a vendor. They all work today with
@@ -203,11 +257,11 @@ change.
 
 | Where | Coupling | P2 direction |
 |-------|----------|--------------|
-| `agents/log_agent/agent.py:51-58` (`esql_string`, `esql_like`), `:84` (`FROM ... \| WHERE`), `:175`, `:184`, `:199` (`STATS ... BY`), `:265` (`LIKE`) | the Log agent writes **ES\|QL** itself | a `LogsQueryBuilder` per provider (ES\|QL, LogQL, SPL, OpenSearch PPL) |
-| `agents/log_agent/agent.py:159` | calls tool `execute_esql` by name | tool names from the provider adapter |
-| `agents/log_agent/agent.py:31-35` (`DEFAULT_FIELDS`: `@timestamp`, `message.keyword`), `:110` (`<message>.keyword` fallback) | Elasticsearch/ECS field conventions as defaults | defaults move into the elasticsearch adapter; other providers bring their own |
-| `agents/log_agent/agent.py:87`, `:136-143` | UI links built from **KQL** (Kibana query language) | the adapter renders the link query |
-| `agents/log_agent/patterns.py:39-40` | `like_prefix` for an ES\|QL `LIKE` | part of the query builder |
+| ~~`agents/log_agent/agent.py:51-58` (`esql_string`, `esql_like`), `:84` (`FROM ... \| WHERE`), `:175`, `:184`, `:199` (`STATS ... BY`), `:265` (`LIKE`)~~ | the Log agent writes **ES\|QL** itself | ✅ **P2:** `providers/logs/elasticsearch.py` (`volume_by_level`, `message_patterns`, `versions_and_startups`, `first_occurrences`) |
+| ~~`agents/log_agent/agent.py:159`~~ | calls tool `execute_esql` by name | ✅ **P2:** the adapter's `ToolRequest` names the tool |
+| ~~`agents/log_agent/agent.py:31-35` (`DEFAULT_FIELDS`), `:110`~~ | Elasticsearch/ECS field conventions as defaults | ✅ **P2:** `ElasticsearchLogs.default_fields` / `fields()` |
+| ~~`agents/log_agent/agent.py:87`, `:136-143`~~ | UI links built from **KQL** | ✅ **P2:** `ElasticsearchLogs.ui_link(levels=..., phrase=...)` |
+| ~~`agents/log_agent/patterns.py:39-40`~~ | `like_prefix` for an ES\|QL `LIKE` | ✅ **P2:** `providers/logs.literal_prefix` + `esql_like` in the adapter |
 | `agents/tickets_agent/analysis.py:115-145` (`jql_value`, `recency_clause`, `scope_jql`, `keyword_jql`) | the Tickets agent writes **JQL** | a tickets query builder (JQL; ServiceNow/Linear later) |
 | `mcp/tickets.py:17-26` (`jira_search`, `jira_get_issue`, ... `TICKET_FIELDS`) | the mcp-atlassian tool names and Jira field names | stays the contract for jira/mock; other providers map to it in their adapter |
 | `agents/alert_agent/agent.py:56` (`matcher_filter`), `:117` (`list_alerts` args) | Alertmanager matcher syntax and tool arguments | alerts adapter (PagerDuty/Opsgenie use service ids, not labels) |
@@ -215,7 +269,7 @@ change.
 | `agents/code_agent/agent.py:160`, `:176`, `:246` | git-mcp tool names (`list_releases`, `search_commits`, `get_diff`) | code adapter (GitHub/GitLab APIs) |
 | `agents/k8s_agent/agent.py:160-180` | kubernetes-mcp tool names | fine for every Kubernetes; only the MCP server varies |
 | `core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`) | only OpenAI-compatible LLMs | `anthropic`, `bedrock` providers |
-| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager) | prompts teach one query language | per-provider prompt fragments, or profile prompt overrides (possible today) |
+| `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager) | prompts teach one query language | ✅ **P2 (logs):** `logs/v3.md` is vendor-neutral; ES\|QL guidance in `providers/logs/elasticsearch/v1.md` via `$provider_guidance`. Tickets/alerts: per-provider fragments |
 | `evals/runner.py:308`, `:349` | local seeding defaults `http://localhost:9093` / `:9200` (env-overridable) | test harness only; fine |
 
 Not couplings (already configuration): field names, index patterns, label and metric names,

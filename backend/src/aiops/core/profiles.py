@@ -23,6 +23,7 @@ from aiops.core.config import (
     load_yaml,
     referenced_env_vars,
 )
+from aiops.providers import PROVIDER_REGISTRY
 
 Status = Literal["implemented", "planned"]
 
@@ -39,16 +40,12 @@ class ProviderSpec:
     note: str = ""
 
 
-#: Capability -> provider -> spec. "planned" = named in the roadmap (PR-P2..P4); a profile
-#: may name it, but ``validate`` reports it as not implemented yet.
-PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
+#: Capability -> provider -> spec, for providers WITHOUT a registered adapter class:
+#: "planned" = named in the roadmap (PR-P2..P4); a profile may name it, but ``validate``
+#: reports it as not implemented yet. Implemented providers with an adapter
+#: (``aiops.providers``, ADR-0012) are added from the provider registry below.
+_STATIC_PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
     "logs": {
-        "elasticsearch": ProviderSpec(
-            "implemented",
-            "mcp-servers/elasticsearch-mcp",
-            agent_tools=("execute_esql",),
-            note="ES|QL; field names from settings.fields",
-        ),
         "opensearch": ProviderSpec("planned", "opensearch-mcp", note="P4 candidate"),
         "loki": ProviderSpec(
             "planned", "loki-mcp", required=("labels.service",), note="LogQL; P4 candidate"
@@ -118,6 +115,19 @@ PROVIDERS: dict[str, dict[str, ProviderSpec]] = {
         "confluence": ProviderSpec("planned", "mcp-atlassian", required=("spaces",)),
     },
 }
+
+
+def provider_matrix() -> dict[str, dict[str, ProviderSpec]]:
+    """The static rows plus every registered provider adapter (implemented)."""
+    matrix = {cap: dict(specs) for cap, specs in _STATIC_PROVIDERS.items()}
+    for cls in PROVIDER_REGISTRY.all():
+        matrix.setdefault(cls.capability, {})[cls.name] = ProviderSpec(
+            "implemented", cls.mcp, cls.required, cls.agent_tools, cls.note
+        )
+    return {cap: dict(sorted(specs.items())) for cap, specs in matrix.items()}
+
+
+PROVIDERS: dict[str, dict[str, ProviderSpec]] = provider_matrix()
 
 #: LLM providers: implemented = accepted by ``llm.provider`` today.
 LLM_PROVIDERS: dict[str, tuple[Status, str]] = {

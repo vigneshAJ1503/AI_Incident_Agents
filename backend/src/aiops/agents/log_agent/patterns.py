@@ -4,7 +4,7 @@
  -> "... within <NUM>ms (pool size=<NUM>, active=<NUM>, waiting=<NUM>)"
 
 Deterministic and dependency-free; good enough to merge the variants that
-ES|QL groups separately (ids, counts, durations, hosts).
+a log store groups separately (ids, counts, durations, hosts).
 """
 
 from __future__ import annotations
@@ -34,14 +34,6 @@ def template(message: str) -> str:
     for pattern, token in _MASKS:
         out = pattern.sub(token, out)
     return _SPACES.sub(" ", out).strip()
-
-
-def like_prefix(template_text: str, min_len: int = 8) -> str | None:
-    """Literal prefix before the first placeholder, for an ES|QL LIKE filter."""
-    prefix = template_text.split("<", 1)[0].rstrip()
-    if len(prefix) < min_len:
-        return None
-    return prefix
 
 
 @dataclass

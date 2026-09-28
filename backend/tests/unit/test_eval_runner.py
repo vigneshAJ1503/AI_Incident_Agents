@@ -164,7 +164,7 @@ def test_replay_single_scenario() -> None:
     assert result.passed and result.status == "success"
     assert "db_timeout_errors_up" in result.signals
     assert result.tool_calls == 4 and result.llm_calls == 1 and result.tokens == 0
-    assert report.model == "fake" and (report.prompt_version or "").startswith("logs/v2@")
+    assert report.model == "fake" and (report.prompt_version or "").startswith("logs/v3@")
 
 
 def test_replay_missing_fixtures_fails_the_scenario(tmp_path: Path) -> None:

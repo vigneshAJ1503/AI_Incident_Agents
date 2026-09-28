@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from aiops.agents.log_agent.patterns import cluster, like_prefix, template
+from aiops.agents.log_agent.patterns import cluster, template
+from aiops.providers.logs import literal_prefix as like_prefix
 
 
 @pytest.mark.parametrize(

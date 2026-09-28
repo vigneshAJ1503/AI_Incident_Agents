@@ -37,12 +37,13 @@ from aiops.core.models import (
     TokenUsage,
     ToolCall,
 )
-from aiops.core.prompts import PromptLoader
+from aiops.core.prompts import Prompt, PromptLoader
 from aiops.llm.base import ChatMessage, LLMError, LLMProvider, ToolSpec
 from aiops.llm.structured import SUBMIT_TOOL, submit_tool
 from aiops.mcp.client import MCPClientError
 from aiops.mcp.registry import MCPRegistry
 from aiops.mcp.toolset import ToolOutcome, Toolset, truncate
+from aiops.providers import PROVIDER_REGISTRY, Provider
 
 log = logging.getLogger(__name__)
 
@@ -300,13 +301,35 @@ class BaseAgent(ABC):
             "hints": json.dumps(run.task.hints, default=str) if run.task.hints else "none",
         }
 
+    def provider[P: Provider](self, capability: str, base: type[P]) -> P:
+        """The provider adapter the profile selects for ``capability`` (ADR-0012)."""
+        return PROVIDER_REGISTRY.for_settings(self.deps.settings, capability, base)
+
+    def prompt_fragments(self, prompt_text: str) -> list[Prompt]:
+        """Prompt fragments of the selected providers (``config/prompts/providers/<cap>/
+        <provider>/vN.md``), when the agent prompt asks for ``$provider_guidance``."""
+        if "provider_guidance" not in prompt_text:
+            return []
+        fragments = []
+        for capability in self.spec.capabilities:
+            cap = self.deps.settings.capabilities.get(capability)
+            cls = PROVIDER_REGISTRY.find(capability, cap.provider) if cap else None
+            if cls is not None and cls.prompt_fragment:
+                fragments.append(self.deps.prompts.load(cls.prompt_fragment))
+        return fragments
+
     def build_prompt(self, run: AgentRun) -> tuple[str, str]:
         prompts = self.deps.prompts
         version = self.deps.settings.agent(self.name).prompt_version
         common = prompts.load("common")
         own = prompts.load(self.spec.prompt, version)
-        run.prompt_ref = own.ref
         variables = self.prompt_variables(run)
+        fragments = self.prompt_fragments(own.text)
+        # Vendor query guidance (ES|QL, JQL, ...) comes from the providers' prompt fragments.
+        variables["provider_guidance"] = "\n\n".join(
+            fragment.render(**variables).strip() for fragment in fragments
+        )
+        run.prompt_ref = "+".join([own.ref, *(fragment.ref for fragment in fragments)])
         system = f"{common.text}\n\n{own.render(**variables)}"
         user = (
             f"Objective: {run.task.objective}\n"

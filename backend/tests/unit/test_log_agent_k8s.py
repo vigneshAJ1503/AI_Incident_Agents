@@ -17,12 +17,13 @@ import pytest
 
 from aiops.agents.deps import build_deps
 from aiops.agents.log_agent import LogAgent
-from aiops.agents.log_agent.agent import LogScope
 from aiops.core.config import load_settings
 from aiops.core.models import AgentResult, AgentStatus, AgentTask
 from aiops.evals.replay import echo_responder
 from aiops.evals.scoring import score_agent
 from aiops.llm.fake import FakeLLMProvider
+from aiops.providers.logs import LogScope
+from aiops.providers.logs.elasticsearch import ElasticsearchLogs
 from tests.fixtures.record_logs_k8s import task_for_window
 from tests.fixtures.scenario_context import SCENARIOS
 
@@ -120,15 +121,18 @@ def scope(service_value: str | None) -> LogScope:
     )
 
 
+ES = ElasticsearchLogs()
+
+
 def test_scope_without_filter_is_unchanged() -> None:
     plain = scope(None)
-    assert plain.source == "FROM logs-*" and plain.service_where is None
-    assert plain.service_kql == ""
+    assert ES.source(plain) == "FROM logs-*" and ES.service_where(plain) is None
+    assert ES.service_kql(plain) == ""
 
 
 def test_scope_filter_escapes_the_value() -> None:
     shared = scope('pay"ment')
-    assert shared.source == 'FROM logs-* | WHERE kubernetes.labels.app == "pay\\"ment"'
+    assert ES.source(shared) == 'FROM logs-* | WHERE kubernetes.labels.app == "pay\\"ment"'
 
 
 def test_synthetic_local_env_has_no_service_filter() -> None:

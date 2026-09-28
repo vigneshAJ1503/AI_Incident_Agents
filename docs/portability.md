@@ -77,7 +77,7 @@ server. "Implemented" = works today by configuration only. "Planned" = named in 
 | code | `git` ✓ (read-only clones of GitHub/GitLab/Bitbucket repos) | `github`, `gitlab` (API) | `mcp-servers/git-mcp` |
 | tickets | `jira` ✓ (the `mcp-atlassian` tool contract: Jira Cloud / Data Center), `mock` ✓ | – | `sooperset/mcp-atlassian`, `mcp-servers/mock-tickets-mcp` |
 | knowledge | `postgres_fts` ✓ (markdown runbooks) | `confluence` | `mcp-servers/knowledge-mcp` |
-| LLM | `openai_compat` ✓ (Groq, Gemini, OpenAI, Azure OpenAI, LiteLLM/vLLM gateways) | `anthropic`, `bedrock` | – |
+| LLM | `openai_compat` ✓ (Groq, Gemini, OpenAI, OpenRouter, a company vLLM/LiteLLM/Ollama server), `anthropic` ✓ (Claude API), `bedrock` ✓ (Converse API, AWS credential chain), `azure_openai` ✓ (deployments + api-version) | `vertex` | – (in-process adapters: `backend/src/aiops/llm/`, docs/setup/llm-providers.md) |
 
 The matrix is code too: `backend/src/aiops/core/profiles.py` (`PROVIDERS`) lists each
 provider's status, required settings and the tools its agent calls. Implemented rows come
@@ -116,7 +116,7 @@ unless noted. `_template/profile.yaml` has each one commented.
 | tickets | `project_key`, `resolved_lookback_days`, `symptom_terms`, `ui_link_template` | the incident project, how far back "similar incidents" go, your symptom vocabulary, `{key}` link |
 | knowledge | `ui_link_template`, `search_k`, `top_docs` | where a cited runbook opens (`{path}`) |
 | every capability | `mcp.url`, `tool_allowlist`, `limits` | your MCP endpoint, the read-only tools agents may call, result/time caps |
-| – | `llm.base_url`, `llm.models.{fast,agent,rca}` | your LLM gateway and models (must support tool calling) |
+| – | `llm.provider`, `llm.base_url`, `llm.api_version`, `llm.models.{fast,agent,rca}` | your approved LLM platform, its endpoint and models/deployments (must support tool calling); see docs/setup/llm-providers.md |
 
 ## The service catalog (`services.yaml`)
 
@@ -176,7 +176,7 @@ timeout, redaction and audit; nothing is written; secret **values** are never pr
 | contract | an allowlisted tool is missing on the server (FAIL); a write-looking tool (`create/update/delete/patch/exec/scale/...`) is **in** `tool_allowlist` (FAIL); the server exposes write tools that aren't approval-gated `write_allowlist` entries (WARN: "keep them out of the allowlist and prefer a read-only credential") |
 | smoke | one tiny read-only call fails: logs `list_indices` + a 1-hour count (size 1), metrics `count(up)`, alerts `list_alerts` (limit 1), k8s `list_deployments` in the catalog namespace, code `list_repositories`, tickets `jira_search` (max 1), knowledge `list_docs` |
 | catalog | for a **sample** of services (`--sample 3`, or `--service`): index pattern matches no index (FAIL) or has no recent docs (WARN), deployment not found, repo not served, no metric series in the last hour for the catalog labels, runbook not indexed (WARN) |
-| llm | no key: WARN "agents will fail until an LLM key is set"; a one-token ping otherwise (`--skip-llm` skips it) |
+| llm | shows provider, endpoint and the model per role (`fast/agent/rca`); no key (or, for Bedrock, no AWS credentials): WARN "agents will fail until ..."; a missing endpoint/api-version/region: FAIL naming the env var; a one-token ping otherwise (`--skip-llm` skips it) |
 
 Exit code: `0` all OK, `1` warnings with `--strict`, `2` any FAIL. `--json` for CI.
 
@@ -202,7 +202,7 @@ credentials). Ask for **read-only** access only:
       Writes (create/comment) happen only through `aiops approvals` after a human approves;
       set `TICKETS_READ_ONLY_MODE=true` on the server if the company wants no writes at all.
 - [ ] **Knowledge**: read access to the runbook repo / space.
-- [ ] **LLM**: an API key scoped to the approved models, with a spend limit. Confirm the
+- [ ] **LLM**: the company-approved platform (docs/setup/llm-providers.md): a key scoped to the approved models with a spend limit, or for Bedrock an IAM role allowed only `bedrock:InvokeModel` on those models. Confirm the
       data-processing terms allow log snippets (redaction runs first: `guardrails.redact`).
 
 ## Secrets
@@ -327,7 +327,7 @@ change.
 | ~~`agents/metrics_agent/agent.py:179` (`query_range`), `:57` (`MAX_POINTS`), `:60-65` (`parse_step`), `analysis.py:117` (`parse_series`)~~ | prometheus-mcp tool name, step/points cap and result format | ✅ **P2c:** the adapter's `MetricRequest` names the tool; `series()` normalizes to neutral series |
 | ~~`agents/metrics_agent/agent.py:236-248`~~ | Grafana panel / Prometheus graph links | ✅ **P2c:** `PrometheusMetrics.ui_link` / `query_link` |
 | `agents/k8s_agent/agent.py:160-180` | kubernetes-mcp tool names | kept: one Kubernetes API everywhere. `providers/k8s/kubernetes.py` is thin (describes the contract for the registry/`validate`); `knowledge/postgres_fts` likewise |
-| `core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`) | only OpenAI-compatible LLMs | `anthropic`, `bedrock` providers (moved to PR-P4) |
+| ~~`core/config.py:105` (`LLMConfig.provider: Literal["openai_compat", "fake"]`)~~ | only OpenAI-compatible LLMs | ✅ **P4b:** `anthropic`, `bedrock`, `azure_openai` adapters behind `LLMProvider` (ADR-0017) |
 | `config/prompts/logs/v1.md:18`, `logs/v2.md:28` (ES\|QL examples), `tickets/v1.md:12-20` (JQL), `alerts/v1.md:18` (Alertmanager), `metrics/v1.md:20-26` (PromQL) | prompts teach one query language | ✅ **P2:** `logs/v3`, `tickets/v2`, `alerts/v2`, `code/v2`, `metrics/v2` are vendor-neutral; guidance in `config/prompts/providers/{logs/elasticsearch,tickets/jira,alerts/alertmanager,code/git,metrics/prometheus}/v1.md` via `$provider_guidance` |
 | `evals/runner.py:308`, `:349` | local seeding defaults `http://localhost:9093` / `:9200` (env-overridable) | test harness only; fine |
 

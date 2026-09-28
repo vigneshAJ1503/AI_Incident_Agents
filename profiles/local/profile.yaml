@@ -13,7 +13,9 @@ metadata:
   owners: [vigneshAJ1503]
 
 llm:
-  provider: ${LLM_PROVIDER:-openai_compat}   # openai_compat (hosted Groq/Gemini) | fake
+  # openai_compat (hosted Groq/Gemini free tiers) | fake. Anthropic/Bedrock/Azure OpenAI:
+  # replace this block with one from profiles/_template/profile.yaml (llm-providers.md).
+  provider: ${LLM_PROVIDER:-openai_compat}
   base_url: ${OPENAI_COMPAT_BASE_URL:-https://api.groq.com/openai/v1}
   api_key: ${OPENAI_COMPAT_API_KEY:-}
   models:

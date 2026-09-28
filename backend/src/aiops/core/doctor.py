@@ -15,6 +15,7 @@ Values of variables and secrets are never printed, only their names.
 
 from __future__ import annotations
 
+import asyncio
 import re
 import time
 from collections.abc import Awaitable, Callable, Mapping
@@ -28,8 +29,9 @@ from aiops.core.catalog import ServiceCatalog, ServiceEntry
 from aiops.core.config import CapabilityConfig, ConfigError, LLMConfig, Settings
 from aiops.core.guardrails.audit import AuditSink, MemoryAuditSink
 from aiops.core.profiles import ValidationReport, validate_profile
+from aiops.llm._common import mask
 from aiops.llm.base import ChatMessage, LLMProvider
-from aiops.llm.factory import create_provider
+from aiops.llm.factory import config_problems, create_provider
 from aiops.mcp.client import MCPClient, MCPClientError, ServerTarget, target_from_config
 from aiops.mcp.toolset import ToolOutcome, Toolset
 
@@ -725,26 +727,41 @@ class Doctor:
                 "provider 'fake': no real LLM configured",
                 "set LLM_PROVIDER=openai_compat and a hosted LLM key",
             )
-        if llm.api_key is None or not llm.api_key.get_secret_value():
+        roles = " ".join(f"{role}={model}" for role, model in llm.models_by_role().items())
+        label = f"{llm.provider} ({_llm_endpoint(llm)}) {roles}"
+        problems = config_problems(llm)
+        key_missing = [p for p in problems if p.startswith("llm.api_key")]
+        if key_missing:
             return Check(
                 "llm",
                 "llm",
                 Status.WARN,
-                "no LLM API key: agents will fail until an LLM key is set",
-                "set OPENAI_COMPAT_API_KEY (never commit it)",
+                f"{label}: no LLM API key: agents will fail until an LLM key is set",
+                f"set {llm.env_var('api_key') or 'the key'} (never commit it)",
             )
-        if not (llm.models.get("fast") or llm.models.get("agent")):
+        if problems:
             return Check(
                 "llm",
                 "llm",
                 Status.FAIL,
-                "no LLM model configured",
-                "set LLM_MODEL_AGENT (and optionally LLM_MODEL_FAST)",
+                f"{label}: " + "; ".join(problems),
+                "see docs/setup/llm-providers.md",
             )
+        if llm.provider == "bedrock" and self._llm_factory is None:
+            from aiops.llm.bedrock import aws_credentials_found
+
+            if not await asyncio.to_thread(aws_credentials_found):
+                return Check(
+                    "llm",
+                    "llm",
+                    Status.WARN,
+                    f"{label}: no AWS credentials: agents will fail until the AWS chain "
+                    "resolves credentials",
+                    "aws sso login / AWS_PROFILE / IRSA / an instance role (never in YAML)",
+                )
         config = llm.model_copy(
             update={"max_retries": 0, "timeout_s": min(llm.timeout_s, self.options.timeout_s)}
         )
-        secret = llm.api_key.get_secret_value()
         started = time.perf_counter()
         try:
             provider = (self._llm_factory or create_provider)(config)
@@ -752,19 +769,32 @@ class Doctor:
                 [ChatMessage.user("Reply with one word: pong")], role="fast", max_tokens=1
             )
         except Exception as exc:  # any provider failure is a FAIL row
-            message = str(exc).replace(secret, "********")[:200]
+            message = mask(str(exc), llm.api_key)[:200]
             return Check(
                 "llm",
                 "llm",
                 Status.FAIL,
-                f"{llm.base_url}: {type(exc).__name__}: {message}",
-                "check the key, base_url and model names",
+                f"{label}: {type(exc).__name__}: {message}",
+                "check the credentials, endpoint and model/deployment names",
             )
         ms = round((time.perf_counter() - started) * 1000, 1)
         return Check(
             "llm",
             "llm",
             Status.OK,
-            f"{llm.base_url} model={response.model}: one-token ping",
+            f"{label}: one-token ping ok (model={response.model})",
             latency_ms=ms,
         )
+
+
+def _llm_endpoint(llm: LLMConfig) -> str:
+    """Where the LLM calls go, for the doctor row (never a secret)."""
+    if llm.provider == "bedrock":
+        from aiops.llm.bedrock import aws_region
+
+        return llm.base_url or f"bedrock-runtime {aws_region() or 'no region'}"
+    if llm.provider == "anthropic":
+        return llm.base_url or "api.anthropic.com"
+    if llm.provider == "azure_openai":
+        return f"{llm.base_url} api-version={llm.api_version}"
+    return llm.base_url or "-"

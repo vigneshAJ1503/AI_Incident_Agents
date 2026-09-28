@@ -10,9 +10,13 @@ import typer
 from aiops.cli.common import EnvOption, console, err_console, handle_errors
 from aiops.core.config import ModelRole, load_settings
 from aiops.llm.base import ChatMessage, LLMError
-from aiops.llm.factory import create_provider
+from aiops.llm.factory import config_problems, create_provider
 
-app = typer.Typer(help="LLM provider utilities (hosted free tiers only).", no_args_is_help=True)
+app = typer.Typer(
+    help="LLM provider utilities (hosted models only: openai_compat, anthropic, bedrock, "
+    "azure_openai).",
+    no_args_is_help=True,
+)
 
 
 @app.command("ping")
@@ -25,6 +29,14 @@ def ping(
     if role not in ("fast", "agent", "rca"):
         raise typer.BadParameter("role must be fast, agent or rca")
     settings = load_settings(env)
+    problems = config_problems(settings.llm)
+    if problems:
+        err_console.print(
+            f"[red]LLM provider '{settings.llm.provider}' is not ready:[/red] "
+            + "; ".join(problems)
+            + " (docs/setup/llm-providers.md)"
+        )
+        raise typer.Exit(code=1)
     provider = create_provider(settings.llm)
     model_role: ModelRole = role  # type: ignore[assignment]
     started = time.perf_counter()
@@ -41,6 +53,6 @@ def ping(
         raise typer.Exit(code=1) from exc
     elapsed_ms = (time.perf_counter() - started) * 1000
     console.print(
-        f"[green]ok[/green] provider={provider.name} model={response.model} "
+        f"[green]ok[/green] provider={provider.name} role={role} model={response.model} "
         f"reply={response.content!r} latency={elapsed_ms:.0f}ms tokens={response.usage.total_tokens}"
     )

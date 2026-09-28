@@ -18,7 +18,7 @@ from aiops.agents.tickets_agent.draft import ACTIONS, draft_ticket
 from aiops.api import models as m
 from aiops.api.context import ApiContext
 from aiops.api.errors import ApiError, not_found
-from aiops.api.health import llm_configured
+from aiops.api.health import llm_configured, llm_missing
 from aiops.api.runner import RunMode
 from aiops.api.scenarios import faults_enabled, injectable
 from aiops.api.sse import event_stream
@@ -199,7 +199,7 @@ async def _choose_mode(
     if body.mode == "live" and not live_ok:
         reasons = []
         if not llm_ok:
-            reasons.append("no LLM configured (OPENAI_COMPAT_API_KEY, LLM_MODEL_AGENT)")
+            reasons.append("no LLM configured (" + "; ".join(llm_missing(ctx.settings)) + ")")
         if down:
             reasons.append(f"capabilities down: {', '.join(down)}")
         raise ApiError(

@@ -327,6 +327,54 @@ async def test_llm_checks(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> No
     assert "sk-secret-value" not in llm.detail
 
 
+async def test_llm_check_shows_provider_and_model_per_role(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """PR-P4b: the real Anthropic adapter over a mocked transport; bedrock without region."""
+    from tests.unit import llm_wire as w
+
+    anthropic_profile = PROFILE.replace(
+        "provider: openai_compat\n  base_url: https://llm.example.com/v1\n"
+        "  api_key: ${TEST_LLM_KEY:-}\n  models: {agent: some-model}",
+        "provider: anthropic\n  api_key: ${TEST_ANTHROPIC_KEY:-}\n"
+        "  models: {fast: small-claude, agent: big-claude}",
+    )
+    assert "anthropic" in anthropic_profile
+    monkeypatch.setenv("TEST_ANTHROPIC_KEY", w.ANTHROPIC_KEY)
+    settings, _ = settings_for(tmp_path, anthropic_profile)
+
+    def factory(config: LLMConfig) -> Any:
+        provider, _ = w.anthropic_server(lambda m, t: text("pong"), None, config)
+        return provider
+
+    doctor = Doctor(
+        settings,
+        DoctorOptions(capabilities=("logs",)),
+        overrides={"logs": logs_server()},
+        llm_factory=factory,
+        validation=ValidationReport("test"),
+    )
+    (llm,) = find(await doctor.run(), "llm", "llm")
+    assert llm.status == Status.OK, llm.detail
+    assert llm.detail.startswith("anthropic (api.anthropic.com) fast=small-claude")
+    assert "agent=big-claude rca=big-claude" in llm.detail
+    assert w.ANTHROPIC_KEY not in llm.detail
+
+    for var in ("AWS_REGION", "AWS_DEFAULT_REGION", "AWS_PROFILE"):
+        monkeypatch.delenv(var, raising=False)
+    monkeypatch.setenv("AWS_CONFIG_FILE", str(tmp_path / "no-aws-config"))
+    bedrock_profile = anthropic_profile.replace(
+        "provider: anthropic\n  api_key: ${TEST_ANTHROPIC_KEY:-}", "provider: bedrock"
+    )
+    settings, _ = settings_for(tmp_path / "bedrock", bedrock_profile)
+    report = await run_doctor(
+        settings, {"logs": logs_server(), "k8s": k8s_server()}, skip_llm=False
+    )
+    (llm,) = find(report, "llm", "llm")
+    assert llm.status == Status.FAIL
+    assert "bedrock (bedrock-runtime no region)" in llm.detail and "AWS_REGION" in llm.detail
+
+
 def test_write_tool_heuristic() -> None:
     for name in (
         "jira_create_issue",

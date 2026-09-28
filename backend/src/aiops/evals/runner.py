@@ -260,13 +260,17 @@ def select_scenarios(
 
 def require_live_llm(settings: Settings) -> None:
     """Live evals need a hosted LLM; fail with instructions instead of a stack trace."""
+    from aiops.llm.factory import config_problems
+
     llm = settings.llm
-    key = llm.api_key.get_secret_value() if llm.api_key else ""
-    if llm.provider != "openai_compat" or not key or not llm.models.get("agent"):
+    problems = ["llm.provider is 'fake'"] if llm.provider == "fake" else config_problems(llm)
+    if problems:
         raise EvalError(
-            "Live evals use the configured hosted LLM, but none is configured. Set "
-            "LLM_PROVIDER=openai_compat, OPENAI_COMPAT_API_KEY and LLM_MODEL_AGENT in .env "
-            "(free tiers: docs/setup/zero-cost.md), or use --mode replay (zero tokens)."
+            "Live evals use the configured hosted LLM, but it is not ready: "
+            + "; ".join(problems)
+            + ". E.g. LLM_PROVIDER=openai_compat, OPENAI_COMPAT_API_KEY and LLM_MODEL_AGENT "
+            "in .env (free tiers: docs/setup/zero-cost.md; other providers: "
+            "docs/setup/llm-providers.md), or use --mode replay (zero tokens)."
         )
 
 

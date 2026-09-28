@@ -45,6 +45,17 @@ tokens), portability by configuration only (ADR-0011/0012), evidence-first.
    responder), and the planner/RCA stay rule-based. The system works end to end with zero
    tokens; the LLM only adds phrasing and ranking.
 
+9. **RCA: rules first, the LLM only ranks/phrases** (PR-033). Candidate root causes come
+   from a rule table over the shared signal vocabulary; confidence = f(number of independent
+   data sources (logs/metrics/alerts/k8s/code), context bonus (runbooks/tickets), time
+   alignment of a change before the first error, contradictions). Fewer than 2 sources is
+   capped at 0.55; below 0.5 the report says "no root cause identified"; no problem signal
+   at all = "no incident" (no hypothesis, confidence 0). The `rca` model may reorder and
+   rephrase candidates, never add one or change a confidence.
+10. **Demo data comes from real replays** (PR-034): the synthetic 14-day history clones the
+    S0-S5 replay investigations (new ids/dates, seeded RNG, some partial/failed runs), so
+    every field shown in the UI is real pipeline output.
+
 ## Consequences
 
 - Investigations are deterministic and free in CI; the LLM is an optional enhancement.

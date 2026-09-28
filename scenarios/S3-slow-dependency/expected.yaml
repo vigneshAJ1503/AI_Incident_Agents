@@ -6,4 +6,9 @@ service: order-service
 environment: production
 window: 30m
 root_cause: Slow stock_levels queries in inventory-service cause order-service upstream timeouts.
+# Whole investigation (PR-034 evals): the root-cause hypothesis mentions one word of
+# every group, with at least min_confidence.
+investigation:
+  root_cause_keywords: [[inventory-service], [timeout], [order-service]]
+  min_confidence: 0.7
 # Per-agent expectations live in agents/<agent>.yaml

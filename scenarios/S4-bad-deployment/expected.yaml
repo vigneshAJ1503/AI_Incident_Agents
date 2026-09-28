@@ -8,4 +8,9 @@ service: user-service
 environment: production
 window: 30m
 root_cause: user-service deployment with a nonexistent image tag (ImagePullBackOff) leaves 1/3 replicas ready.
+# Whole investigation (PR-034 evals): the root-cause hypothesis mentions one word of
+# every group, with at least min_confidence.
+investigation:
+  root_cause_keywords: [[image], [user-service], [imagepullbackoff, pull]]
+  min_confidence: 0.7
 # Per-agent expectations live in agents/<agent>.yaml

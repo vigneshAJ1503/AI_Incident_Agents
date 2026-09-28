@@ -1236,6 +1236,15 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - the audit sink moves to Postgres
 - ✅ Investigations survive restarts; `aiops show <id>` replays them.
 
+> **As built (PR-033/034, ADR-0014):** the RCA agent (`agents/rca_agent`, not in the MCP
+> agent registry) correlates deterministically first: signal x agent co-occurrence, time
+> alignment (latest change before the first error) and a rule table of candidate root
+> causes whose confidence grows with independent data sources (1 source <= 0.55; docs and
+> tickets only corroborate). The `rca` model may only rank and rephrase candidates.
+> Replays S1-S5 reach the ground-truth root cause (confidence 0.88-0.95) and S0 reports
+> "no incident" (`aiops eval investigations`, zero tokens). `aiops demo seed|export`
+> produce the UI's demo data.
+
 #### PR-033 · RCA / Correlation Agent
 - **Branch:** `feat/033-rca-agent`
 - **Scope:**

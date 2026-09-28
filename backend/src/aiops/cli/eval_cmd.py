@@ -123,3 +123,31 @@ def run(
             f"[red]Pass rate {report.summary.pass_rate:.0%} is below {threshold:.0%}.[/red]"
         )
         raise typer.Exit(code=1)
+
+
+@app.command("investigations")
+@handle_errors
+def investigations(
+    scenario: list[str] = typer.Option([], "--scenario", "-s", help="Scenario id(s); default all."),
+    env: str | None = EnvOption,
+) -> None:
+    """Replay whole investigations (S0-S5) and score the RCA against ground truth."""
+    from aiops.evals.investigation import run_investigation_evals
+
+    results = run_investigation_evals(load_settings(env), scenario)
+    table = Table("Scenario", "Result", "Status", "Severity", "Conf.", "Tokens", "Root cause")
+    for e in results:
+        table.add_row(
+            f"{e.scenario} {e.title}",
+            "PASS" if e.passed else "FAIL: " + ", ".join(c.name for c in e.checks if not c.passed),
+            e.status,
+            e.severity,
+            f"{e.confidence:.2f}",
+            str(e.tokens),
+            e.root_cause or "no root cause (no incident)",
+        )
+    console.print(table)
+    passed = sum(e.passed for e in results)
+    console.print(f"{passed}/{len(results)} investigations reach the ground truth")
+    if passed < len(results):
+        raise typer.Exit(code=1)

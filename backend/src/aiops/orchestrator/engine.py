@@ -240,6 +240,10 @@ class Orchestrator:
 
         if self.concluder is not None:
             await self.concluder(run)
+        else:  # RCA (PR-033) + response builder (PR-034)
+            from aiops.orchestrator.conclude import conclude
+
+            await conclude(self, run)
 
     async def _round2(self, run: InvestigationRun, results1: list[AgentResult]) -> None:
         inv = run.investigation

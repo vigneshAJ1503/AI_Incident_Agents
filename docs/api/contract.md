@@ -38,6 +38,7 @@ The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the *
   },
   "clarification_question": null,
   "clarification_candidates": [],               // NEW (PR-030): catalog services to pick from
+  "claims": [ /* Finding: kind FACT|OBSERVATION|CORRELATION|HYPOTHESIS|RECOMMENDATION, description, evidence_ids */ ],  // NEW (PR-033)
   "versions": { "model": "…", "prompts": "…" },
   "usage": { "input_tokens": 0, "output_tokens": 0, "calls": 0 },   // aggregated (NEW, serialized)
   "duration_ms": 8420,                                               // NEW
@@ -116,4 +117,13 @@ Backwards compatible; the UI treats all of them as optional.
 - SSE framing: the UI listens to both unnamed (`data:` only) and named (`event: <type>`) messages; send `id: <seq>` on every event.
 
 ## Demo data
+
+**As built (PR-034):** `aiops demo seed` stores 46 investigations (6 replays + 40 synthetic, seeded RNG,
+`mode: "demo"`). `aiops demo export --out <dir>` (`make demo-export`, default `demo/export/`) writes
+`investigations.json` (`{items, next_cursor}`), `investigations/<id>.json`, `events/<id>.json`
+(SSE streams), `dashboard.json`, `services.json`, `agents.json`, `approvals.json`,
+`scenarios.json` and `manifest.json`; evidence data is trimmed to short excerpts. The UI's committed
+dataset (`frontend/src/demo/`, PR-036) has its own layout and generator (`make ui-demo-data`);
+this export is the backend-generated equivalent from real replay runs.
+
 `aiops demo seed` (PR-034) runs full investigations in **replay** mode over scenarios S0–S5 (recorded fixtures, fake LLM, zero tokens). It stores them with `mode: "demo"`, plus a synthetic 14-day history (about 40 investigations spread over the services, with realistic statuses, severities and durations) so the dashboard has charts on first launch. The UI also ships a **static demo dataset** (`frontend/src/demo/*.json`, generated from the same contract), so it can run with no backend at all (`NEXT_PUBLIC_DEMO=1`).

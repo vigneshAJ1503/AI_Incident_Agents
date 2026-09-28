@@ -795,6 +795,13 @@
   },
   "additionalProperties": false,
   "properties": {
+    "claims": {
+      "items": {
+        "$ref": "#/$defs/Finding"
+      },
+      "title": "Claims",
+      "type": "array"
+    },
     "clarification_candidates": {
       "items": {
         "type": "string"

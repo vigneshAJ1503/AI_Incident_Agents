@@ -6,4 +6,5 @@ service: payment-service
 environment: production
 window: 30m
 root_cause: null
+# Whole investigation (PR-034 evals): no incident, no hypothesis, confidence 0.
 # Per-agent expectations live in agents/<agent>.yaml

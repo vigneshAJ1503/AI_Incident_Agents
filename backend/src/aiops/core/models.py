@@ -324,6 +324,8 @@ class Investigation(_Model):
     hypotheses: list[Hypothesis] = Field(default_factory=list)
     recommendations: list[Recommendation] = Field(default_factory=list)
     timeline: list[TimelineEvent] = Field(default_factory=list)
+    #: The RCA's typed claims (FACT ... RECOMMENDATION), each citing evidence ids.
+    claims: list[Finding] = Field(default_factory=list)
     report: InvestigationReport | None = None  # None until the RCA phase finished
     clarification_question: str | None = None
     clarification_candidates: list[str] = Field(default_factory=list)

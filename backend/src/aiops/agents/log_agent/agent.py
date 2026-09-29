@@ -25,6 +25,7 @@ from typing import Any
 from aiops.agents.base import AgentRun, AgentSpec, BaseAgent
 from aiops.agents.log_agent.analysis import DATA_SIGNALS, SIGNALS, LogAnalysis, analyze
 from aiops.agents.registry import AGENTS
+from aiops.core.links import duration
 from aiops.core.models import (
     AgentResult,
     AgentStatus,
@@ -150,7 +151,7 @@ class LogAgent(BaseAgent):
         # Evidence summaries + links now that numbers are known.
         volume_ev.summary = (
             f"{analysis.current_errors} errors in {analysis.current_total} lines during the incident window "
-            f"vs {analysis.baseline_errors} in {analysis.baseline_total} over the previous {scope.baseline}"
+            f"vs {analysis.baseline_errors} in {analysis.baseline_total} over the previous {duration(scope.baseline.total_seconds())}"
         )
         volume_ev.link = logs.ui_link(scope, window)
         notes.append(f"[{volume_ev.id}] volume")

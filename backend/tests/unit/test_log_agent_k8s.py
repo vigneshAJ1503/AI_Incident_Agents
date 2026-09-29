@@ -87,7 +87,9 @@ def test_s1_real_db_timeouts_and_v182_deployment() -> None:
     assert {"db_timeout_errors_up", "deployment_detected", "new_error_pattern"} <= set(
         result.signals
     )
-    _volume, _patterns, versions, first = result.evidence
+    volume, _patterns, versions, first = result.evidence
+    # A compact duration, never Python's timedelta repr ("0:15:00", "1 day, 0:00:00").
+    assert volume.summary.endswith("over the previous 15m")
     assert "v1.8.2 at" in versions.summary
     assert first.summary.startswith("First occurrence of 'Database connection timeout")
     user = llm.requests[0]["messages"][1].content

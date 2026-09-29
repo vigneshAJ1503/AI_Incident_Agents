@@ -110,7 +110,8 @@ test("/metrics is Prometheus text with bounded labels (no investigation ids)", a
 
 test("Idempotency-Key: a retried create returns the same investigation", async ({ request }) => {
   const key = `e2e-${Date.now()}`;
-  const body = { question: "Something is broken" };
+  // a recorded scenario's question: without a live cluster the API runs in replay mode
+  const body = { question: "Is anything wrong with payment-service in production?" };
   const headers = { "Idempotency-Key": key };
   const first = await request.post("/api/investigations", { data: body, headers });
   expect(first.status()).toBe(202);
@@ -126,6 +127,9 @@ test("Idempotency-Key: a retried create returns the same investigation", async (
     headers,
   });
   expect(reused.status()).toBe(422);
+  expect(((await reused.json()) as { error: { code: string } }).error.code).toBe(
+    "idempotency_key_reused",
+  );
 });
 
 test("theme toggle switches light/dark and persists across a reload", async ({ page }) => {

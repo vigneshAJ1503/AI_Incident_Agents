@@ -46,14 +46,13 @@ scrape_configs:
       - targets: ["172.21.0.100:30080"]
 
   # PR-041 (docs/observability.md): the aiops API's own metrics, for the Grafana dashboard
-  # "AI Observability". Two targets, whichever is running: the `api` container on the
-  # `aiops` network (make demo / make api-up), or the API on the host (make api, make
-  # demo-live). The other one simply shows as down. Labels are bounded (agent, role,
+  # "AI Observability", whether the API runs in the `api` container (make demo / make
+  # api-up) or on the host (make api, make demo-live). Labels are bounded (agent, role,
   # model, capability, tool, status): never investigation ids.
   - job_name: aiops-api
     metrics_path: /metrics
+    # ONE target: the API container publishes :8000 on the host, so the host address reaches
+    # it too. Scraping both would count every metric twice. (Linux: bind a host-run API to
+    # 0.0.0.0 or point this at aiops-api:8000.)
     static_configs:
-      - targets: ["aiops-api:8000"]
-        labels: { deployment: container }
       - targets: ["host.docker.internal:8000"]
-        labels: { deployment: host }

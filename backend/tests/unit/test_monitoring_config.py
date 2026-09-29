@@ -105,8 +105,10 @@ def test_prometheus_scrapes_the_aiops_api_and_the_ai_dashboard_uses_its_metrics(
 
     job = scrape_jobs()["aiops-api"]
     assert job["metrics_path"] == "/metrics"
-    targets = {c["targets"][0] for c in job["static_configs"]}
-    assert targets == {"aiops-api:8000", "host.docker.internal:8000"}
+    targets = [t for c in job["static_configs"] for t in c["targets"]]
+    # One target: the container publishes :8000 on the host, so a second target (the
+    # container name) would reach the same process and count every metric twice.
+    assert targets == ["host.docker.internal:8000"]
     exported = set()
     for collector in vars(metrics).values():
         describe = getattr(collector, "describe", None)

@@ -6,7 +6,8 @@ Investigation loop:
      kills), each covering the service AND its catalog dependencies, over
      [window start - baseline, window end];
   2. deterministic analysis in Python: baseline median vs the window, sustained change
-     point (start time), magnitude (ratio, z-score), signals;
+     point (start time), magnitude (ratio, z-score), signals; a series with no baseline
+     (fresh cluster) is judged against ``settings.absolute_thresholds`` instead;
   3. bounded LLM follow-ups + an evidence-cited report;
   4. finalize: signals and status come from the data (an LLM can neither invent nor hide
      an anomaly), "no metric anomaly" is said explicitly, metrics are never a root cause.
@@ -30,6 +31,7 @@ from aiops.agents.metrics_agent.analysis import (
     SIGNALS,
     MetricsAnalysis,
     SeriesStats,
+    absolute_thresholds,
     detect,
     downsample,
     fmt,
@@ -72,6 +74,8 @@ class MetricsScope:
     dependencies: list[str]
     provider: MetricsProvider
     baseline: timedelta
+    #: no-baseline fallback: metric -> absolute threshold (settings.absolute_thresholds)
+    absolute: dict[str, float]
 
     @property
     def neutral(self) -> MetricScope:
@@ -144,6 +148,7 @@ class MetricsAgent(BaseAgent):
             dependencies=list(deps),
             provider=provider,
             baseline=timedelta(minutes=float(minutes)),
+            absolute=absolute_thresholds(provider.settings.get("absolute_thresholds")),
         )
 
     # -- deterministic phase ---------------------------------------------------------------
@@ -181,19 +186,28 @@ class MetricsAgent(BaseAgent):
                 for k, v in scope.provider.series(mr, outcome.data).items()
                 if k in mapping
             }
-            stats = [self._stats(mr, name, values, window) for name, values in series.items()]
+            stats = [
+                self._stats(mr, name, values, window, scope.absolute)
+                for name, values in series.items()
+            ]
             analysis.stats.extend(stats)
             self._describe(evidence, mr, stats, series, scope, window, span)
             notes.append(f"[{evidence.id}] {sli.key}")
         return analysis, notes
 
     @staticmethod
-    def _stats(mr: MetricRequest, service: str, values: Values, window: TimeRange) -> SeriesStats:
+    def _stats(
+        mr: MetricRequest,
+        service: str,
+        values: Values,
+        window: TimeRange,
+        absolute: dict[str, float],
+    ) -> SeriesStats:
         if mr.sli.key == "restarts":
             return restarts_stats(service, values, window)
         if mr.sli.key == "oom_killed":
             return oom_stats(service, values, window)
-        return detect(mr.sli.key, service, mr.sli.unit, values, window)
+        return detect(mr.sli.key, service, mr.sli.unit, values, window, absolute)
 
     def _describe(
         self,

@@ -30,7 +30,9 @@ reads Secrets/ConfigMaps.
   the whole manifest) are never returned.
 - **Credentials:** only bearer tokens (ServiceAccount kubeconfig or in-cluster). A kubeconfig with
   client certificates or exec/auth-provider plugins (typically an admin identity) is refused. The
-  token is re-read on HTTP 401, so a refreshed short-lived token needs no restart.
+  credential file (kubeconfig or projected token) is re-read when it changes and once more on
+  HTTP 401, so a refreshed short-lived token needs no restart. In Docker, mount the kubeconfig's
+  DIRECTORY (compose mounts `.data/k8s`): a single-file bind mount never sees an atomic replace.
 - **Validation and caps:** object names must be RFC 1123 names, label selectors a small character
   set with at most 10 terms; `limit` ≤ `MAX_RESULTS`, events/ReplicaSets scanned ≤ `MAX_SCAN`,
   logs ≤ `MAX_LOG_LINES` lines and `MAX_LOG_BYTES` bytes, look-back ≤ `MAX_SINCE_HOURS`;
@@ -56,7 +58,7 @@ Kubernetes keeps events for about **1 hour** (`--event-ttl`); older events can't
 ## Run
 ```bash
 make k8s-reader-kubeconfig   # RBAC + .data/k8s/aiops-reader.kubeconfig (token valid 24h)
-make kubernetes-mcp-up       # container on 127.0.0.1:8106, kubeconfig mounted read-only
+make kubernetes-mcp-up       # container on 127.0.0.1:8106, .data/k8s mounted read-only
 # or from the host (the kubeconfig points at the Minikube node IP, unreachable from macOS):
 KUBECONFIG=../../.data/k8s/aiops-reader.kubeconfig \
 K8S_API_SERVER=$(kubectl config view --minify --context aiops -o jsonpath='{.clusters[0].cluster.server}') \

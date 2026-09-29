@@ -9,12 +9,14 @@ import pytest
 from aiops.agents.metrics_agent.analysis import (
     MetricsAnalysis,
     Rule,
+    absolute_thresholds,
     detect,
     downsample,
     fmt,
     oom_stats,
     restarts_stats,
 )
+from aiops.core.config import ConfigError
 from aiops.core.models import TimeRange
 
 T0 = datetime(2026, 9, 25, 10, 0, tzinfo=UTC)
@@ -54,13 +56,100 @@ def test_error_rate_change_point_and_magnitude() -> None:
     assert "error rate up: 0.0% -> 30.0%" in a.describe()
 
 
-def test_no_baseline_is_never_an_anomaly() -> None:
+def test_no_baseline_without_absolute_threshold_is_never_an_anomaly() -> None:
     """A series that only starts inside the window (fresh Prometheus, new service) has
-    nothing to compare with: noted, never flagged."""
-    fresh = [None] * 30 + [1.2] * 31
+    nothing to compare with: without an absolute threshold it is noted, never flagged."""
+    fresh = [None] * 30 + [9.5] * 31
     stats = detect("latency_p95", "payment-service", "seconds", series(fresh), WINDOW)
-    assert stats.anomaly is None and stats.baseline is None and stats.current == 1.2
+    assert stats.anomaly is None and stats.baseline is None and stats.current == 9.5
     assert stats.note and "no baseline" in stats.note
+    rps = detect("rps", "payment-service", "rps", series(fresh), WINDOW, DEFAULTS)
+    assert rps.anomaly is None  # traffic has no absolute threshold
+
+
+DEFAULTS = absolute_thresholds(None)
+FRESH = [None] * 30  # nothing before the window: a cluster that just started
+
+
+@pytest.mark.parametrize(
+    ("metric", "unit", "value", "threshold_text"),
+    [
+        ("error_rate", "ratio", 0.14, "above the absolute threshold 5.0%"),
+        ("latency_p95", "seconds", 9.5, "above the absolute threshold 2.00s"),
+        ("db_pool_utilization", "ratio", 1.0, "above the absolute threshold 90.0%"),
+        ("db_pool_pending", "count", 11.0, "above the absolute threshold 0"),
+        ("cache_up", "bool", 0.0, "below the absolute threshold 0.5"),
+    ],
+)
+def test_no_baseline_falls_back_to_absolute_thresholds(
+    metric: str, unit: str, value: float, threshold_text: str
+) -> None:
+    """The live-demo bug: a fresh cluster (no baseline) with 14 % 5xx, a full DB pool and
+    9.5 s p95 must NOT be reported as "no anomaly"."""
+    stats = detect(metric, "payment-service", unit, series(FRESH + [value] * 31), WINDOW, DEFAULTS)
+    a = stats.anomaly
+    assert a is not None, stats.note
+    assert a.baseline is None and stats.baseline is None  # never invented
+    assert a.threshold == DEFAULTS[metric] and a.current == value
+    assert a.start_time == WINDOW.start and a.ongoing
+    assert f"no baseline; {threshold_text}" in a.describe()
+    assert stats.as_dict()["basis"] == "absolute"
+    assert stats.as_dict()["threshold"] == DEFAULTS[metric]
+    assert "->" not in a.describe()  # no fake "baseline -> current"
+
+
+def test_healthy_values_without_baseline_are_not_anomalies() -> None:
+    """S0 on a fresh cluster stays silent: healthy absolute values are below every limit."""
+    healthy = {
+        "error_rate": ("ratio", 0.0),
+        "latency_p95": ("seconds", 0.975),  # the sample services' healthy top bucket
+        "latency_p99": ("seconds", 0.995),
+        "db_pool_utilization": ("ratio", 0.35),
+        "db_pool_pending": ("count", 0.0),
+        "cache_up": ("bool", 1.0),
+    }
+    stats = []
+    for metric, (unit, value) in healthy.items():
+        s = detect(metric, "payment-service", unit, series(FRESH + [value] * 31), WINDOW, DEFAULTS)
+        assert s.anomaly is None, (metric, s.note)
+        assert s.note and "no baseline" in s.note
+        stats.append(s)
+    analysis = MetricsAnalysis("payment-service", [], WINDOW, WINDOW, stats=stats)
+    assert analysis.signals == ["no_anomaly"]
+    assert "within the absolute thresholds" in analysis.no_anomaly_sentence()
+
+
+def test_absolute_threshold_needs_a_sustained_run() -> None:
+    blip = FRESH + [0.0] * 10 + [0.5, 0.5] + [0.0] * 19  # two points (1 min) above 5 %
+    stats = detect("error_rate", "payment-service", "ratio", series(blip), WINDOW, DEFAULTS)
+    assert stats.anomaly is None
+    assert stats.note and "not above the absolute threshold 5.0%" in stats.note
+
+
+def test_a_real_baseline_wins_over_absolute_thresholds() -> None:
+    """Already at 100 % pool use before the window: that is the baseline, not a change."""
+    values = series([1.0] * 61)
+    stats = detect("db_pool_utilization", "payment-service", "ratio", values, WINDOW, DEFAULTS)
+    assert stats.anomaly is None and stats.baseline == 1.0
+
+
+def test_absolute_threshold_settings() -> None:
+    assert DEFAULTS == {
+        "error_rate": 0.05,
+        "latency_p95": 2.0,
+        "db_pool_utilization": 0.9,
+        "db_pool_pending": 0.0,
+        "cache_up": 0.5,
+    }
+    custom = absolute_thresholds({"latency_p95": 0.5, "latency_p99": 1, "error_rate": None})
+    assert custom["latency_p95"] == 0.5 and custom["latency_p99"] == 1.0
+    assert "error_rate" not in custom  # null disables one
+    with pytest.raises(ConfigError, match=r"unknown metric.*rps"):
+        absolute_thresholds({"rps": 1})
+    with pytest.raises(ConfigError, match="latency_p95 must be a non-negative number"):
+        absolute_thresholds({"latency_p95": "2s"})
+    with pytest.raises(ConfigError, match="must be a mapping"):
+        absolute_thresholds([1])
 
 
 def test_noise_and_short_blips_are_not_anomalies() -> None:

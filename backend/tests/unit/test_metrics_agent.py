@@ -193,6 +193,50 @@ def test_s0_says_no_anomaly_explicitly() -> None:
     assert "No metric anomaly for payment-service" in result.summary
 
 
+def _fresh_cluster(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Simulate a cluster that started at the window start: drop every recorded point
+    before it, so no series has a baseline (the live-demo situation)."""
+    original = MetricsAgent._stats
+
+    def without_baseline(mr: Any, service: str, values: Any, window: Any, absolute: Any) -> Any:
+        start = window.start.timestamp()
+        fresh = [(t, v) for t, v in values if t >= start]
+        return original(mr, service, fresh, window, absolute)
+
+    monkeypatch.setattr(MetricsAgent, "_stats", staticmethod(without_baseline))
+
+
+def test_fresh_cluster_s1_uses_absolute_thresholds(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fresh_cluster(monkeypatch)
+    result = run_agent("S1", FakeLLMProvider(responder=echo_responder("no_signal")))
+    assert result.status is AgentStatus.SUCCESS  # the data wins over the LLM's "no_signal"
+    assert {"error_rate_up", "latency_up", "db_pool_saturated"} <= set(result.signals)
+    assert "no_anomaly" not in result.signals
+    for metric in ("error_rate", "latency_p95", "db_pool_utilization", "db_pool_pending"):
+        own = evidence_for(result, metric)["services"]["payment-service"]
+        assert own["anomalous"] and own["basis"] == "absolute", (metric, own)
+        assert own["baseline"] is None  # never invented
+    errors = next(e for e in result.evidence if e.data.get("metric") == "error_rate")
+    assert "no baseline; above the absolute threshold 5.0%" in errors.summary
+
+
+def test_fresh_cluster_s0_stays_silent(monkeypatch: pytest.MonkeyPatch) -> None:
+    _fresh_cluster(monkeypatch)
+    result = run_agent("S0", FakeLLMProvider(responder=echo_responder("no_signal")))
+    assert result.status is AgentStatus.NO_SIGNAL
+    assert result.signals == ["no_anomaly"]
+    assert "No metric anomaly for payment-service" in result.summary
+
+
+def test_bad_absolute_thresholds_fail_readably() -> None:
+    settings = load_settings("local", CONFIG)
+    settings.capabilities["metrics"].settings["absolute_thresholds"] = {"latency": 2}
+    deps = build_deps(settings, llm=FakeLLMProvider(), replay_dir=FIXTURES / "S1")
+    result = asyncio.run(MetricsAgent(deps).run(task_for("S1")))
+    assert result.status is AgentStatus.FAILED
+    assert "absolute_thresholds: unknown metric(s) latency" in (result.error or result.summary)
+
+
 def test_llm_cannot_invent_or_hide_signals() -> None:
     def overclaiming(messages: list[ChatMessage], tools: list[ToolSpec] | None) -> LLMResponse:
         return tool_call(

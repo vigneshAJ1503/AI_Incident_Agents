@@ -130,14 +130,17 @@ services:
     image: aiops/kubernetes-mcp:0.1.0
     container_name: aiops-kubernetes-mcp
     environment:
-      - KUBECONFIG=/etc/aiops/kubeconfig
+      - KUBECONFIG=/etc/aiops/k8s/aiops-reader.kubeconfig
       - ALLOWED_NAMESPACES=${K8S_ALLOWED_NAMESPACES:-prod}
       - MAX_RESULTS=${K8S_MAX_RESULTS:-200}
       - MAX_LOG_LINES=${K8S_MAX_LOG_LINES:-300}
       - MAX_SINCE_HOURS=${K8S_MAX_SINCE_HOURS:-48}
       - QUERY_TIMEOUT_S=${K8S_QUERY_TIMEOUT_S:-15}
     volumes:
-      - ${K8S_READER_KUBECONFIG_FILE:-../../.data/k8s/aiops-reader.kubeconfig}:/etc/aiops/kubeconfig:ro
+      # The DIRECTORY, not the file: the script replaces the kubeconfig atomically (new
+      # inode), which a single-file bind mount would never show; the server re-reads it
+      # when it changes (and once on a 401), so a regenerated token needs no restart.
+      - ${K8S_READER_KUBECONFIG_DIR:-../../.data/k8s}:/etc/aiops/k8s:ro
     ports:
       - "127.0.0.1:${K8S_MCP_PORT:-8106}:8106"
     user: "10001:10001"

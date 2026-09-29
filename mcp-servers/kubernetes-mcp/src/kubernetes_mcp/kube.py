@@ -1,20 +1,36 @@
 """Minimal async Kubernetes API client: GET only, so read-only by construction.
 
 Talks to the REST API directly (no kubectl, no official client: small image and
-memory). Credentials are loaded lazily and reloaded once on HTTP 401, so a
-regenerated short-lived token (`make k8s-reader-kubeconfig`) is picked up without
+memory). Credentials are loaded lazily and reloaded when the credential file changes
+(kubeconfig or the in-cluster projected token: cheap stat per request) and, failing
+that, once on HTTP 401. So a regenerated short-lived token (`make
+k8s-reader-kubeconfig`) or a rotated projected ServiceAccount token is picked up without
 restarting the server.
+
+Note for bind mounts: mount the DIRECTORY holding the kubeconfig, not the file. The
+script replaces the file atomically (new inode), which a single-file bind mount never
+sees (deploy/compose/docker-compose.mcp.yml).
 """
 
 from __future__ import annotations
 
+import os
 import ssl
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 import httpx2
 
-from kubernetes_mcp.config import ConfigError, KubeCredentials, ServerSettings, load_credentials
+from kubernetes_mcp.config import (
+    IN_CLUSTER_DIR,
+    ConfigError,
+    KubeCredentials,
+    ServerSettings,
+    load_credentials,
+)
+
+Signature = tuple[int, int, int] | None
 
 Params = dict[str, str | int]
 
@@ -47,8 +63,25 @@ class KubeClient:
         self._load = credentials or (lambda: load_credentials(settings))
         self._transport = transport
         self._http: httpx2.AsyncClient | None = None
+        #: The file whose change means "new credentials" (only for the default loader).
+        self._watch: Path | None = None
+        if credentials is None:
+            self._watch = (
+                Path(settings.kubeconfig) if settings.kubeconfig else IN_CLUSTER_DIR / "token"
+            )
+        self._signature: Signature = None
+
+    def _stat(self) -> Signature:
+        if self._watch is None:
+            return None
+        try:
+            st = os.stat(self._watch)  # follows the ..data symlink of projected volumes
+        except OSError:
+            return None
+        return (st.st_mtime_ns, st.st_ino, st.st_size)
 
     def _connect(self) -> httpx2.AsyncClient:
+        self._signature = self._stat()
         try:
             creds = self._load()
         except ConfigError as exc:
@@ -67,6 +100,8 @@ class KubeClient:
             self._http = None
 
     async def _request(self, path: str, params: Params | None) -> httpx2.Response:
+        if self._http is not None and self._stat() != self._signature:
+            await self.aclose()  # the credential file was rewritten: use the new token
         for attempt in (1, 2):
             if self._http is None:
                 self._http = self._connect()

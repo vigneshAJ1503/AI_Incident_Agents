@@ -23,6 +23,8 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from aiops.fault_commits import DemoRepo
+
 NAMESPACE = "prod"
 BASE_MANIFESTS = "deploy/k8s/base"
 KUBECTL_TIMEOUT_S = 120
@@ -226,17 +228,26 @@ def resolve(scenario_or_type: str) -> Fault:
 class FaultState:
     scenario: str | None = None
     injected_at: str | None = None
+    #: Demo sample-repo commits that carry the fault (reverted with it), oldest first.
+    commits: list[str] = field(default_factory=list)
 
     @classmethod
     def load(cls, path: Path) -> FaultState:
         if not path.is_file():
             return cls()
         data: dict[str, Any] = json.loads(path.read_text())
-        return cls(scenario=data.get("scenario"), injected_at=data.get("injected_at"))
+        return cls(
+            scenario=data.get("scenario"),
+            injected_at=data.get("injected_at"),
+            commits=[str(c) for c in data.get("commits") or []],
+        )
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps({"scenario": self.scenario, "injected_at": self.injected_at}))
+        data: dict[str, Any] = {"scenario": self.scenario, "injected_at": self.injected_at}
+        if self.commits:
+            data["commits"] = self.commits
+        path.write_text(json.dumps(data))
 
 
 @contextmanager
@@ -270,11 +281,14 @@ class FaultInjector:
         *,
         sleep: Callable[[float], None] = time.sleep,
         log: Callable[[str], None] = print,
+        code_repo: DemoRepo | None = None,
     ) -> None:
         self.repo_root = repo_root
         self.run = runner
         self.sleep = sleep
         self.log = log
+        #: Local demo only: also commit the fault to the sample Git repo (fault_commits).
+        self.code_repo = code_repo
         self.state_path = repo_root / ".data" / "fault-state.json"
         self.lock_path = repo_root / ".data" / "cluster.lock"
 
@@ -289,17 +303,26 @@ class FaultInjector:
             raise FaultError(
                 f"Scenario {current.scenario} is already active; run `make revert-fault` first."
             )
-        for step in fault.steps:
-            self.log(f"  - {step.description}")
-            self.run(step.args)
+        # Like a real company: the change lands in git first, then it is rolled out.
+        commits = self.code_repo.commit_fault(fault.scenario) if self.code_repo else []
+        try:
+            for step in fault.steps:
+                self.log(f"  - {step.description}")
+                self.run(step.args)
+        except FaultError:
+            if self.code_repo:
+                self.code_repo.revert(commits)
+            raise
         state = FaultState(
             scenario=fault.scenario,
             injected_at=datetime.now(UTC).isoformat(timespec="seconds").replace("+00:00", "Z"),
+            commits=commits,
         )
         state.save(self.state_path)
         return state
 
     def _revert(self) -> None:
+        commits = self.state().commits
         self.log("  - re-apply base manifests (ConfigMaps, images, replicas)")
         self.run(("apply", "-k", str(self.repo_root / BASE_MANIFESTS)))
         self.run(("-n", NAMESPACE, "scale", "deployment/redis", "--replicas=1"))
@@ -320,6 +343,10 @@ class FaultInjector:
             self.run(
                 ("-n", NAMESPACE, "rollout", "status", f"deployment/{deploy}", "--timeout=180s")
             )
+        if commits and self.code_repo:
+            self.code_repo.revert(commits)
+        elif commits:
+            self.log(f"  - sample-repo commits {', '.join(c[:10] for c in commits)} kept (git off)")
         FaultState().save(self.state_path)
 
     # -- public API --------------------------------------------------------------------------

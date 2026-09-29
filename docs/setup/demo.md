@@ -106,6 +106,21 @@ page can then inject S1–S5 into the cluster (one at a time, `.data/cluster.loc
   true`; `POST /api/scenarios/S1/inject` → `injected`, then `/api/scenarios/revert` back to the
   healthy baseline in ~12 s.
 - `make demo-down` stops all of it, including Minikube (kept, not deleted).
+- **Kubernetes credentials:** when `demo-live` (re)starts Minikube it writes a fresh read-only
+  kubeconfig (`.data/k8s/aiops-reader.kubeconfig`); otherwise it keeps the existing one only if
+  the cluster still accepts its token (a `TokenReview`), it has > 2 h left, and the cluster CA is
+  unchanged. kubernetes-mcp mounts `.data/k8s` and re-reads the file when it changes: no restart.
+- **Code changes arrive through git:** `demo-live` keeps `.data/sample-repo` (read by git-mcp) a
+  **healthy** S0 history ending now (rebuilt when older than `DEMO_SEED_MAX_AGE_H`, kept while a
+  fault is active). Injecting a scenario also commits its change there with the current time,
+  like a real deploy (S1: `tune db pool` by Jordan Lee, `DB_POOL_SIZE "20" -> "2"` in
+  `services/payment-service/config/app.yaml`, then `release payment-service v1.8.2`); reverting
+  commits a `git revert`. Local only, never pushed. Opt out: `AIOPS_FAULT_GIT_COMMITS=0` (or
+  `aiops fault inject S1 --no-git-commit`).
+- **A freshly started cluster** has no metric history before the incident window. The Metrics
+  agent then compares against absolute thresholds (5xx > 5 %, p95 > 2 s, DB pool ≥ 90 %, DB
+  waiters > 0, cache down; `capabilities.metrics.settings.absolute_thresholds`), reported as
+  "no baseline; above the absolute threshold X", instead of "No metric anomaly".
 
 ## `make demo-e2e`: Playwright against the real API
 
@@ -152,5 +167,19 @@ user-facing impact or a critical alert; `medium` = latency only; `low` = the res
 - "Demo data is fresh … kept it": expected on re-runs; `make demo-reset` re-seeds now.
 - The API is unreachable from the UI: `docker logs aiops-web` (the proxy answers
   `502 api_unreachable` with the upstream URL) and `make api-logs`.
+- K8s agent: "unauthorized: the ServiceAccount token expired or is invalid": run
+  `make k8s-reader-kubeconfig` (or `scripts/k8s-reader-kubeconfig.sh --check` to see why). The
+  running kubernetes-mcp picks the new token up on its next call. If it still fails, the
+  container predates the directory mount (it mounted the single file, whose atomic replacement
+  it never sees): `make mcp-up` recreates it once.
+- Code agent: "Scanned 0 commits … touching payment-service" during a live scenario: the
+  sample repo was not a healthy S0 one when you injected (e.g. built with `make seed-repo S=S1`
+  for the fixtures, so the change was "already in" it), the injection ran with
+  `AIOPS_FAULT_GIT_COMMITS=0`, or the host API is older than this feature. Fix: revert, then
+  `cd backend && uv run aiops seed repo -S S0`, and inject again. `aiops fault status` lists the
+  commits an active fault added.
+- Metrics agent says "no baseline data before the window" on every metric: expected on a
+  cluster up for less than `baseline_minutes`; anomalies then come from the absolute thresholds.
+  Tune them per profile if your SLOs differ.
 - Tag: after `make demo` + `make demo-e2e` pass on `main`, the milestone tag is
   `git tag -a v0.6.0 -m "Web UI + make demo" && git push origin v0.6.0` (MASTER_PLAN §14).

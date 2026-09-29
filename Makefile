@@ -129,9 +129,12 @@ mcp-up: ## Build and start the MCP servers (needs make infra-up)
 	@if [ -d .data/k8s/aiops-reader.kubeconfig ]; then \
 		echo "Removing stale directory .data/k8s/aiops-reader.kubeconfig (Docker created it)"; \
 		rm -rf .data/k8s/aiops-reader.kubeconfig; fi
-	@if [ ! -f .data/k8s/aiops-reader.kubeconfig ] && command -v minikube >/dev/null && \
+	@mkdir -p .data/k8s
+	@# (Re)generate it when missing, rejected by the cluster (restarted Minikube) or close
+	@# to expiry. kubernetes-mcp mounts the directory and re-reads the file: no restart.
+	@if command -v minikube >/dev/null && \
 		[ "$$(minikube status -p aiops --format '{{.Host}}' 2>/dev/null)" = "Running" ]; then \
-		./scripts/k8s-reader-kubeconfig.sh; fi
+		./scripts/k8s-reader-kubeconfig.sh --if-needed; fi
 	$(MCP_COMPOSE) up -d --build --wait
 
 .PHONY: mcp-down
@@ -350,12 +353,12 @@ k8s-rbac: ## Apply the read-only RBAC for the agents (aiops-system/aiops-reader)
 	$(KUBECTL) apply -k deploy/k8s/rbac
 
 .PHONY: k8s-reader-kubeconfig
-k8s-reader-kubeconfig: ## RBAC + a short-lived read-only kubeconfig in .data/k8s (rerun when the token expires)
+k8s-reader-kubeconfig: ## RBAC + a fresh short-lived read-only kubeconfig in .data/k8s (kubernetes-mcp picks it up live)
 	./scripts/k8s-reader-kubeconfig.sh
 
 .PHONY: kubernetes-mcp-up
 kubernetes-mcp-up: ## Build and start only kubernetes-mcp on 127.0.0.1:8106 (needs k8s-reader-kubeconfig)
-	@test -f .data/k8s/aiops-reader.kubeconfig || ./scripts/k8s-reader-kubeconfig.sh
+	./scripts/k8s-reader-kubeconfig.sh --if-needed
 	$(MCP_COMPOSE) up -d --build --wait kubernetes-mcp
 
 .PHONY: k8s-can-i

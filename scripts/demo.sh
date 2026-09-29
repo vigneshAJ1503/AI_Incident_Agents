@@ -72,12 +72,29 @@ up() {
   finish
 }
 
+# The Code agent reads .data/sample-repo (git-mcp). For the live demo it holds a HEALTHY
+# history ending now; injecting a scenario commits its change on top (e.g. S1 "tune db
+# pool"), reverting commits a git revert (backend/src/aiops/fault_commits.py). Rebuilt
+# when older than DEMO_SEED_MAX_AGE_H; kept while a fault is active. Opt out of the fault
+# commits (and this rebuild): AIOPS_FAULT_GIT_COMMITS=0.
+live_repo() {
+  if [[ "${AIOPS_FAULT_GIT_COMMITS:-1}" =~ ^(0|false|no|off)$ ]]; then return; fi
+  if grep -q '"scenario": "S' .data/fault-state.json 2>/dev/null; then
+    echo "    A fault is active: sample Git repo kept."
+    return
+  fi
+  say "Sample Git repo for the Code agent (healthy S0 history ending now)"
+  (cd backend && uv run --no-sync aiops seed repo -S S0 \
+    --if-older-than "${DEMO_SEED_MAX_AGE_H:-12}") | tail -1
+}
+
 live() {
   ./scripts/ensure-network.sh
   say "Data stack (Elasticsearch, Postgres, Redis, Prometheus, Alertmanager)"
   "${INFRA[@]}" up -d --wait
-  say "Minikube (2.2 GB) + sample services"
+  say "Minikube (2.2 GB) + sample services (+ a fresh read-only kubeconfig when needed)"
   ./scripts/minikube-up.sh
+  live_repo
   say "MCP servers"
   make --no-print-directory mcp-up
   "${APP[@]}" build

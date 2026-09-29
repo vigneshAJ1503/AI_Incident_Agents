@@ -21,8 +21,11 @@ make infra-up mcp-up k8s-up
 ```
 The cluster is stateless (manifests re-apply, sample data is ephemeral), so recreating it is safe.
 
-## kubernetes-mcp: "is a directory" / can't read `/etc/aiops/kubeconfig`
-If kubernetes-mcp starts before `.data/k8s/aiops-reader.kubeconfig` exists, Docker creates a **directory** at that path for the bind mount. `make mcp-up` now removes such a directory and generates the kubeconfig first when Minikube is running. To fix it by hand:
+## kubernetes-mcp: "unauthorized: the ServiceAccount token expired or is invalid"
+The reader token is short-lived (24 h) and a restarted Minikube may reject it. Run `make k8s-reader-kubeconfig` (`scripts/k8s-reader-kubeconfig.sh --check` says why the current one is stale). kubernetes-mcp mounts the `.data/k8s` **directory** and re-reads the kubeconfig when it changes (and once more on a 401), so no restart is needed. `make k8s-up`, `make mcp-up` and `make demo-live` do this automatically (`--if-needed`).
+
+## kubernetes-mcp: "is a directory" / can't read the kubeconfig (old single-file mount)
+Before the directory mount, if kubernetes-mcp started before `.data/k8s/aiops-reader.kubeconfig` existed, Docker created a **directory** at that path. The script now removes such a directory before writing the file. To fix it by hand:
 ```bash
 rm -rf .data/k8s/aiops-reader.kubeconfig
 make k8s-reader-kubeconfig

@@ -114,6 +114,7 @@ export function ReportActions({ inv }: { inv: Investigation }) {
               <ApprovalPreview approval={draft} />
               <ApprovalActions
                 approval={draft}
+                inline
                 onDone={(a) => setDraft(a.status === "pending" ? a : null)}
               />
             </>

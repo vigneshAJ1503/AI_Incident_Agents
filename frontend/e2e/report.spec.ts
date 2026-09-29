@@ -91,7 +91,10 @@ test.describe("report view (S1)", () => {
     const dialog = page.getByRole("dialog", { name: "Create a Jira ticket" });
     await expect(dialog).toContainText("jira_create_issue");
     await dialog.getByRole("button", { name: "Approve" }).click();
-    await page.getByTestId("confirm-decision").click();
+    // The confirmation replaces the buttons in the same dialog; no second dialog stacks up.
+    await expect(dialog.getByTestId("inline-confirm")).toContainText("Approve and execute?");
+    await expect(page.getByRole("dialog")).toHaveCount(1);
+    await dialog.getByTestId("confirm-decision").click();
     await expect(page.getByText(/Created OPS-\d+/)).toBeVisible();
   });
 });

@@ -266,3 +266,24 @@ async def test_reaper_fails_stuck_investigations_only(
         update={"api": settings.api.model_copy(update={"stuck_after_s": 0.0})}
     )
     assert await InvestigationRunner(off, store, EventBus()).reap_stuck(now=now) == []
+
+
+def test_api_starts_when_postgres_is_not_up_yet() -> None:
+    """On Kubernetes the API pod can start before Postgres resolves (found by PR-047's
+    Minikube install): building the app must not migrate eagerly and crash; startup marks
+    the store down and /health says degraded until it is back."""
+    from aiops.api.context import build_context
+    from aiops.core.config import load_settings
+
+    settings = load_settings("local", CONFIG)
+    unreachable = "postgresql://aiops:x@aiops-postgresql.invalid:5432/aiops"
+    settings = settings.model_copy(
+        update={
+            "storage": settings.storage.model_copy(
+                update={"database_url": unreachable, "approvals": "postgres"}
+            )
+        }
+    )
+    ctx = build_context(settings, reaper=False)  # must not raise
+    asyncio.run(ctx.startup())
+    assert ctx.store_ok is False

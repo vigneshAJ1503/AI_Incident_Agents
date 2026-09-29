@@ -117,7 +117,7 @@ def build_context(
     return ApiContext(
         settings=settings,
         store=store,
-        approvals=approvals or ApprovalService.from_settings(settings),
+        approvals=approvals or ApprovalService.from_settings(settings, migrate=False),
         catalog=ServiceCatalog.from_settings(settings),
         scenarios=ScenarioCatalog.load(settings.config_dir),
         bus=bus,

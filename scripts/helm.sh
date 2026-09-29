@@ -87,12 +87,17 @@ install_minikube() {
   fi
   say "Loading them into Minikube ($PROFILE)"
   for image in "${IMAGES[@]}"; do minikube -p "$PROFILE" image load "aiops/$image:0.1.0"; done
-  say "Namespace + the Postgres password Secret (random, generated once, never printed)"
+  say "Namespace + the Postgres password and secrets-key Secrets (random, generated once, never printed)"
   kubectl --context "$PROFILE" create namespace "$NAMESPACE" --dry-run=client -o yaml \
     | kubectl --context "$PROFILE" apply -f - >/dev/null
   if ! "${kubectl[@]}" get secret aiops-postgres >/dev/null 2>&1; then
     "${kubectl[@]}" create secret generic aiops-postgres \
       --from-literal=password="$(openssl rand -hex 24)" >/dev/null
+  fi
+  # Settings -> Integrations encryption key: a Fernet key is 32 random bytes, url-safe base64
+  if ! "${kubectl[@]}" get secret aiops-secrets-key >/dev/null 2>&1; then
+    "${kubectl[@]}" create secret generic aiops-secrets-key \
+      --from-literal=AIOPS_SECRETS_KEY="$(openssl rand -base64 32 | tr '+/' '-_')" >/dev/null
   fi
   kubeconfig
   say "helm upgrade --install $RELEASE (values-minikube.yaml)"

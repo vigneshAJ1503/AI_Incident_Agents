@@ -190,6 +190,13 @@ valueFrom:
 - name: {{ $name }}
   value: {{ $value | quote }}
 {{- end }}
+{{- with .Values.integrations.secretsKey.existingSecret }}
+- name: AIOPS_SECRETS_KEY
+  valueFrom:
+    secretKeyRef:
+      name: {{ . }}
+      key: {{ $.Values.integrations.secretsKey.key }}
+{{- end }}
 {{- range $name, $value := .Values.api.env }}
 - name: {{ $name }}
   value: {{ $value | quote }}

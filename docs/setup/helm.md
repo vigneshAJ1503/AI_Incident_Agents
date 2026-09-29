@@ -96,6 +96,8 @@ profile:
         tier: 1
 llm:
   existingSecret: aiops-llm
+integrations:   # Settings -> Integrations: encrypts secrets saved from the Web UI
+  secretsKey: {existingSecret: aiops-secrets-key, key: AIOPS_SECRETS_KEY}
 api:
   auth: {existingSecret: aiops-api-auth}
 web:

@@ -95,6 +95,20 @@
         "env": {"$ref": "#/definitions/stringMap"}
       }
     },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secretsKey": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": {"$ref": "#/definitions/secretName"},
+            "key": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
     "api": {
       "type": "object",
       "additionalProperties": false,

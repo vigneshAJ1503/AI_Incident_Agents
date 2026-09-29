@@ -285,7 +285,11 @@ class ApprovalService:
         self.clock = clock
 
     @classmethod
-    def from_settings(cls, settings: Settings, *, clock: Clock = utcnow) -> ApprovalService:
+    def from_settings(
+        cls, settings: Settings, *, clock: Clock = utcnow, migrate: bool = True
+    ) -> ApprovalService:
+        """``migrate=False`` for the API: its startup migrates, and a store that is not up
+        yet (a pod starting before Postgres) must not stop the process."""
         guardrails = settings.guardrails
         store: ApprovalStore
         audit: ApprovalAuditSink
@@ -294,7 +298,7 @@ class ApprovalService:
             from aiops.store.sync_stores import SqlApprovalAuditSink, SqlApprovalStore
 
             url, schema = database_url(settings), settings.storage.db_schema
-            store = SqlApprovalStore(url, schema)
+            store = SqlApprovalStore(url, schema, migrate=migrate)
             audit = SqlApprovalAuditSink(url, schema, migrate=False)
         else:
             store = JsonFileApprovalStore(settings.repo_path(guardrails.approvals_path))

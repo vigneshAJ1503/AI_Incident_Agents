@@ -26,6 +26,8 @@ def pytest_configure(config: pytest.Config) -> None:
     for var in (
         "OPENAI_COMPAT_API_KEY",
         "OPENAI_COMPAT_API_KEY_2",
+        "GEMINI_API_KEY",
+        "GEMINI_MODEL",
         "AIOPS_REPLAY_LLM",
         "LLM_MODEL_FAST",
         "LLM_MODEL_AGENT",
@@ -54,6 +56,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "OPENAI_COMPAT_BASE_URL",
         "OPENAI_COMPAT_API_KEY",
         "OPENAI_COMPAT_API_KEY_2",
+        "GEMINI_API_KEY",
+        "GEMINI_MODEL",
         "AIOPS_REPLAY_LLM",
         "LLM_MODEL_FAST",
         "LLM_MODEL_AGENT",

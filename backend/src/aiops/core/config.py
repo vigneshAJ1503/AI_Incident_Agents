@@ -166,9 +166,14 @@ class LLMConfig(_Strict):
     #: tool choice. Set false for models that reject forced tool use: ``required`` is then
     #: sent as ``auto`` and ``generate_structured`` relies on its prompt + corrective retry.
     forced_tool_choice: bool = True
+    #: Other providers, in order, used when this one is rate-limited or down (e.g. Groq,
+    #: then Gemini's free tier). Each is a full provider config; one with no key is skipped.
+    fallbacks: list[LLMConfig] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _provider_fields(self) -> LLMConfig:
+        if any(f.fallbacks for f in self.fallbacks):
+            raise ValueError("llm.fallbacks entries cannot have fallbacks of their own")
         if self.provider == "bedrock" and self.api_key is not None:
             raise ValueError(
                 "llm.api_key must not be set for provider 'bedrock': AWS credentials come from "

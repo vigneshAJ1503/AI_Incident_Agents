@@ -102,6 +102,10 @@ def _cited_evidence(messages: list[ChatMessage]) -> str | None:
     return None
 
 
+#: The "model" of a zero-LLM run (replay, or an agent's deterministic fallback).
+DETERMINISTIC = "deterministic"
+
+
 def echo_responder(status: str = "no_signal", signals: list[str] | None = None) -> Responder:
     """Submit the overview as the summary with one finding citing real evidence.
 
@@ -134,6 +138,7 @@ def echo_responder(status: str = "no_signal", signals: list[str] | None = None) 
             },
         )
         # Replay spends no real tokens; report zero so scorecards don't suggest otherwise.
-        return response.model_copy(update={"usage": TokenUsage(calls=1)})
+        # The model name shows in the UI, metrics and traces: say what actually ran.
+        return response.model_copy(update={"usage": TokenUsage(calls=1), "model": DETERMINISTIC})
 
     return respond

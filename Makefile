@@ -82,8 +82,23 @@ ui-up: ## Start the optional UIs (Kibana ~0.6 GB, Grafana ~0.1 GB); agents never
 	$(COMPOSE) --profile ui up -d --wait kibana grafana
 
 .PHONY: grafana-up
-grafana-up: ## Start only Grafana (http://localhost:3000, dashboards "Service Overview", "K8s Workloads")
+grafana-up: ## Start only Grafana (http://localhost:3000, dashboards "Service Overview", "K8s Workloads", "AI Observability")
 	$(COMPOSE) --profile ui up -d --wait grafana
+
+# --- AI observability (PR-041): docs/observability.md -------------------------------------
+.PHONY: tracing-up
+tracing-up: ## Opt-in trace backend: Jaeger (UI :16686, OTLP/HTTP :4318, ~20 MiB); then AIOPS_OTLP_ENDPOINT=http://localhost:4318
+	@./scripts/ensure-network.sh
+	$(COMPOSE) --profile tracing up -d --wait jaeger
+	@echo "Jaeger UI: http://localhost:16686  ·  export AIOPS_OTLP_ENDPOINT=http://localhost:4318 (host API/CLI)"
+
+.PHONY: tracing-down
+tracing-down: ## Stop Jaeger (its in-memory traces are dropped)
+	$(COMPOSE) --profile tracing stop jaeger
+
+.PHONY: ai-metrics
+ai-metrics: ## Print the API's AI metrics (agents, LLM, tools, cost, overrides) from http://127.0.0.1:$(API_PORT)/metrics
+	@curl -fsS http://127.0.0.1:$(API_PORT)/metrics | grep -E '^aiops_' | grep -v '_bucket'
 
 .PHONY: ui-down
 ui-down: ## Stop the optional UIs to free memory
@@ -95,7 +110,7 @@ infra-up-lite: ## Alias of infra-up (kept for compatibility)
 
 .PHONY: infra-down
 infra-down: ## Stop the stack (keeps data)
-	$(COMPOSE) --profile ui down
+	$(COMPOSE) --profile ui --profile tracing down
 
 .PHONY: infra-reset
 infra-reset: ## Stop the stack and DELETE its data volumes

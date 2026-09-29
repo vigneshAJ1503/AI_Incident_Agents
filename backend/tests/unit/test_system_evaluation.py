@@ -10,7 +10,13 @@ import pytest
 from typer.testing import CliRunner
 
 from aiops.cli.main import app
-from aiops.core.config import EvalsConfig, LLMConfig, ModelPrice, Settings, load_settings
+from aiops.core.config import (
+    CostConfig,
+    LLMConfig,
+    ModelPrice,
+    Settings,
+    load_settings,
+)
 from aiops.core.models import TokenUsage
 from aiops.evals.investigation import InvestigationEval
 from aiops.evals.runner import EvalError, EvalPaths
@@ -178,7 +184,7 @@ def test_brier_and_root_cause_accuracy() -> None:
 def test_cost_from_the_price_table(settings: Settings) -> None:
     priced = settings.model_copy(
         update={
-            "evals": EvalsConfig(
+            "cost": CostConfig(  # PR-041: the price table moved from evals.pricing to cost.pricing
                 pricing={
                     "big-model": ModelPrice(input=3.0, output=15.0),
                     "api.groq.com": ModelPrice(input=0.5, output=1.0),

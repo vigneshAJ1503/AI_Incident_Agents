@@ -16,6 +16,7 @@ from aiops.core.events import EventBus
 from aiops.core.guardrails.approvals import ApprovalExecutor, ApprovalService
 from aiops.llm.factory import create_provider
 from aiops.mcp.registry import MCPRegistry
+from aiops.observability.llm import instrument
 from aiops.orchestrator.intent import IntentClassifier
 from aiops.store.db import StoreError
 from aiops.store.repository import InvestigationStore
@@ -59,7 +60,7 @@ class ApiContext:
             llm = None
             if llm_configured(self.settings):
                 try:
-                    llm = create_provider(self.settings.llm)
+                    llm = instrument(create_provider(self.settings.llm), self.settings)
                 except ConfigError as exc:  # configured but unusable: rules only
                     log.warning("intent classifier without LLM: %s", exc)
             caps = [(n, c.provider) for n, c in self.settings.capabilities.items()]

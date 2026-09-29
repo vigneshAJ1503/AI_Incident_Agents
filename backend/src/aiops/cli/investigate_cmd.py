@@ -13,6 +13,7 @@ from aiops.cli.common import EnvOption, console, err_console, handle_errors
 from aiops.core.config import Settings, load_settings
 from aiops.core.events import EventBus, InvestigationEvent
 from aiops.core.models import Investigation
+from aiops.observability.tracing import setup_tracing, shutdown_tracing
 from aiops.orchestrator.engine import InvestigationRequest, Orchestrator
 from aiops.orchestrator.planner import Plan
 from aiops.orchestrator.replay import ReplayError, load_replay, replay_clock
@@ -118,7 +119,8 @@ def print_event(event: InvestigationEvent) -> None:
         ),
         "agent_finished": lambda: (
             f"{data.get('status')} signals={','.join(data.get('signals', []))} "
-            f"evidence={data.get('evidence_count')} tokens={data.get('tokens')}"
+            f"evidence={data.get('evidence_count')} tokens={data.get('tokens')} "
+            f"cost=${data.get('cost_usd') or 0:.4f}"
         ),
         "error": lambda: str(data.get("message")),
         "clarification_needed": lambda: str(data.get("question")),
@@ -132,11 +134,12 @@ def print_investigation(inv: Investigation) -> None:
     colour = {"completed": "green", "partial": "yellow"}.get(inv.status.value, "red")
     console.print(
         f"\n[bold {colour}]{inv.id}: {inv.status.value}[/bold {colour}] "
-        f"({inv.mode}, {inv.duration_ms or 0:.0f} ms, tokens {inv.usage.total_tokens})"
+        f"({inv.mode}, {inv.duration_ms or 0:.0f} ms, tokens {inv.usage.total_tokens}, "
+        f"cost ${inv.usage.cost_usd:.4f})"
     )
     if inv.clarification_question:
         console.print(f"[yellow]{inv.clarification_question}[/yellow]")
-    table = Table("Round", "Agent", "Status", "Signals", "Evidence")
+    table = Table("Round", "Agent", "Status", "Signals", "Evidence", "Tokens", "Cost")
     by_step = {r.task_id: r for r in inv.results}
     for step in inv.steps:
         result = by_step.get(step.id)
@@ -146,6 +149,8 @@ def print_investigation(inv: Investigation) -> None:
             result.status.value if result else step.status.value,
             ", ".join(result.signals) if result else "",
             str(len(result.evidence)) if result else "",
+            str(result.usage.total_tokens) if result else "",
+            f"${result.usage.cost_usd:.4f}" if result else "",
         )
     console.print(table)
     report = inv.report
@@ -204,7 +209,11 @@ def investigate(
         bus.subscribe(print_event)
     orchestrator = build_orchestrator(settings, replay, bus)
     request = _request(question, service, environment, since, start, end, replay)
-    inv = asyncio.run(orchestrator.investigate(request))
+    setup_tracing(settings.observability.tracing)  # no-op unless an OTLP endpoint is set
+    try:
+        inv = asyncio.run(orchestrator.investigate(request))
+    finally:
+        shutdown_tracing()  # flushes the spans before the process exits
     if save:
         _save(settings, inv, bus)
     if as_json:

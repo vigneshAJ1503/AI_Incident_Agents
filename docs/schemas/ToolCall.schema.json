@@ -10,6 +10,11 @@
       "title": "Arguments",
       "type": "object"
     },
+    "cached": {
+      "default": false,
+      "title": "Cached",
+      "type": "boolean"
+    },
     "capability": {
       "title": "Capability",
       "type": "string"

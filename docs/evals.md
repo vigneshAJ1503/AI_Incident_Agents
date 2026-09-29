@@ -48,9 +48,12 @@ investigations` still exist for quick loops on one part.
   outcome is 1 when the reported root cause is correct, and 0 otherwise. A healthy scenario
   has no correct root cause, so any confidence there counts against calibration. 0 is
   perfect; a system that always says 50% scores 0.25.
-- **Cost.** The profile has a price table, `evals.pricing`, in USD per 1M tokens. A price is
-  looked up by model id first, then by provider host (e.g. `api.groq.com`), then `*`. The
-  default is 0, which is right for the free tiers this project uses.
+- **Cost.** The profile has a price table, `cost.pricing` (PR-041; the older `evals.pricing`
+  is still read), in USD per 1M tokens. A price is looked up by model id first, then by
+  provider host (e.g. `api.groq.com`), then `*`. The default is 0, which is right for the
+  free tiers this project uses. The same table prices every live LLM call, so cost per agent
+  and per investigation also shows in the API, the Web UI and `/metrics`
+  ([observability.md](observability.md)).
 
 ## Reading the scorecard
 

@@ -59,6 +59,8 @@ export const TokenUsage = z.object({
   input_tokens: z.number().int().default(0),
   output_tokens: z.number().int().default(0),
   calls: z.number().int().default(0),
+  /** PR-041: estimated USD from the profile's `cost.pricing` ($0 on free tiers; absent = 0). */
+  cost_usd: z.number().optional(),
 });
 export type TokenUsage = z.infer<typeof TokenUsage>;
 
@@ -73,6 +75,8 @@ export const ToolCall = z.object({
   result_chars: z.number().int().default(0),
   error: nullableStr,
   started_at: isoDate.optional(),
+  /** PR-041: answered by the investigation's tool cache (an identical read-only call). */
+  cached: z.boolean().optional(),
 });
 export type ToolCall = z.infer<typeof ToolCall>;
 
@@ -317,9 +321,21 @@ export const DashboardSummary = z.object({
       success_rate: z.number(),
       p50_ms: z.number(),
       tokens: z.number().int().default(0),
+      /** PR-041: estimated LLM cost of the runs, and per run. */
+      cost_usd: z.number().default(0),
+      avg_cost_usd: z.number().default(0),
     }),
   ),
   recent: z.array(InvestigationSummary),
+  /** PR-041: LLM spend of the window (optional: older APIs don't send it). */
+  cost: z
+    .object({
+      total_usd: z.number().default(0),
+      avg_usd_per_investigation: z.number().default(0),
+      tokens: z.number().int().default(0),
+      avg_tokens_per_investigation: z.number().int().default(0),
+    })
+    .optional(),
 });
 export type DashboardSummary = z.infer<typeof DashboardSummary>;
 

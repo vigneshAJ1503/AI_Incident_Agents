@@ -18,6 +18,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useMemo } from "react";
 
+import { AgentCostCard } from "@/components/agent-cost-card";
 import { Sparkline } from "@/components/charts/sparkline";
 import { InvestigationListItem } from "@/components/investigation-row";
 import { NumberTicker, Stagger, StaggerItem } from "@/components/motion";
@@ -348,6 +349,8 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          <AgentCostCard agents={data.agents} cost={data.cost} />
 
           <Card>
             <CardHeader className="flex-row items-center justify-between">

@@ -18,7 +18,7 @@ test.describe("settings → integrations (demo mode)", () => {
     }
     await expect(page.getByTestId("integration-logs")).toContainText("elasticsearch");
     await expect(page.getByTestId("integration-logs")).toContainText("Connected");
-    await expect(page.getByTestId("integration-slack")).toContainText("Coming in PR-048");
+    await expect(page.getByTestId("integration-slack")).toContainText("Coming soon");
     // a secret saved earlier is shown masked: last 4 characters at most
     await expect(page.getByTestId("secret-tickets-Authorization")).toHaveText(
       "Authorization: ••••9f2c",

@@ -172,7 +172,7 @@ describe("integration card and dialog", () => {
 
   it("marks Slack as coming in PR-048", () => {
     render(<SlackPlaceholderCard />);
-    expect(screen.getByTestId("integration-slack")).toHaveTextContent("Coming in PR-048");
+    expect(screen.getByTestId("integration-slack")).toHaveTextContent("Coming soon");
   });
 
   it("enables Save only once something changed, and types secrets into a password field", async () => {

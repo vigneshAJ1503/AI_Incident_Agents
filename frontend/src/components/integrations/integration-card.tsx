@@ -169,7 +169,7 @@ export function SlackPlaceholderCard() {
       icon={MessageSquareIcon}
       title="Chat (Slack)"
       subtitle="Slack · Teams"
-      aside={<Badge tone="purple">Coming in PR-048</Badge>}
+      aside={<Badge tone="purple">Coming soon</Badge>}
       testId="integration-slack"
     >
       <p className="text-xs text-muted-foreground">

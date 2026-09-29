@@ -1514,6 +1514,35 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 - **Scope:** Settings → Integrations (Elasticsearch, Kubernetes, Prometheus, GitHub, Jira, Slack); test-connection; secrets are never shown after saving.
 - ✅ An integration can be configured without editing YAML.
 
+> **As built (PR-046, ADR-0021, [docs/portability.md](docs/portability.md#configure-from-the-ui-settings--integrations-pr-046)):**
+> - **Web UI:** Settings → **Integrations** (`/settings/integrations`, glass cards): one card per
+>   capability (logs, metrics, alerts, k8s, code, tickets, knowledge) with provider, live status
+>   (the `/health` check), MCP URL and masked secrets, plus a Slack card "coming in PR-048".
+>   **Configure** opens a form: provider (implemented only), enabled, MCP URL/timeout, limits and
+>   every `settings.*` key of the profile (typed, with the profile value beside it), secrets,
+>   **Test connection**, **Save**, **Reset to profile**. Demo mode serves the same page from
+>   `frontend/src/demo/integrations.json` (`DemoClient`, same rules in the tab).
+> - **API:** `GET /integrations[/{cap}]`, `PUT /integrations/{cap}`, `POST /integrations/{cap}/test`,
+>   `GET /integrations/audit` (docs/api/contract.md). The YAML profile stays the source of
+>   defaults; overrides live in Postgres (`integration_override`, Alembic `0002`) and are
+>   validated with `CapabilityConfig` + `profile validate` checks before saving. A save swaps
+>   the API's settings for **new** investigations (runner, health, approvals executor, chat
+>   classifier); running ones keep theirs. No restart.
+> - **Test connection** = `aiops doctor` for one capability (`core.doctor.check_capability`:
+>   config, reachability, contract, smoke, catalog) on the saved settings + an unsaved draft.
+> - **Secrets** are write-only HTTP headers for MCP servers behind auth (new `mcp.headers`, also
+>   usable from YAML as `${VAR}`), Fernet-encrypted with `AIOPS_SECRETS_KEY`; the API returns
+>   `configured` + at most the last 4 characters. No key = refused with a how-to message.
+> - **Audit + auth:** every change writes `integration_audit` (actor, field, change; never a
+>   value); with `api.auth` on, save/test need an authenticated principal. Rate limit group
+>   `integrations` (30/minute). CSP/security headers unchanged.
+> - **Deviations:** "Elasticsearch, Kubernetes, Prometheus, GitHub, Jira" are the capability
+>   cards (logs/k8s/metrics/code/tickets + alerts, knowledge), bound to whatever provider the
+>   profile names; GitHub repos go through the existing code provider (a GitHub API provider is
+>   still planned). Tool allowlists, guardrail settings, the catalog and the LLM block stay
+>   YAML-only on purpose. The overlay applies in the API process that saved it (other replicas
+>   on restart; the CLI reads the YAML only). Slack is a placeholder until PR-048.
+
 #### PR-047 · Production images + Helm chart
 - **Branch:** `feat/047-helm`
 - **Scope:**

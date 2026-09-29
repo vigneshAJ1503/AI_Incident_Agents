@@ -17,7 +17,7 @@ async function setTheme(page: Page, theme: "light" | "dark") {
 
 const PAGES: [string, string][] = (
   process.env.SCREENSHOT_PAGES ??
-  "dashboard=/,investigations=/investigations,new-investigation=/investigations/new,report=/investigations/inv-demo-s1,approvals=/approvals,scenarios=/scenarios,agents=/agents,services=/services"
+  "dashboard=/,investigations=/investigations,new-investigation=/investigations/new,report=/investigations/inv-demo-s1,approvals=/approvals,scenarios=/scenarios,agents=/agents,services=/services,integrations=/settings/integrations"
 )
   .split(",")
   .map((p) => p.split("=") as [string, string]);
@@ -34,6 +34,19 @@ for (const [name, path] of PAGES) {
       await page.screenshot({ path: `${OUT}/${name}-${theme}.png`, fullPage: true });
     });
   }
+}
+
+for (const theme of THEMES) {
+  test(`integration dialog (${theme})`, async ({ page }) => {
+    await page.goto("/settings/integrations");
+    await setTheme(page, theme);
+    await page.reload();
+    await page.getByRole("button", { name: "Configure Logs" }).click();
+    await page.getByRole("button", { name: "Test connection" }).click();
+    await expect(page.getByTestId("test-results")).toContainText("Test pass");
+    await page.waitForTimeout(500);
+    await page.screenshot({ path: `${OUT}/integration-dialog-${theme}.png` });
+  });
 }
 
 for (const theme of THEMES) {

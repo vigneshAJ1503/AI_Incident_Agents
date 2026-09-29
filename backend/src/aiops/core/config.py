@@ -55,6 +55,10 @@ CATALOG_FILE = "services.yaml"
 _INTERPOLATION = re.compile(r"\$\{([A-Za-z_][A-Za-z0-9_]*)(?::-([^}]*))?\}")
 
 
+#: An HTTP header name (RFC 9110 token, restricted to the usual letters/digits/dashes).
+HEADER_NAME = re.compile(r"^[A-Za-z][A-Za-z0-9-]{0,63}$")
+
+
 class ConfigError(Exception):
     """Configuration is missing or invalid. The message is meant for humans."""
 
@@ -70,6 +74,20 @@ class MCPServerConfig(_Strict):
     args: list[str] = Field(default_factory=list)
     env: dict[str, str] = Field(default_factory=dict)
     timeout_s: float = Field(default=30.0, gt=0)
+    #: HTTP headers sent to an ``http`` MCP server that sits behind authentication, e.g.
+    #: ``{Authorization: "Bearer ${ACME_LOGS_MCP_TOKEN}"}``. Values are secrets: masked in
+    #: every dump, never logged. The Web UI stores them encrypted (PR-046, ``AIOPS_SECRETS_KEY``).
+    headers: dict[str, SecretStr] = Field(default_factory=dict)
+
+    @field_validator("headers")
+    @classmethod
+    def _valid_headers(cls, value: dict[str, SecretStr]) -> dict[str, SecretStr]:
+        for name, secret in value.items():
+            if not HEADER_NAME.match(name):
+                raise ValueError(f"invalid header name {name!r} (letters, digits and '-')")
+            if any(c in secret.get_secret_value() for c in "\r\n\0"):
+                raise ValueError(f"header {name}: the value must be a single line")
+        return value
 
     @model_validator(mode="after")
     def _check_transport(self) -> MCPServerConfig:
@@ -77,7 +95,13 @@ class MCPServerConfig(_Strict):
             raise ValueError("transport 'http' requires 'url'")
         if self.transport == "stdio" and not self.command:
             raise ValueError("transport 'stdio' requires 'command'")
+        if self.transport == "stdio" and self.headers:
+            raise ValueError("'headers' are sent to http MCP servers only (transport is stdio)")
         return self
+
+    def header_values(self) -> dict[str, str]:
+        """The headers with their secret values, for the HTTP client only."""
+        return {k: v.get_secret_value() for k, v in self.headers.items() if v.get_secret_value()}
 
 
 class CapabilityLimits(_Strict):
@@ -434,7 +458,7 @@ class StorageConfig(_Strict):
 
 _RATE = re.compile(r"^\s*(\d+)\s*/\s*(second|minute|hour|s|m|h)\s*$")
 _RATE_UNITS = {"second": 1, "s": 1, "minute": 60, "m": 60, "hour": 3600, "h": 3600}
-RATE_LIMIT_GROUPS = frozenset({"investigations", "approvals", "scenarios"})
+RATE_LIMIT_GROUPS = frozenset({"investigations", "approvals", "scenarios", "integrations"})
 
 
 def parse_rate(value: str) -> tuple[int, float]:
@@ -479,12 +503,14 @@ class ApiConfig(_Strict):
     oidc: OIDCConfig | None = None
     #: Per-client limits (client = authenticated name, else the peer IP): ``N/second|
     #: minute|hour``. ``investigations`` = POST /investigations + clarify; ``approvals`` =
-    #: approve/deny/ticket drafts; ``scenarios`` = fault inject/revert.
+    #: approve/deny/ticket drafts; ``scenarios`` = fault inject/revert; ``integrations`` =
+    #: saving an integration and "test connection" (PR-046).
     rate_limits: dict[str, str] = Field(
         default_factory=lambda: {
             "investigations": "10/minute",
             "approvals": "30/minute",
             "scenarios": "6/minute",
+            "integrations": "30/minute",
         }
     )
     #: Largest accepted request body (HTTP 413 above).

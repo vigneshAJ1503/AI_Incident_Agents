@@ -75,6 +75,11 @@ class CapabilityHealth:
         self._at = 0.0
         self._lock = asyncio.Lock()
 
+    def reconfigure(self, settings: Settings) -> None:
+        """New settings (an integration saved from the UI): drop the cached answer."""
+        self.settings = settings
+        self._cached = None
+
     async def status(self) -> dict[str, str]:
         """``{capability: ok|down|disabled}`` for every configured capability."""
         async with self._lock:

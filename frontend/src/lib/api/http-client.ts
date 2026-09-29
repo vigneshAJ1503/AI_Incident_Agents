@@ -17,6 +17,9 @@ import {
   CreateInvestigationResponse,
   DashboardSummary,
   Health,
+  IntegrationList,
+  IntegrationSaved,
+  IntegrationTestResult,
   Investigation,
   InvestigationPage,
   LiveEvent,
@@ -24,6 +27,7 @@ import {
   ServiceList,
   type AskRequest,
   type CreateInvestigationRequest,
+  type IntegrationUpdate,
 } from "./schemas";
 
 const EVENT_TYPES = LiveEvent.options.map((o) => o.shape.type.value);
@@ -169,6 +173,22 @@ export class HttpClient implements ApiClient {
   }
   async revertScenarios() {
     await this.post("/scenarios/revert");
+  }
+  integrations() {
+    return this.json(IntegrationList, "/integrations");
+  }
+  saveIntegration(capability: string, update: IntegrationUpdate) {
+    return this.json(IntegrationSaved, `/integrations/${encodeURIComponent(capability)}`, {
+      method: "PUT",
+      body: JSON.stringify(update),
+    });
+  }
+  testIntegration(capability: string, draft?: IntegrationUpdate) {
+    return this.json(
+      IntegrationTestResult,
+      `/integrations/${encodeURIComponent(capability)}/test`,
+      { method: "POST", body: JSON.stringify(draft ?? {}) },
+    );
   }
 
   /**

@@ -185,3 +185,36 @@ audit = sa.Table(
     sa.Column("status", sa.String(16)),
     sa.Column("document", JSON, nullable=False),
 )
+
+# --------------------------------------------------------------------------- integrations (PR-046)
+# A separate MetaData: revision 0001 creates ``metadata`` wholesale, so tables added later
+# must not be part of it (0002 creates these with explicit ``op.create_table`` calls).
+integration_metadata = sa.MetaData()
+
+#: Web UI overrides of one capability, layered over the active profile's YAML (the YAML
+#: stays the source of defaults). ``document`` = non-secret overrides
+#: ``{enabled?, provider?, fields: {dotted key: value}}``; ``secrets`` = ``{header name:
+#: {ciphertext, hint}}`` encrypted with AIOPS_SECRETS_KEY (core/secrets.py).
+integration_override = sa.Table(
+    "integration_override",
+    integration_metadata,
+    sa.Column("profile", sa.String(100), primary_key=True),
+    sa.Column("capability", sa.String(64), primary_key=True),
+    sa.Column("document", JSON, nullable=False),
+    sa.Column("secrets", JSON, nullable=False),
+    sa.Column("updated_at", TS, nullable=False),
+    sa.Column("updated_by", sa.String(200), nullable=False),
+)
+
+#: Who changed which field of which integration, and when. Never a value.
+integration_audit = sa.Table(
+    "integration_audit",
+    integration_metadata,
+    sa.Column("id", sa.String(64), primary_key=True),
+    sa.Column("recorded_at", TS, nullable=False, index=True),
+    sa.Column("profile", sa.String(100), nullable=False),
+    sa.Column("capability", sa.String(64), nullable=False, index=True),
+    sa.Column("actor", sa.String(200), nullable=False),
+    sa.Column("action", sa.String(32), nullable=False),
+    sa.Column("changes", JSON, nullable=False),
+)

@@ -7,6 +7,10 @@ import type {
   CreateInvestigationResponse,
   DashboardSummary,
   Health,
+  IntegrationList,
+  IntegrationSaved,
+  IntegrationTestResult,
+  IntegrationUpdate,
   Investigation,
   InvestigationPage,
   InvestigationStatus,
@@ -56,6 +60,11 @@ export interface ApiClient {
   scenarios(): Promise<Scenario[]>;
   injectScenario(id: string): Promise<void>;
   revertScenarios(): Promise<void>;
+  /** Settings → Integrations (PR-046). Secret values are never returned. */
+  integrations(): Promise<IntegrationList>;
+  saveIntegration(capability: string, update: IntegrationUpdate): Promise<IntegrationSaved>;
+  /** `aiops doctor` for one capability; `draft` = unsaved changes to test with. */
+  testIntegration(capability: string, draft?: IntegrationUpdate): Promise<IntegrationTestResult>;
   /** Subscribe to the live event stream. Returns an unsubscribe function. */
   subscribe(id: string, handlers: StreamHandlers, lastSeq?: number): () => void;
 }

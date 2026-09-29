@@ -7,11 +7,14 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from contextlib import AsyncExitStack
+from collections.abc import AsyncIterator
+from contextlib import AbstractAsyncContextManager, AsyncExitStack, asynccontextmanager
 from typing import Any
 
 from mcp import Client, StdioServerParameters
+from mcp.client.streamable_http import streamable_http_client
 from mcp.server.mcpserver import MCPServer
+from mcp.shared._httpx_utils import create_mcp_http_client
 from mcp_types import TextContent
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -58,6 +61,17 @@ def target_from_config(config: MCPServerConfig) -> ServerTarget:
     raise MCPClientError(f"Invalid MCP server config: {config}")
 
 
+@asynccontextmanager
+async def _http_with_headers(url: str, headers: dict[str, str]) -> AsyncIterator[Any]:
+    """Streamable HTTP with extra headers (an MCP server behind auth). The httpx client is
+    ours, so it is closed with the transport."""
+    async with (
+        create_mcp_http_client(headers=headers) as http,
+        streamable_http_client(url, http_client=http) as streams,
+    ):
+        yield streams
+
+
 class MCPClient:
     def __init__(
         self,
@@ -67,9 +81,12 @@ class MCPClient:
         timeout_s: float = 30.0,
         connect_attempts: int = 3,
         connect_backoff_s: float = 0.5,
+        headers: dict[str, str] | None = None,
     ) -> None:
         self.name = name
         self._target = target
+        #: Sent to an HTTP server (``mcp.headers``); values are secrets, never logged.
+        self._headers = dict(headers or {})
         self._timeout_s = timeout_s
         self._connect_attempts = connect_attempts
         self._connect_backoff_s = connect_backoff_s
@@ -79,7 +96,12 @@ class MCPClient:
 
     @classmethod
     def from_config(cls, name: str, config: MCPServerConfig) -> MCPClient:
-        return cls(name, target_from_config(config), timeout_s=config.timeout_s)
+        return cls(
+            name,
+            target_from_config(config),
+            timeout_s=config.timeout_s,
+            headers=config.header_values(),
+        )
 
     async def __aenter__(self) -> MCPClient:
         await self.connect()
@@ -93,7 +115,7 @@ class MCPClient:
         for attempt in range(1, self._connect_attempts + 1):
             stack = AsyncExitStack()
             try:
-                client = Client(self._target, read_timeout_seconds=self._timeout_s)
+                client = Client(self._server(), read_timeout_seconds=self._timeout_s)
                 # asyncio.timeout (not wait_for) keeps anyio cancel scopes in the same task.
                 async with asyncio.timeout(self._timeout_s):
                     await stack.enter_async_context(client)
@@ -112,6 +134,13 @@ class MCPClient:
         raise MCPClientError(
             f"Cannot connect to MCP server '{self.name}' ({self._describe()}): {cause}"
         ) from last_error
+
+    def _server(self) -> ServerTarget | AbstractAsyncContextManager[Any]:
+        """What ``Client`` connects to; a fresh header-carrying transport per attempt (a
+        transport context manager can be entered only once)."""
+        if self._headers and isinstance(self._target, str):
+            return _http_with_headers(self._target, self._headers)
+        return self._target
 
     async def close(self) -> None:
         if self._stack is not None:

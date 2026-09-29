@@ -9,6 +9,7 @@ import agentsJson from "@/demo/agents.json";
 import approvalsJson from "@/demo/approvals.json";
 import dashboardJson from "@/demo/dashboard.json";
 import healthJson from "@/demo/health.json";
+import integrationsJson from "@/demo/integrations.json";
 import investigationsJson from "@/demo/investigations.json";
 import metaJson from "@/demo/meta.json";
 import scenariosJson from "@/demo/scenarios.json";
@@ -23,6 +24,7 @@ import {
   runningAnswer,
   runningItem,
 } from "@/lib/demo/ask";
+import { applyDemoUpdate, demoTestResult } from "@/lib/demo/integrations";
 import { routeQuestion, type DemoScenarioId } from "@/lib/demo/route";
 import {
   scheduleSession,
@@ -45,6 +47,7 @@ import {
   ApprovalList,
   DashboardSummary,
   Health,
+  IntegrationList,
   Investigation,
   InvestigationSummary,
   LiveEvent,
@@ -55,6 +58,7 @@ import {
   type AskRequest,
   type AskResponse,
   type CreateInvestigationRequest,
+  type IntegrationUpdate,
   type InvestigationSummary as Summary,
 } from "./schemas";
 
@@ -77,6 +81,8 @@ interface Persisted {
   sessions: DemoSession[];
   approvals: Approval[];
   active: string | null;
+  /** Settings → Integrations edits (PR-046): never a secret value, only its last 4 chars. */
+  integrations?: unknown;
 }
 
 export interface DemoClientOptions {
@@ -99,6 +105,7 @@ export class DemoClient implements ApiClient {
   private sessions = new Map<string, DemoSession>();
   private approvalState: Approval[];
   private activeScenario: string | null = null;
+  private integrationState: IntegrationList;
   private listeners = new Map<string, Set<() => void>>();
 
   constructor(opts: DemoClientOptions) {
@@ -121,6 +128,11 @@ export class DemoClient implements ApiClient {
       ApprovalList,
       shiftTimes(approvalsJson, this.shift),
       "demo approvals.json",
+    );
+    this.integrationState = parseOrThrow(
+      IntegrationList,
+      integrationsJson,
+      "demo integrations.json",
     );
     // the built-in open investigation waiting for a clarification (UC-13)
     const open = this.history.items.find((i) => i.status === "needs_clarification");
@@ -148,6 +160,8 @@ export class DemoClient implements ApiClient {
       for (const s of p.sessions) this.sessions.set(s.id, s);
       this.approvalState = parseOrThrow(ApprovalList, p.approvals, "demo state");
       this.activeScenario = p.active;
+      if (p.integrations)
+        this.integrationState = parseOrThrow(IntegrationList, p.integrations, "demo state");
     } catch {
       // corrupt or blocked storage: start fresh
     }
@@ -158,6 +172,7 @@ export class DemoClient implements ApiClient {
         sessions: [...this.sessions.values()],
         approvals: this.approvalState,
         active: this.activeScenario,
+        integrations: this.integrationState,
       };
       this.storage?.setItem(STORE_KEY, JSON.stringify(p));
     } catch {
@@ -508,6 +523,40 @@ export class DemoClient implements ApiClient {
       "Fault injection is disabled in demo mode (AIOPS_ENABLE_FAULTS=0)",
       403,
       "forbidden",
+    );
+  }
+
+  integrations() {
+    return this.delay(structuredClone(this.integrationState));
+  }
+  private integration(capability: string) {
+    const item = this.integrationState.items.find((i) => i.capability === capability);
+    if (!item) throw new ApiError(`Capability '${capability}' not found`, 404, "not_found");
+    return item;
+  }
+  async saveIntegration(capability: string, update: IntegrationUpdate) {
+    await this.delay(undefined);
+    const saved = applyDemoUpdate(
+      this.integration(capability),
+      update,
+      "demo-operator",
+      new Date(this.now()).toISOString(),
+      this.integrationState.secrets_enabled,
+    );
+    this.integrationState = {
+      ...this.integrationState,
+      items: this.integrationState.items.map((i) =>
+        i.capability === capability ? saved.integration : i,
+      ),
+    };
+    this.save();
+    return structuredClone(saved);
+  }
+  async testIntegration(capability: string, draft?: IntegrationUpdate) {
+    const item = this.integration(capability);
+    await this.delay(undefined);
+    return new Promise<ReturnType<typeof demoTestResult>>((resolve) =>
+      setTimeout(() => resolve(demoTestResult(item, draft)), this.latency * 4),
     );
   }
 

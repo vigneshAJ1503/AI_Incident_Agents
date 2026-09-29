@@ -267,6 +267,7 @@ api:
     investigations: 10/minute     # POST /investigations, clarify
     approvals: 30/minute          # approve, deny, ticket drafts
     scenarios: 6/minute           # fault inject/revert
+    integrations: 30/minute       # Settings -> Integrations: save, test connection (PR-046)
   max_body_bytes: 65536           # HTTP 413 above
   idempotency_ttl_s: 86400        # Idempotency-Key memory for POST /investigations
   stuck_after_s: 900              # reaper: running with no events this long -> failed (0 = off)

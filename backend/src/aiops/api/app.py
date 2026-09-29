@@ -34,6 +34,7 @@ from aiops.agents.tickets_agent.draft import ACTIONS
 from aiops.api.auth import PUBLIC_PATHS, AuthMiddleware, build_authenticator
 from aiops.api.context import ApiContext, build_context
 from aiops.api.errors import install_error_handlers
+from aiops.api.integrations import router as integrations_router
 from aiops.api.routes import router
 from aiops.api.security import (
     BodySizeLimitMiddleware,
@@ -129,6 +130,7 @@ def create_app(ctx: ApiContext | None = None) -> FastAPI:
     app.state.idempotency = IdempotencyStore(api.idempotency_ttl_s)
     install_error_handlers(app)
     app.include_router(router)
+    app.include_router(integrations_router)
     if context.settings.observability.metrics.enabled:
         metrics.initialize(
             context.settings, [spec.name for spec in AGENTS.specs()], sorted(set(ACTIONS.values()))
@@ -146,7 +148,7 @@ def create_app(ctx: ApiContext | None = None) -> FastAPI:
     app.add_middleware(RequestContextMiddleware)
     cors: dict[str, Any] = {
         "allow_origins": list(api.cors_origins),
-        "allow_methods": ["GET", "POST", "OPTIONS"],
+        "allow_methods": ["GET", "POST", "PUT", "OPTIONS"],
         "allow_headers": [
             "Content-Type",
             "X-API-Key",

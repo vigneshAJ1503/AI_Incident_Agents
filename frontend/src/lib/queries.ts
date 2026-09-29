@@ -7,6 +7,8 @@ import type {
   Approval,
   AskRequest,
   CreateInvestigationRequest,
+  IntegrationList,
+  IntegrationUpdate,
   InvestigationSummary,
 } from "@/lib/api/schemas";
 
@@ -19,6 +21,7 @@ export const qk = {
   agents: ["agents"] as const,
   approvals: (status?: string) => ["approvals", status ?? "all"] as const,
   scenarios: ["scenarios"] as const,
+  integrations: ["integrations"] as const,
 };
 
 export const useHealth = () =>
@@ -79,6 +82,39 @@ export const useApprovals = (status?: string) =>
   });
 export const useScenarios = () =>
   useQuery({ queryKey: qk.scenarios, queryFn: () => getClient().scenarios() });
+
+/** Settings → Integrations (PR-046). */
+export const useIntegrations = () =>
+  useQuery({ queryKey: qk.integrations, queryFn: () => getClient().integrations() });
+
+/** Save an integration; the list (and /health, whose statuses may change) is refreshed. */
+export function useSaveIntegration() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ capability, update }: { capability: string; update: IntegrationUpdate }) =>
+      getClient().saveIntegration(capability, update),
+    onSuccess: (saved) => {
+      qc.setQueryData<IntegrationList>(qk.integrations, (old) =>
+        old
+          ? {
+              ...old,
+              items: old.items.map((i) =>
+                i.capability === saved.integration.capability ? saved.integration : i,
+              ),
+            }
+          : old,
+      );
+      void qc.invalidateQueries({ queryKey: qk.health });
+    },
+  });
+}
+
+export function useTestIntegration() {
+  return useMutation({
+    mutationFn: ({ capability, draft }: { capability: string; draft?: IntegrationUpdate }) =>
+      getClient().testIntegration(capability, draft),
+  });
+}
 
 export function useCreateInvestigation() {
   const qc = useQueryClient();

@@ -1,0 +1,39 @@
+{{- if .Values.tests.enabled }}
+# `helm test <release>`: /api/health answers with the store up, through the web proxy when the
+# UI is enabled (the browser's path), else on the API service. Same hardened pod as the rest.
+{{- $target := printf "http://%s-api:%v/api/health" (include "aiops.fullname" .) .Values.api.service.port }}
+{{- if .Values.web.enabled }}
+{{- $target = printf "http://%s-web:%v/api/health" (include "aiops.fullname" .) .Values.web.service.port }}
+{{- end }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: {{ include "aiops.fullname" . }}-test-health
+  labels:
+    {{- include "aiops.componentLabels" (list . "test") | nindent 4 }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: before-hook-creation
+spec:
+  restartPolicy: Never
+  serviceAccountName: {{ include "aiops.serviceAccountName" . }}
+  automountServiceAccountToken: false
+  {{- with include "aiops.imagePullSecrets" . }}{{ . | trim | nindent 2 }}{{- end }}
+  {{- include "aiops.podSecurityContext" . | nindent 2 }}
+  containers:
+    - name: health
+      image: {{ include "aiops.image" (list . .Values.api.image) }}
+      imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+      command:
+        - python
+        - -c
+        - |
+          import json, sys, urllib.request
+          body = json.load(urllib.request.urlopen({{ $target | quote }}, timeout=10))
+          print(json.dumps({k: body.get(k) for k in ("status", "profile", "store", "llm")}))
+          sys.exit(0 if body.get("store") == "ok" else 1)
+      {{- include "aiops.containerSecurityContext" . | nindent 6 }}
+      resources:
+        requests: {cpu: 10m, memory: 32Mi}
+        limits: {cpu: 200m, memory: 64Mi}
+{{- end }}

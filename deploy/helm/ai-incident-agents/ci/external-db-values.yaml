@@ -1,0 +1,34 @@
+# CI coverage (make helm-lint): a managed Postgres from a URL Secret, the profile from a
+# ConfigMap the company manages (GitOps), no Helm hooks, Loki as the logs server, no web UI.
+profile:
+  name: acme
+  create: false
+  existingConfigMap: acme-aiops-profile
+postgresql:
+  enabled: false
+externalDatabase:
+  existingSecret: acme-aiops-db
+  urlKey: url
+migrations:
+  useHelmHooks: false
+web:
+  enabled: false
+tests:
+  enabled: true
+global:
+  imageRegistry: ghcr.io/acme
+  imageTag: 0.1.0
+  imagePullSecrets:
+    - name: ghcr
+mcpServers:
+  mockTickets: {enabled: true}
+  loki:
+    enabled: true
+    existingSecret: acme-loki
+    env:
+      LOKI_URL: https://logs-prod.grafana.net
+      ALLOWED_STREAMS: namespace=prod
+  kubernetes: {enabled: true}
+k8sReader:
+  namespaces: [prod]
+  clusterRead: false

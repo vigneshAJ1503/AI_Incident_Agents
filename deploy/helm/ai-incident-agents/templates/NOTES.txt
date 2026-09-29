@@ -1,0 +1,43 @@
+AI Incident Agents {{ .Chart.AppVersion }} is installed as release "{{ .Release.Name }}" in namespace "{{ .Release.Namespace }}".
+Profile: {{ .Values.profile.name }}{{ if .Values.profile.existingConfigMap }} (ConfigMap {{ .Values.profile.existingConfigMap }}){{ else if .Values.profile.create }} (ConfigMap {{ include "aiops.profile.configMapName" . }}){{ else }} (built into the image){{ end }}
+Database: {{ if .Values.postgresql.enabled }}bundled Postgres ({{ include "aiops.postgresql.fullname" . }}, single instance){{ else }}external (Secret {{ .Values.externalDatabase.existingSecret }}){{ end }}
+MCP servers: {{ $on := list }}{{ range $k, $v := .Values.mcpServers }}{{ if $v.enabled }}{{ $on = append $on $k }}{{ end }}{{ end }}{{ join ", " $on | default "none" }}
+
+1. Watch the rollout (the migration Job runs after install):
+     kubectl -n {{ .Release.Namespace }} get pods -l app.kubernetes.io/instance={{ .Release.Name }} -w
+
+{{- if and .Values.ingress.enabled .Values.web.enabled }}
+2. Open the Web UI: http{{ if .Values.ingress.tls }}s{{ end }}://{{ .Values.ingress.host }}
+{{- else if .Values.web.enabled }}
+2. Open the Web UI (it also proxies the API under /api):
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "aiops.fullname" . }}-web 3100:{{ .Values.web.service.port }}
+     open http://localhost:3100            (health: http://localhost:3100/api/health)
+{{- else }}
+2. Reach the API:
+     kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "aiops.fullname" . }}-api 8000:{{ .Values.api.service.port }}
+     curl http://localhost:8000/api/health
+{{- end }}
+
+3. Check it: helm test {{ .Release.Name }} -n {{ .Release.Namespace }}
+{{- if not .Values.llm.existingSecret }}
+
+NOTE: no LLM Secret (llm.existingSecret): investigations run as zero-token REPLAYS of the
+      recorded scenarios. Add a Secret with your hosted LLM key for live investigations.
+{{- end }}
+{{- if not .Values.api.auth.existingSecret }}
+
+WARNING: the API has NO authentication (api.auth.existingSecret is empty). Keep it
+         cluster-internal (port-forward) or set named API keys before exposing it.
+{{- end }}
+{{- if and .Values.ingress.enabled (not .Values.api.auth.existingSecret) }}
+
+WARNING: the Ingress exposes an UNAUTHENTICATED product. Set api.auth.existingSecret and
+         web.apiKeySecret (or put SSO in front of it) now.
+{{- end }}
+{{- if and (gt (int .Values.api.replicaCount) 1) .Values.profile.create (not (contains "postgres" .Values.profile.profileYaml)) }}
+
+WARNING: api.replicaCount > 1 with file-based approvals: set storage.approvals/audit: postgres
+         in the profile so every replica shares them.
+{{- end }}
+
+Docs: docs/setup/helm.md (install walkthrough, values, upgrades, security).

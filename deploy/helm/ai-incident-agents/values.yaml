@@ -1,0 +1,355 @@
+# AI Incident Agents: Helm values (PR-047, docs/setup/helm.md).
+#
+# Installing for a company is CONFIGURATION ONLY:
+#   1. the profile (capabilities, providers, limits) and its service catalog  -> `profile`
+#   2. secrets, always from Secrets you create yourself                       -> `*.existingSecret`
+#   3. which MCP servers run in the cluster                                   -> `mcpServers.*.enabled`
+# NEVER put a secret value in this file: every credential is a reference to an existing Secret.
+# Validated by values.schema.json (typos in keys fail `helm install` with a readable error).
+
+global:
+  # Prefix for our images, e.g. ghcr.io/acme -> ghcr.io/acme/aiops/backend:<tag>. Empty = none.
+  imageRegistry: ""
+  # Default tag of our images (empty = the chart's appVersion).
+  imageTag: ""
+  imagePullPolicy: IfNotPresent
+  imagePullSecrets: []   # [{name: regcred}]
+
+nameOverride: ""
+fullnameOverride: ""
+
+# ------------------------------------------------------------------------------ profile
+# The company profile (ADR-0011, docs/portability.md), selected with AIOPS_PROFILE=<name>.
+# Three ways to provide it:
+#   a) a profile baked into the image (local, local-k8s, local-loki):  create: false
+#   b) inline here (rendered into a ConfigMap):                        create: true (default)
+#   c) a ConfigMap you manage (keys profile.yaml [+ services.yaml]):   existingConfigMap: <name>
+# b) and c) are mounted at /app/profiles/<name>/, so `extends: local` (or any built-in
+# profile) still works and a profile only overrides what differs.
+profile:
+  name: helm
+  create: true
+  existingConfigMap: ""
+  # profile.yaml. The default = the `local` profile (replays of the recorded scenarios, no
+  # data sources needed) with approvals + the tool-call audit in Postgres, so they survive
+  # restarts and every API replica shares them.
+  profileYaml: |
+    extends: local
+    metadata:
+      company: AI Incident Agents (Helm)
+      description: The local profile on Kubernetes; state in Postgres.
+    storage:
+      approvals: postgres
+      audit: postgres
+  # services.yaml (the service catalog). Empty = the catalog of the extended profile.
+  servicesYaml: ""
+
+# ------------------------------------------------------------------------------ secrets
+# LLM credentials. Every key of this Secret becomes an environment variable of the API
+# (and the migration Job), e.g. OPENAI_COMPAT_API_KEY, OPENAI_COMPAT_API_KEY_2,
+# ANTHROPIC_API_KEY, AWS_* for Bedrock: whatever `${VAR}`s your profile's llm block reads.
+# Empty = no key: investigations run as zero-token replays of the recorded fixtures.
+llm:
+  existingSecret: ""
+  # Non-secret LLM settings (the profile reads them as ${VAR}); strings only.
+  env: {}
+  #  LLM_PROVIDER: openai_compat
+  #  OPENAI_COMPAT_BASE_URL: https://api.groq.com/openai/v1
+  #  LLM_MODEL_FAST: llama-3.1-8b-instant
+
+# ------------------------------------------------------------------------------ api
+api:
+  image:
+    repository: aiops/backend
+    tag: ""            # empty = global.imageTag, then the chart's appVersion
+  replicaCount: 1       # >1 needs profile storage in Postgres (the default); see docs/setup/helm.md
+  # API authentication (docs/api/README.md#security). A Secret with (any of) the keys
+  # AIOPS_API_KEYS (named keys "name:KEY,...": approver identities) and AIOPS_API_KEY.
+  # Empty = no authentication: only for a cluster-internal, port-forwarded trial.
+  auth:
+    existingSecret: ""
+  # Replays started from the UI: seconds per recorded tool call (0 = instant).
+  replayToolDelaySeconds: "0.5"
+  # Extra plain environment variables ({NAME: value}); strings only, never secrets.
+  env: {}
+  # Extra Secrets whose keys all become environment variables (e.g. a profile's ${JIRA_*}).
+  envFromSecrets: []
+  service:
+    type: ClusterIP
+    port: 8000
+  resources:
+    requests: {cpu: 100m, memory: 192Mi}
+    limits: {cpu: "1", memory: 384Mi}   # measured ~150 MiB after a replay investigation
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+  extraVolumes: []        # e.g. prompt overrides from another ConfigMap
+  extraVolumeMounts: []
+
+# ------------------------------------------------------------------------------ web
+web:
+  enabled: true
+  image:
+    repository: aiops/web
+    tag: ""
+  replicaCount: 1
+  # Server-side API key the web proxy adds to /api/* calls when the API requires one
+  # (never sent to the browser). Use a NAMED key so UI approvals have an identity.
+  apiKeySecret:
+    name: ""
+    key: AIOPS_UI_API_KEY
+  service:
+    type: ClusterIP
+    port: 3100
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: 500m, memory: 192Mi}  # measured 39-59 MiB
+  podAnnotations: {}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# The Web UI is the only entry point (it proxies /api/* to the API), so only it gets an Ingress.
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  host: aiops.example.com
+  tls: []   # [{secretName: aiops-tls, hosts: [aiops.example.com]}]
+
+# ------------------------------------------------------------------------------ database
+# The evidence store (Postgres). Either the bundled single-instance StatefulSet (a simple
+# default for trials and small teams), or your own managed Postgres (recommended in production).
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: 16.15-alpine3.24
+  auth:
+    username: aiops
+    database: aiops
+    # REQUIRED Secret (create it before installing): the password under `passwordKey`.
+    #   kubectl create secret generic aiops-postgres --from-literal=password="$(openssl rand -hex 24)"
+    existingSecret: aiops-postgres
+    passwordKey: password
+  persistence:
+    enabled: true
+    size: 2Gi
+    storageClass: ""     # empty = the cluster default
+    accessModes: [ReadWriteOnce]
+  # Server settings sized for the lean budget (the API opens few connections).
+  args: [-c, shared_buffers=32MB, -c, max_connections=50]
+  resources:
+    requests: {cpu: 50m, memory: 64Mi}
+    limits: {cpu: "1", memory: 256Mi}
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Used when postgresql.enabled=false: a Secret holding the full URL under `urlKey`,
+# postgresql://USER:PASSWORD@HOST:5432/DB?sslmode=require
+externalDatabase:
+  existingSecret: ""
+  urlKey: url
+
+# Schema migrations (Alembic `aiops db upgrade`), a Job run after install and before every
+# upgrade (Helm hooks). The API also migrates on start; a Postgres advisory lock serializes them.
+migrations:
+  enabled: true
+  useHelmHooks: true      # false = a plain Job per release revision (e.g. for GitOps tools)
+  backoffLimit: 10        # retries while the bundled Postgres is still starting
+  ttlSecondsAfterFinished: 3600
+  # Also store the demo history (S0-S5 replays + 14 days of synthetic investigations; zero
+  # tokens) like `make demo`. Idempotent (only when older than 12 h). For trials only.
+  seedDemo: false
+  resources:
+    requests: {cpu: 50m, memory: 128Mi}
+    limits: {cpu: "1", memory: 384Mi}
+
+# ------------------------------------------------------------------------------ MCP servers
+# Our read-only MCP servers, one per capability. Each enabled server gets a Deployment and a
+# Service, and the API gets `<urlEnv>=http://<release>-mcp-<name>:<port>/mcp`, the variable the
+# built-in profiles read (${LOGS_MCP_URL}, ...). A company's own profile can point a
+# capability at any other URL instead. Per server:
+#   env              plain settings (the server's guardrails: allowlists, caps, timeouts)
+#   existingSecret   a Secret whose keys become env vars (tokens, passwords); never inline
+#   database         tickets | libpq: the server gets the evidence store's connection
+#   extraVolumes/extraVolumeMounts   e.g. the repositories of the git server
+mcpServers:
+  # Offline Jira stand-in: approved Jira drafts become tickets here (schema `tickets`).
+  mockTickets:
+    enabled: true
+    image: {repository: aiops/mock-tickets-mcp, tag: ""}
+    port: 8109
+    urlEnv: TICKETS_MCP_URL
+    healthPath: /health
+    database: tickets
+    env:
+      TICKETS_STORE: postgres
+      TICKETS_SCHEMA: tickets
+      ALLOWED_PROJECTS: OPS
+      READ_ONLY_MODE: "false"
+      BASE_URL: http://localhost:8109
+    existingSecret: ""
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 160Mi}
+  elasticsearch:
+    enabled: false
+    image: {repository: aiops/elasticsearch-mcp, tag: ""}
+    port: 8101
+    urlEnv: LOGS_MCP_URL
+    env:
+      ES_URL: http://elasticsearch:9200
+      ALLOWED_INDEX_PATTERNS: "*-prod-*,logs-k8s-*"
+      MAX_TIME_RANGE_HOURS: "48"
+      MAX_RESULTS: "1000"
+      QUERY_TIMEOUT_S: "30"
+    existingSecret: ""
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 160Mi}
+  loki:
+    enabled: false
+    image: {repository: aiops/loki-mcp, tag: ""}
+    port: 8110
+    urlEnv: LOGS_MCP_URL
+    env:
+      LOKI_URL: http://loki:3100
+      ALLOWED_STREAMS: namespace=prod
+      QUERY_TIMEOUT_S: "30"
+      MAX_RANGE_HOURS: "48"
+      MAX_LINES: "500"
+      MAX_SERIES: "1000"
+    existingSecret: ""   # LOKI_BEARER_TOKEN or LOKI_USERNAME/LOKI_PASSWORD, LOKI_ORG_ID
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 128Mi}
+  prometheus:
+    enabled: false
+    image: {repository: aiops/prometheus-mcp, tag: ""}
+    port: 8103
+    urlEnv: METRICS_MCP_URL
+    env:
+      PROM_URL: http://prometheus:9090
+      QUERY_TIMEOUT_S: "20"
+      MAX_RANGE_HOURS: "24"
+      MAX_POINTS: "1100"
+      MIN_STEP_S: "15"
+      MAX_SERIES: "50"
+      METRIC_ALLOWLIST: "http_.*,db_pool_.*,redis_up,process_.*,kube_.*,up,ALERTS.*"
+    existingSecret: ""   # PROM_BEARER_TOKEN or PROM_USERNAME/PROM_PASSWORD, PROM_ORG_ID
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 128Mi}
+  alertmanager:
+    enabled: false
+    image: {repository: aiops/alertmanager-mcp, tag: ""}
+    port: 8105
+    urlEnv: ALERTS_MCP_URL
+    env:
+      AM_URL: http://alertmanager:9093
+      PROMETHEUS_URL: ""   # alert_history via the ALERTS series; empty = Alertmanager only
+      MAX_RESULTS: "200"
+      MAX_TIME_RANGE_HOURS: "168"
+      QUERY_TIMEOUT_S: "15"
+    existingSecret: ""
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 128Mi}
+  # Read-only Kubernetes access with its own ServiceAccount (see `k8sReader` below).
+  kubernetes:
+    enabled: false
+    image: {repository: aiops/kubernetes-mcp, tag: ""}
+    port: 8106
+    urlEnv: K8S_MCP_URL
+    env:
+      MAX_RESULTS: "200"
+      MAX_LOG_LINES: "300"
+      MAX_SINCE_HOURS: "48"
+      QUERY_TIMEOUT_S: "15"
+    existingSecret: ""
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 128Mi}
+  git:
+    enabled: false
+    image: {repository: aiops/git-mcp, tag: ""}
+    port: 8107
+    urlEnv: CODE_MCP_URL
+    env:
+      GIT_REPOS: sample-repo=/repos/sample-repo
+      MAX_COMMITS: "200"
+      MAX_DIFF_CHARS: "40000"
+      MAX_RANGE_DAYS: "90"
+    existingSecret: ""
+    # The repositories, mounted read-only (a PVC kept in sync by your CI, a git-sync sidecar...).
+    extraVolumes: []
+    #  - name: repos
+    #    persistentVolumeClaim: {claimName: aiops-repos, readOnly: true}
+    extraVolumeMounts: []
+    #  - {name: repos, mountPath: /repos, readOnly: true}
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 192Mi}
+  # Runbook search (Postgres full-text, schema `knowledge`; ingest with `aiops ingest-knowledge`).
+  knowledge:
+    enabled: false
+    image: {repository: aiops/knowledge-mcp, tag: ""}
+    port: 8108
+    urlEnv: KNOWLEDGE_MCP_URL
+    database: libpq
+    env:
+      KNOWLEDGE_SCHEMA: knowledge
+      MAX_K: "10"
+      STATEMENT_TIMEOUT_MS: "5000"
+    existingSecret: ""
+    resources:
+      requests: {cpu: 25m, memory: 64Mi}
+      limits: {cpu: 500m, memory: 160Mi}
+
+# RBAC of the Kubernetes MCP server (only created when mcpServers.kubernetes.enabled).
+# Least privilege: get/list/watch on workload objects in `namespaces` only (RoleBindings), plus
+# optional read of nodes + namespaces (cluster-scoped). Never secrets, configmaps, exec,
+# port-forward or any write verb (ADR-0008).
+k8sReader:
+  namespaces: [prod]
+  clusterRead: true
+
+# ------------------------------------------------------------------------------ platform
+serviceAccount:
+  # The identity of every pod except the Kubernetes MCP server. It has NO RBAC and its token
+  # is not mounted.
+  create: true
+  name: ""
+  annotations: {}   # e.g. eks.amazonaws.com/role-arn for Bedrock via IRSA
+
+# The same hardened security context everywhere (restricted Pod Security Standard).
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile: {type: RuntimeDefault}
+containerSecurityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  privileged: false
+  capabilities: {drop: [ALL]}
+
+# Ingress-only NetworkPolicies: web <- anyone (or `webFrom`), api <- web (+ `apiFrom`),
+# MCP servers <- api, Postgres <- api, migration Job and the servers that need it.
+# Needs a CNI that enforces NetworkPolicy (Calico, Cilium, ...).
+networkPolicy:
+  enabled: false
+  webFrom: []   # NetworkPolicyPeer list (e.g. the ingress controller's namespace); [] = anyone
+  apiFrom: []   # extra clients of the API (e.g. a Slack bot); the web UI is always allowed
+
+podDisruptionBudget:
+  enabled: false
+  minAvailable: 1   # for api and web; use with replicaCount >= 2
+
+# `helm test <release>`: checks /api/health through the web proxy.
+tests:
+  enabled: true

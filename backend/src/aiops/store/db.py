@@ -20,6 +20,8 @@ from aiops.core.config import Settings
 
 DATABASE_URL_VAR = "AIOPS_DATABASE_URL"
 MIGRATIONS = Path(__file__).with_name("migrations")
+#: Postgres advisory lock key that serializes concurrent `upgrade()` calls ("aiops-db").
+_LOCK = 0x6169_6F70_732D_6462
 
 
 class StoreError(Exception):
@@ -85,6 +87,9 @@ def upgrade(url: str, schema: str) -> None:
     try:
         with engine.begin() as connection:
             if not is_sqlite(url):
+                # One migrator at a time (PR-047): the Helm migration Job and API replicas
+                # starting together would otherwise race on CREATE TABLE. Released at commit.
+                connection.execute(sa.text("SELECT pg_advisory_xact_lock(:key)"), {"key": _LOCK})
                 connection.execute(sa.text(f'CREATE SCHEMA IF NOT EXISTS "{schema}"'))
             connection = connection.execution_options(**execution_options(url, schema))
             config = Config()

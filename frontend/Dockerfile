@@ -25,6 +25,14 @@ COPY . .
 RUN npm run build
 
 FROM ${NODE_IMAGE}
+ARG VERSION=0.1.0
+ARG REVISION=unknown
+LABEL org.opencontainers.image.title="aiops-web" \
+      org.opencontainers.image.description="AI Incident Agents: Web UI (Next.js standalone)" \
+      org.opencontainers.image.source="https://github.com/vigneshAJ1503/AI_Incident_Agents" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}"
 WORKDIR /app
 ENV NODE_ENV=production \
     NEXT_TELEMETRY_DISABLED=1 \
@@ -34,15 +42,22 @@ ENV NODE_ENV=production \
 # Numeric UID/GID (Kubernetes runAsNonRoot needs a number); files stay root-owned, read-only.
 # Security (PR-042, Trivy): apply Alpine security fixes, and drop the package managers the
 # standalone server never uses (npm/yarn/corepack bundle their own vulnerable dependencies).
+# PR-047: no apk and no shell at runtime either (the apk database stays for scanners).
+# BusyBox provides /bin/sh and every applet, so it is removed last. Runs with a read-only root
+# filesystem; writable: /tmp and /app/.next/cache (compose tmpfs, Helm emptyDir). Last RUN.
 RUN apk upgrade --no-cache \
     && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
        /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack /opt/yarn-* \
        /usr/local/bin/yarn /usr/local/bin/yarnpkg \
-    && addgroup -g 10001 aiops && adduser -D -u 10001 -G aiops aiops
+    && addgroup -g 10001 aiops && adduser -D -u 10001 -G aiops aiops \
+    && rm -f /sbin/apk /usr/local/bin/docker-entrypoint.sh /bin/busybox
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 USER 10001:10001
 EXPOSE 3100
+# Exec form: there is no shell.
 HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=10 \
-  CMD node -e "fetch('http://127.0.0.1:3100/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+  CMD ["node", "-e", "fetch('http://127.0.0.1:3100/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+# The base image's docker-entrypoint.sh is a shell script (removed above): run node directly.
+ENTRYPOINT ["node"]
+CMD ["server.js"]

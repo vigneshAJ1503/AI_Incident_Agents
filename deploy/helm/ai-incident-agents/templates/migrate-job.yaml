@@ -1,0 +1,68 @@
+{{- if .Values.migrations.enabled }}
+# Schema migrations: Alembic `aiops db upgrade` (idempotent), with the API's image, profile
+# and database settings. Helm hooks: after install (the bundled Postgres exists by then; the
+# Job retries until it answers) and before every upgrade (new tables before new API pods).
+apiVersion: batch/v1
+kind: Job
+metadata:
+  {{- if .Values.migrations.useHelmHooks }}
+  name: {{ include "aiops.fullname" . }}-migrate
+  annotations:
+    helm.sh/hook: post-install,pre-upgrade
+    helm.sh/hook-weight: "0"
+    helm.sh/hook-delete-policy: before-hook-creation
+  {{- else }}
+  name: {{ printf "%s-migrate-%d" (include "aiops.fullname" .) .Release.Revision | trunc 63 | trimSuffix "-" }}
+  {{- end }}
+  labels:
+    {{- include "aiops.componentLabels" (list . "migrate") | nindent 4 }}
+spec:
+  backoffLimit: {{ .Values.migrations.backoffLimit }}
+  ttlSecondsAfterFinished: {{ .Values.migrations.ttlSecondsAfterFinished }}
+  template:
+    metadata:
+      labels:
+        {{- include "aiops.componentLabels" (list . "migrate") | nindent 8 }}
+        aiops.io/db-client: "true"
+    spec:
+      restartPolicy: Never
+      serviceAccountName: {{ include "aiops.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- with include "aiops.imagePullSecrets" . }}{{ . | trim | nindent 6 }}{{- end }}
+      {{- include "aiops.podSecurityContext" . | nindent 6 }}
+      {{- if .Values.migrations.seedDemo }}
+      initContainers:
+      {{- else }}
+      containers:
+      {{- end }}
+        - name: migrate
+          image: {{ include "aiops.image" (list . .Values.api.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: [aiops, db, upgrade]
+          {{- include "aiops.containerSecurityContext" . | nindent 10 }}
+          env:
+            {{- include "aiops.api.env" . | nindent 12 }}
+          {{- with include "aiops.api.envFrom" . }}{{ . | trim | nindent 10 }}{{- end }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "aiops.api.volumeMounts" . | nindent 12 }}
+      {{- if .Values.migrations.seedDemo }}
+      containers:
+        # The demo history (zero tokens), like `make demo`: only when older than 12 h.
+        - name: seed-demo
+          image: {{ include "aiops.image" (list . .Values.api.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          command: [aiops, demo, seed, --if-older-than, "12"]
+          {{- include "aiops.containerSecurityContext" . | nindent 10 }}
+          env:
+            {{- include "aiops.api.env" . | nindent 12 }}
+          {{- with include "aiops.api.envFrom" . }}{{ . | trim | nindent 10 }}{{- end }}
+          resources:
+            {{- toYaml .Values.migrations.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "aiops.api.volumeMounts" . | nindent 12 }}
+      {{- end }}
+      volumes:
+        {{- include "aiops.api.volumes" . | nindent 8 }}
+{{- end }}

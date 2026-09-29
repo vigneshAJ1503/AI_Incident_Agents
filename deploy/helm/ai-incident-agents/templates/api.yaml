@@ -1,0 +1,100 @@
+{{- include "aiops.database.validate" . }}
+{{- $urlEnvs := dict }}
+{{- range $key, $server := .Values.mcpServers }}
+{{- if and $server.enabled $server.urlEnv }}
+{{- if hasKey $urlEnvs $server.urlEnv }}
+{{- fail (printf "mcpServers.%s and mcpServers.%s both set %s: enable only one server per capability (e.g. elasticsearch OR loki for logs)" (get $urlEnvs $server.urlEnv) $key $server.urlEnv) }}
+{{- end }}
+{{- $_ := set $urlEnvs $server.urlEnv $key }}
+{{- end }}
+{{- end }}
+# The REST + SSE API (`aiops serve`, docs/api/README.md). Investigations run in this process.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "aiops.fullname" . }}-api
+  labels:
+    {{- include "aiops.componentLabels" (list . "api") | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list . "api") | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aiops.componentLabels" (list . "api") | nindent 8 }}
+        aiops.io/db-client: "true"
+      annotations:
+        # Roll the pods when the profile changes.
+        checksum/profile: {{ print .Values.profile | sha256sum }}
+        {{- with .Values.api.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "aiops.serviceAccountName" . }}
+      automountServiceAccountToken: false
+      {{- with include "aiops.imagePullSecrets" . }}{{ . | trim | nindent 6 }}{{- end }}
+      {{- include "aiops.podSecurityContext" . | nindent 6 }}
+      # Investigations in flight get time to finish (graceful shutdown, PR-042b).
+      terminationGracePeriodSeconds: 60
+      containers:
+        - name: api
+          image: {{ include "aiops.image" (list . .Values.api.image) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          {{- include "aiops.containerSecurityContext" . | nindent 10 }}
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            {{- include "aiops.api.env" . | nindent 12 }}
+          {{- with include "aiops.api.envFrom" . }}{{ . | trim | nindent 10 }}{{- end }}
+          # Liveness = the process serves HTTP; readiness = /api/health (profile, store,
+          # capabilities). A slow or down data source never restarts the API.
+          startupProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 2
+            failureThreshold: 60
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 20
+            timeoutSeconds: 3
+            failureThreshold: 3
+          readinessProbe:
+            httpGet: {path: /api/health, port: http}
+            periodSeconds: 10
+            timeoutSeconds: 8
+            failureThreshold: 3
+          resources:
+            {{- toYaml .Values.api.resources | nindent 12 }}
+          volumeMounts:
+            {{- include "aiops.api.volumeMounts" . | nindent 12 }}
+      volumes:
+        {{- include "aiops.api.volumes" . | nindent 8 }}
+      {{- with .Values.api.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.api.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "aiops.fullname" . }}-api
+  labels:
+    {{- include "aiops.componentLabels" (list . "api") | nindent 4 }}
+spec:
+  type: {{ .Values.api.service.type }}
+  selector:
+    {{- include "aiops.selectorLabels" (list . "api") | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ .Values.api.service.port }}
+      targetPort: http

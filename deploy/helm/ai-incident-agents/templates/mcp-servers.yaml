@@ -1,0 +1,111 @@
+{{- /* One Deployment + Service per enabled MCP server (values: mcpServers.<name>). */ -}}
+{{- range $key, $server := .Values.mcpServers }}
+{{- if $server.enabled }}
+{{- $name := include "aiops.mcp.fullname" (list $ $key) }}
+{{- $component := printf "mcp-%s" (kebabcase $key) }}
+{{- $isK8s := eq $key "kubernetes" }}
+---
+# MCP server `{{ $key }}`: read-only, guardrails enforced server-side (its env below).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "aiops.componentLabels" (list $ $component) | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list $ $component) | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "aiops.componentLabels" (list $ $component) | nindent 8 }}
+        aiops.io/mcp-server: "true"
+        {{- if $server.database }}
+        aiops.io/db-client: "true"
+        {{- end }}
+    spec:
+      {{- if $isK8s }}
+      # The only pod with a Kubernetes token: the read-only k8s-reader ServiceAccount.
+      serviceAccountName: {{ include "aiops.fullname" $ }}-k8s-reader
+      automountServiceAccountToken: true
+      {{- else }}
+      serviceAccountName: {{ include "aiops.serviceAccountName" $ }}
+      automountServiceAccountToken: false
+      {{- end }}
+      {{- with include "aiops.imagePullSecrets" $ }}{{ . | trim | nindent 6 }}{{- end }}
+      {{- include "aiops.podSecurityContext" $ | nindent 6 }}
+      containers:
+        - name: {{ $component }}
+          image: {{ include "aiops.image" (list $ $server.image) }}
+          imagePullPolicy: {{ $.Values.global.imagePullPolicy }}
+          {{- include "aiops.containerSecurityContext" $ | nindent 10 }}
+          # The image's entrypoint serves streamable HTTP on {{ $server.port }}; keep them in sync.
+          ports:
+            - name: http
+              containerPort: {{ $server.port }}
+          env:
+            {{- if $isK8s }}
+            - name: ALLOWED_NAMESPACES
+              value: {{ join "," $.Values.k8sReader.namespaces | quote }}
+            {{- end }}
+            {{- if $server.database }}
+            {{- include "aiops.mcp.databaseEnv" (list $ $server.database) | trim | nindent 12 }}
+            {{- end }}
+            {{- range $envName, $value := $server.env }}
+            - name: {{ $envName }}
+              value: {{ $value | quote }}
+            {{- end }}
+          {{- with $server.existingSecret }}
+          envFrom:
+            - secretRef:
+                name: {{ . }}
+          {{- end }}
+          startupProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            tcpSocket: {port: http}
+            periodSeconds: 20
+            failureThreshold: 3
+          readinessProbe:
+            {{- if $server.healthPath }}
+            httpGet: {path: {{ $server.healthPath }}, port: http}
+            {{- else }}
+            tcpSocket: {port: http}
+            {{- end }}
+            periodSeconds: 10
+            timeoutSeconds: 5
+          resources:
+            {{- toYaml $server.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+            {{- with $server.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+      volumes:
+        - name: tmp
+          emptyDir: {sizeLimit: 32Mi}
+        {{- with $server.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $name }}
+  labels:
+    {{- include "aiops.componentLabels" (list $ $component) | nindent 4 }}
+spec:
+  type: ClusterIP
+  selector:
+    {{- include "aiops.selectorLabels" (list $ $component) | nindent 4 }}
+  ports:
+    - name: http
+      port: {{ $server.port }}
+      targetPort: http
+{{- end }}
+{{- end }}

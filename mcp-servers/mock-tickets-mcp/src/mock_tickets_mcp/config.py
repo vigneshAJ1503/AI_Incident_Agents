@@ -24,6 +24,9 @@ class ServerSettings:
     pg_user: str = "aiops"
     pg_password: str = field(default="", repr=False)
     pg_database: str = "aiops"
+    #: A full libpq URL (``postgresql://user:pass@host:5432/db``) that wins over ``PG_*``:
+    #: one Secret value for an external database (PR-047, the Helm chart).
+    database_url: str = field(default="", repr=False)
     schema: str = "tickets"
     #: Server-side guardrail: only these projects exist for clients (empty = all).
     allowed_projects: tuple[str, ...] = ("OPS",)
@@ -35,6 +38,10 @@ class ServerSettings:
 
     @property
     def dsn(self) -> str:
+        if self.database_url:
+            # SQLAlchemy-style URLs (postgresql+psycopg://) are accepted too.
+            scheme, sep, rest = self.database_url.partition("://")
+            return f"{scheme.split('+')[0]}{sep}{rest}"
         password = quote(self.pg_password, safe="")
         auth = f"{self.pg_user}:{password}" if password else self.pg_user
         return f"postgresql://{auth}@{self.pg_host}:{self.pg_port}/{self.pg_database}"
@@ -51,6 +58,7 @@ class ServerSettings:
             pg_user=_env("PG_USER", "aiops"),
             pg_password=os.environ.get("PG_PASSWORD", ""),
             pg_database=_env("PG_DATABASE", "aiops"),
+            database_url=os.environ.get("TICKETS_DATABASE_URL", "").strip(),
             schema=_env("TICKETS_SCHEMA", "tickets"),
             allowed_projects=() if projects == ("*",) else projects,
             max_results=int(_env("MAX_RESULTS", "50")),

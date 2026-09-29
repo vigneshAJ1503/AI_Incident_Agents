@@ -114,6 +114,18 @@ jobs:
       - name: Validate + unit-test alert rules, validate alertmanager.yml
         run: make check-rules
 
+  # PR-047: the Helm chart. Helm 3.22.0 and kubeconform v0.8.0 run in pinned containers
+  # (scripts/helm.sh): lint --strict, render every values set, kubeconform -strict against the
+  # Kubernetes schemas, then the security guardrails (non-root, read-only FS, no inline secrets).
+  helm:
+    name: helm chart (lint · kubeconform · guardrails)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: astral-sh/setup-uv@d0cc045d04ccac9d8b7881df0226f9e82c39688e # v6.8.0
+      - name: make helm-lint
+        run: make helm-lint
+
   sample-services:
     name: sample-services (lint · typecheck · test · image)
     runs-on: ubuntu-latest

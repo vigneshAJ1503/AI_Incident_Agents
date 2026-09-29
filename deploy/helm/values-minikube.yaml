@@ -1,0 +1,40 @@
+# Local Minikube install (make helm-install-minikube, docs/setup/helm.md): the `make demo`
+# experience on Kubernetes. Zero tokens: no LLM Secret, so investigations are replays.
+# The images are built locally and loaded into the node (`minikube image load`), never pulled.
+fullnameOverride: aiops
+
+global:
+  imagePullPolicy: IfNotPresent
+
+profile:
+  name: helm
+  create: true   # the chart default: `local` + approvals/audit in Postgres
+
+# Like `make demo`: the S0-S5 replays + 14 days of history, so the dashboard isn't empty.
+migrations:
+  seedDemo: true
+
+integrations:
+  secretsKey:
+    existingSecret: aiops-secrets-key   # created by scripts/helm.sh (random Fernet key)
+
+postgresql:
+  auth:
+    existingSecret: aiops-postgres   # created by scripts/helm.sh with a random password
+  persistence:
+    size: 1Gi
+
+mcpServers:
+  mockTickets:
+    enabled: true
+    env:
+      TICKETS_STORE: postgres
+      TICKETS_SCHEMA: tickets
+      ALLOWED_PROJECTS: OPS
+      READ_ONLY_MODE: "false"
+      # Ticket links in the UI; reach it with a port-forward to svc/aiops-mcp-mock-tickets.
+      BASE_URL: http://localhost:8109
+
+# Exercise the hardening on the live cluster too (Minikube's CNI may not enforce policies).
+networkPolicy:
+  enabled: true

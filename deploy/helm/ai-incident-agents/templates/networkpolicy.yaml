@@ -1,0 +1,94 @@
+{{- if .Values.networkPolicy.enabled }}
+{{- $instance := .Release.Name }}
+# Ingress allowlists per component (egress stays open: the API calls a hosted LLM and your
+# data sources, which live anywhere). Enforced only by a NetworkPolicy-capable CNI.
+# web: from anyone (or networkPolicy.webFrom).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aiops.fullname" . }}-web
+  labels:
+    {{- include "aiops.componentLabels" (list . "web") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list . "web") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: http
+      {{- with .Values.networkPolicy.webFrom }}
+      from:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+---
+# api: from the web UI, `helm test` and networkPolicy.apiFrom.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aiops.fullname" . }}-api
+  labels:
+    {{- include "aiops.componentLabels" (list . "api") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list . "api") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: http
+      from:
+        - podSelector:
+            matchLabels:
+              {{- include "aiops.selectorLabels" (list . "web") | nindent 14 }}
+        - podSelector:
+            matchLabels:
+              {{- include "aiops.selectorLabels" (list . "test") | nindent 14 }}
+        {{- with .Values.networkPolicy.apiFrom }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+---
+# MCP servers: from the API only.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aiops.fullname" . }}-mcp
+  labels:
+    {{- include "aiops.labels" . | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/instance: {{ $instance }}
+      aiops.io/mcp-server: "true"
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: http
+      from:
+        - podSelector:
+            matchLabels:
+              {{- include "aiops.selectorLabels" (list . "api") | nindent 14 }}
+{{- if .Values.postgresql.enabled }}
+---
+# Postgres: from its clients in this release (API, migration Job, database-backed servers).
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "aiops.postgresql.fullname" . }}
+  labels:
+    {{- include "aiops.componentLabels" (list . "postgresql") | nindent 4 }}
+spec:
+  podSelector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list . "postgresql") | nindent 6 }}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - port: postgresql
+      from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/instance: {{ $instance }}
+              aiops.io/db-client: "true"
+{{- end }}
+{{- end }}

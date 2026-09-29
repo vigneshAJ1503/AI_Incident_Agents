@@ -36,6 +36,10 @@ root cause and approve a Jira draft. Without an LLM key every investigation is a
 recorded fixtures (zero tokens). `make demo-live` adds Minikube and fault injection; see
 [docs/setup/demo.md](docs/setup/demo.md).
 
+**Install it on Kubernetes** with Helm: configuration only (a profile, its service catalog and
+your existing Secrets), hardened images, `make helm-install-minikube` to try it locally; see
+[docs/setup/helm.md](docs/setup/helm.md).
+
 For development:
 
 ```bash

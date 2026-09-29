@@ -1,0 +1,20 @@
+apiVersion: v2
+name: ai-incident-agents
+description: >-
+  AI Incident Agents: an evidence-first AI incident investigation platform (API, Web UI,
+  Postgres evidence store and read-only MCP servers). Configuration only: a company profile,
+  its service catalog and existing Kubernetes Secrets.
+type: application
+# The chart version (SemVer) and the version of the images it deploys by default.
+version: 0.1.0
+appVersion: "0.1.0"
+kubeVersion: ">=1.27.0-0"
+home: https://github.com/vigneshAJ1503/AI_Incident_Agents
+sources:
+  - https://github.com/vigneshAJ1503/AI_Incident_Agents
+keywords: [aiops, incident-response, rca, mcp, observability]
+maintainers:
+  - name: vigneshAJ1503
+    url: https://github.com/vigneshAJ1503
+annotations:
+  artifacthub.io/license: MIT

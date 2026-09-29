@@ -1,0 +1,33 @@
+{{- if and .Values.ingress.enabled .Values.web.enabled }}
+# Only the Web UI is exposed: it serves the UI and proxies /api/* (REST + SSE) to the API.
+# SSE needs an unbuffered proxy: e.g. nginx.ingress.kubernetes.io/proxy-buffering: "off".
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "aiops.fullname" . }}
+  labels:
+    {{- include "aiops.componentLabels" (list . "web") | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .Values.ingress.className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- with .Values.ingress.tls }}
+  tls:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "aiops.fullname" . }}-web
+                port:
+                  name: http
+{{- end }}

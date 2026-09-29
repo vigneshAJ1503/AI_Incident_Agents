@@ -49,6 +49,7 @@ with a clear tool error instead of being silently ignored.
 |----------|---------|
 | `TICKETS_STORE` | `postgres` (`memory` for demos: empty, not persistent) |
 | `PG_HOST` / `PG_PORT` / `PG_USER` / `PG_PASSWORD` / `PG_DATABASE` | `localhost` / `15432` / `aiops` / (empty) / `aiops` |
+| `TICKETS_DATABASE_URL` | (empty) a full `postgresql://…` URL; wins over `PG_*` (Helm chart, external database) |
 | `TICKETS_SCHEMA` | `tickets` |
 | `ALLOWED_PROJECTS` | `OPS` (`*` = all) |
 | `MAX_RESULTS` | `50` |

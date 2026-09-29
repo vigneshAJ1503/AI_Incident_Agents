@@ -1,0 +1,287 @@
+{
+  "$schema": "https://json-schema.org/draft-07/schema#",
+  "title": "AI Incident Agents Helm values",
+  "description": "Configuration only: a profile + service catalog, Secrets by reference (never values), and MCP server toggles. See docs/setup/helm.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "definitions": {
+    "image": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "tag": {"type": "string", "not": {"const": "latest"}, "description": "Empty = global.imageTag, then the chart appVersion. Never 'latest'."}
+      }
+    },
+    "secretName": {
+      "type": "string",
+      "description": "The NAME of an existing Secret (never a secret value). Empty = none.",
+      "pattern": "^$|^[a-z0-9]([-a-z0-9.]*[a-z0-9])?$",
+      "maxLength": 253
+    },
+    "stringMap": {
+      "type": "object",
+      "description": "Environment variables: {NAME: \"value\"}. Quote numbers and booleans. Never secrets (use a Secret).",
+      "propertyNames": {"pattern": "^[A-Za-z_][A-Za-z0-9_]*$"},
+      "additionalProperties": {"type": "string"}
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "requests": {"type": "object"},
+        "limits": {"type": "object", "required": ["cpu", "memory"]}
+      },
+      "required": ["limits"]
+    },
+    "service": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "type": {"enum": ["ClusterIP", "NodePort", "LoadBalancer"]},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535}
+      }
+    },
+    "mcpServer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["enabled", "image", "port"],
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "image": {"$ref": "#/definitions/image"},
+        "port": {"type": "integer", "minimum": 1, "maximum": 65535, "description": "Must match the port the image serves on."},
+        "urlEnv": {"type": "string", "pattern": "^$|^[A-Z_][A-Z0-9_]*$", "description": "The API env var that gets this server's /mcp URL (e.g. LOGS_MCP_URL)."},
+        "healthPath": {"type": "string", "description": "HTTP readiness path; empty = TCP check."},
+        "database": {"enum": ["", "tickets", "libpq"], "description": "Give the server the evidence store's connection (tickets = PG_*, libpq = PG*)."},
+        "env": {"$ref": "#/definitions/stringMap"},
+        "existingSecret": {"$ref": "#/definitions/secretName"},
+        "extraVolumes": {"type": "array"},
+        "extraVolumeMounts": {"type": "array"},
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    }
+  },
+  "properties": {
+    "global": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "imageRegistry": {"type": "string"},
+        "imageTag": {"type": "string", "not": {"const": "latest"}},
+        "imagePullPolicy": {"enum": ["Always", "IfNotPresent", "Never"]},
+        "imagePullSecrets": {"type": "array", "items": {"type": "object", "required": ["name"]}}
+      }
+    },
+    "nameOverride": {"type": "string"},
+    "fullnameOverride": {"type": "string"},
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[a-z0-9][a-z0-9_-]*$", "description": "AIOPS_PROFILE: a built-in profile, or the folder name the ConfigMap is mounted as."},
+        "create": {"type": "boolean"},
+        "existingConfigMap": {"type": "string"},
+        "profileYaml": {"type": "string"},
+        "servicesYaml": {"type": "string"}
+      }
+    },
+    "llm": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "existingSecret": {"$ref": "#/definitions/secretName"},
+        "env": {"$ref": "#/definitions/stringMap"}
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "secretsKey": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "existingSecret": {"$ref": "#/definitions/secretName"},
+            "key": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "api": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "image": {"$ref": "#/definitions/image"},
+        "replicaCount": {"type": "integer", "minimum": 1},
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {"existingSecret": {"$ref": "#/definitions/secretName"}}
+        },
+        "replayToolDelaySeconds": {"type": "string", "pattern": "^[0-9]+(\\.[0-9]+)?$"},
+        "env": {"$ref": "#/definitions/stringMap"},
+        "envFromSecrets": {"type": "array", "items": {"$ref": "#/definitions/secretName"}},
+        "service": {"$ref": "#/definitions/service"},
+        "resources": {"$ref": "#/definitions/resources"},
+        "podAnnotations": {"type": "object"},
+        "nodeSelector": {"type": "object"},
+        "tolerations": {"type": "array"},
+        "affinity": {"type": "object"},
+        "extraVolumes": {"type": "array"},
+        "extraVolumeMounts": {"type": "array"}
+      }
+    },
+    "web": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "image": {"$ref": "#/definitions/image"},
+        "replicaCount": {"type": "integer", "minimum": 1},
+        "apiKeySecret": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "name": {"$ref": "#/definitions/secretName"},
+            "key": {"type": "string", "minLength": 1}
+          }
+        },
+        "service": {"$ref": "#/definitions/service"},
+        "resources": {"$ref": "#/definitions/resources"},
+        "podAnnotations": {"type": "object"},
+        "nodeSelector": {"type": "object"},
+        "tolerations": {"type": "array"},
+        "affinity": {"type": "object"}
+      }
+    },
+    "ingress": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "className": {"type": "string"},
+        "annotations": {"type": "object"},
+        "host": {"type": "string"},
+        "tls": {"type": "array"}
+      }
+    },
+    "postgresql": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "image": {"$ref": "#/definitions/image"},
+        "auth": {
+          "type": "object",
+          "additionalProperties": false,
+          "description": "No password field on purpose: the password comes from existingSecret.",
+          "properties": {
+            "username": {"type": "string", "minLength": 1},
+            "database": {"type": "string", "minLength": 1},
+            "existingSecret": {"$ref": "#/definitions/secretName"},
+            "passwordKey": {"type": "string", "minLength": 1}
+          }
+        },
+        "persistence": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "enabled": {"type": "boolean"},
+            "size": {"type": "string", "pattern": "^[0-9]+(Mi|Gi|Ti)$"},
+            "storageClass": {"type": "string"},
+            "accessModes": {"type": "array", "items": {"type": "string"}}
+          }
+        },
+        "args": {"type": "array", "items": {"type": "string"}},
+        "resources": {"$ref": "#/definitions/resources"},
+        "nodeSelector": {"type": "object"},
+        "tolerations": {"type": "array"},
+        "affinity": {"type": "object"}
+      }
+    },
+    "externalDatabase": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "existingSecret": {"$ref": "#/definitions/secretName"},
+        "urlKey": {"type": "string", "minLength": 1}
+      }
+    },
+    "migrations": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "useHelmHooks": {"type": "boolean"},
+        "backoffLimit": {"type": "integer", "minimum": 0},
+        "ttlSecondsAfterFinished": {"type": "integer", "minimum": 0},
+        "seedDemo": {"type": "boolean"},
+        "resources": {"$ref": "#/definitions/resources"}
+      }
+    },
+    "mcpServers": {
+      "type": "object",
+      "description": "One entry per MCP server; the built-in ones are mockTickets, elasticsearch, loki, prometheus, alertmanager, kubernetes, git, knowledge.",
+      "propertyNames": {"pattern": "^[a-z][a-zA-Z0-9]*$"},
+      "additionalProperties": {"$ref": "#/definitions/mcpServer"}
+    },
+    "k8sReader": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "namespaces": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "clusterRead": {"type": "boolean"}
+      }
+    },
+    "serviceAccount": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "create": {"type": "boolean"},
+        "name": {"type": "string"},
+        "annotations": {"type": "object"}
+      }
+    },
+    "podSecurityContext": {
+      "type": "object",
+      "required": ["runAsNonRoot", "runAsUser"],
+      "properties": {
+        "runAsNonRoot": {"const": true},
+        "runAsUser": {"type": "integer", "minimum": 1}
+      }
+    },
+    "containerSecurityContext": {
+      "type": "object",
+      "required": ["readOnlyRootFilesystem", "allowPrivilegeEscalation"],
+      "properties": {
+        "readOnlyRootFilesystem": {"const": true},
+        "allowPrivilegeEscalation": {"const": false},
+        "privileged": {"const": false}
+      }
+    },
+    "networkPolicy": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "webFrom": {"type": "array"},
+        "apiFrom": {"type": "array"}
+      }
+    },
+    "podDisruptionBudget": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": {"type": "boolean"},
+        "minAvailable": {"type": ["integer", "string"]}
+      }
+    },
+    "tests": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {"enabled": {"type": "boolean"}}
+    }
+  }
+}

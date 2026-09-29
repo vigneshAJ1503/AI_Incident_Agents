@@ -1,0 +1,18 @@
+{{- if .Values.podDisruptionBudget.enabled }}
+{{- range $component := list "api" "web" }}
+{{- if or (eq $component "api") $.Values.web.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ include "aiops.fullname" $ }}-{{ $component }}
+  labels:
+    {{- include "aiops.componentLabels" (list $ $component) | nindent 4 }}
+spec:
+  minAvailable: {{ $.Values.podDisruptionBudget.minAvailable }}
+  selector:
+    matchLabels:
+      {{- include "aiops.selectorLabels" (list $ $component) | nindent 6 }}
+{{- end }}
+{{- end }}
+{{- end }}

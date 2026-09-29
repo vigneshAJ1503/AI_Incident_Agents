@@ -1,0 +1,75 @@
+# CI coverage (make helm-lint): every toggle ON, so every template renders and is validated.
+# Not an install recipe: e.g. only one logs server may run, so Loki stays off here.
+profile:
+  name: acme
+  create: true
+  profileYaml: |
+    extends: local-k8s
+    metadata:
+      company: ACME (CI render test)
+  servicesYaml: |
+    services:
+      - name: checkout
+        description: Checkout API
+        owners: [payments]
+llm:
+  existingSecret: aiops-llm
+  env:
+    LLM_PROVIDER: openai_compat
+    OPENAI_COMPAT_BASE_URL: https://api.groq.com/openai/v1
+api:
+  replicaCount: 2
+  auth:
+    existingSecret: aiops-api-auth
+  envFromSecrets: [aiops-jira]
+  env:
+    AIOPS_API_CORS_ORIGINS: https://aiops.example.com
+web:
+  replicaCount: 2
+  apiKeySecret:
+    name: aiops-api-auth
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+  host: aiops.example.com
+  tls:
+    - secretName: aiops-tls
+      hosts: [aiops.example.com]
+migrations:
+  seedDemo: true
+mcpServers:
+  mockTickets: {enabled: true}
+  elasticsearch: {enabled: true}
+  prometheus:
+    enabled: true
+    existingSecret: aiops-prometheus
+  alertmanager: {enabled: true}
+  kubernetes: {enabled: true}
+  git:
+    enabled: true
+    extraVolumes:
+      - name: repos
+        persistentVolumeClaim: {claimName: aiops-repos, readOnly: true}
+    extraVolumeMounts:
+      - {name: repos, mountPath: /repos, readOnly: true}
+  knowledge: {enabled: true}
+k8sReader:
+  namespaces: [prod, staging]
+  clusterRead: true
+networkPolicy:
+  enabled: true
+  webFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: ingress-nginx
+podDisruptionBudget:
+  enabled: true
+serviceAccount:
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123456789012:role/aiops-bedrock
+
+integrations:
+  secretsKey:
+    existingSecret: aiops-secrets-key

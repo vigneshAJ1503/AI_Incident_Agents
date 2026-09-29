@@ -464,6 +464,27 @@ api-down: ## Stop the API + Web UI containers
 api-logs: ## Tail the API container's JSON logs
 	$(APP_COMPOSE) logs -f --tail=100
 
+# --- Helm chart (PR-047): docs/setup/helm.md. Helm + kubeconform run in pinned containers --
+.PHONY: helm-lint
+helm-lint: ## Lint the chart, render every values set, kubeconform -strict + security guardrails (Docker; CI job `helm`)
+	@./scripts/helm.sh lint
+
+.PHONY: helm-template
+helm-template: ## Render the chart to stdout: make helm-template [VALUES=values-minikube.yaml] (path under deploy/helm/)
+	@./scripts/helm.sh template $(VALUES)
+
+.PHONY: helm-install-minikube
+helm-install-minikube: ## Build + load the images into Minikube (-p aiops) and helm upgrade --install (namespace aiops, ~0.4 GB)
+	@./scripts/helm.sh install-minikube
+
+.PHONY: helm-test-minikube
+helm-test-minikube: ## helm test the Minikube release (/api/health through the web proxy)
+	@./scripts/helm.sh test-minikube
+
+.PHONY: helm-uninstall-minikube
+helm-uninstall-minikube: ## helm uninstall the Minikube release (keeps the namespace, Secret and Postgres volume)
+	@./scripts/helm.sh uninstall-minikube
+
 # --- The one-command demo (PR-039): docs/setup/demo.md ----------------------------------
 .PHONY: demo
 demo: ## THE demo: Postgres + seeded history + API + Web UI + mock tickets on http://localhost:3100 (~0.3 GB)

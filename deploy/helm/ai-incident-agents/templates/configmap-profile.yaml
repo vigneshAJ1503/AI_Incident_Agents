@@ -1,0 +1,20 @@
+{{- if and .Values.profile.create (not .Values.profile.existingConfigMap) }}
+{{- if not .Values.profile.profileYaml }}
+{{- fail "profile.create=true needs profile.profileYaml (or set profile.existingConfigMap, or profile.create=false for a built-in profile)" }}
+{{- end }}
+# The company profile + service catalog (ADR-0011), mounted at /app/profiles/<name>/.
+# No secrets here: the profile reads them as ${VAR} from the Secrets in the pod environment.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "aiops.profile.configMapName" . }}
+  labels:
+    {{- include "aiops.componentLabels" (list . "api") | nindent 4 }}
+data:
+  profile.yaml: |
+    {{- .Values.profile.profileYaml | nindent 4 }}
+  {{- with .Values.profile.servicesYaml }}
+  services.yaml: |
+    {{- . | nindent 4 }}
+  {{- end }}
+{{- end }}

@@ -19,6 +19,7 @@ export const qk = {
   agents: ["agents"] as const,
   approvals: (status?: string) => ["approvals", status ?? "all"] as const,
   scenarios: ["scenarios"] as const,
+  faultStatus: ["scenarios", "status"] as const,
 };
 
 export const useHealth = () =>
@@ -77,8 +78,20 @@ export const useApprovals = (status?: string) =>
     queryFn: () => getClient().approvals(status),
     refetchInterval: 20_000,
   });
-export const useScenarios = () =>
-  useQuery({ queryKey: qk.scenarios, queryFn: () => getClient().scenarios() });
+export const useScenarios = (pollMs: number | false = false) =>
+  useQuery({
+    queryKey: qk.scenarios,
+    queryFn: () => getClient().scenarios(),
+    refetchInterval: pollMs,
+  });
+/** Fault injection progress; polls while a background revert runs (also after a reload). */
+export const useFaultStatus = (enabled: boolean) =>
+  useQuery({
+    queryKey: qk.faultStatus,
+    queryFn: () => getClient().scenarioStatus(),
+    enabled,
+    refetchInterval: (q) => (q.state.data?.reverting ? 2_000 : false),
+  });
 
 export function useCreateInvestigation() {
   const qc = useQueryClient();

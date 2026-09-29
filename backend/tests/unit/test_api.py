@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import threading
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
@@ -18,7 +19,7 @@ from pydantic import SecretStr
 from aiops.api.context import ApiContext
 from aiops.api.health import CapabilityHealth, llm_configured
 from aiops.api.runner import InvestigationRunner
-from aiops.api.scenarios import ScenarioCatalog
+from aiops.api.scenarios import KubectlFaultController, ScenarioCatalog
 from aiops.api.sse import event_stream
 from aiops.core.catalog import ServiceCatalog
 from aiops.core.config import ApiConfig, CapabilityConfig, LLMConfig, Settings, load_settings
@@ -29,6 +30,7 @@ from aiops.core.models import (
     InvestigationReport,
     InvestigationStatus,
 )
+from aiops.faults import FaultError
 from aiops.orchestrator.dashboard import dashboard_summary
 from aiops.store.repository import InvestigationStore
 from tests.api_support import (
@@ -649,6 +651,54 @@ async def test_fault_endpoints_when_enabled(
     assert faults.calls == ["inject S1", "revert"]
 
 
+async def test_scenario_status_reports_a_background_revert(
+    settings: Settings, store: InvestigationStore, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """Live-demo regression: the UI said "Reverted" at once while the revert ran for
+    minutes. ``GET /scenarios/status`` lets it wait for the real outcome."""
+    faults = FakeFaults()
+    faults.state, faults.in_progress = "S1", True
+    ctx = make_context(settings, store, faults=faults)
+    async with api_client(ctx) as client:
+        running = (await client.get("/api/scenarios/status")).json()
+        faults.state, faults.in_progress = None, False
+        done = (await client.get("/api/scenarios/status")).json()
+        faults.state, faults.last_error = "S1", "rollout status timed out"
+        failed = (await client.get("/api/scenarios/status")).json()
+    assert running == {"active": "S1", "reverting": True, "last_error": None}
+    assert done == {"active": None, "reverting": False, "last_error": None}
+    assert failed == {"active": "S1", "reverting": False, "last_error": "rollout status timed out"}
+
+
+def test_kubectl_controller_tracks_the_background_revert(tmp_path: Path) -> None:
+    release = threading.Event()
+    outcome: list[Exception | None] = [FaultError("rollout status timed out"), None]
+
+    class Injector:
+        def revert(self) -> None:
+            release.wait(5)
+            error = outcome.pop(0)
+            if error:
+                raise error
+
+    controller = KubectlFaultController(tmp_path, injector_factory=lambda: Injector())  # type: ignore[arg-type,return-value]
+    controller.revert()
+    assert controller.reverting() and controller.last_error is None
+    with pytest.raises(FaultError, match="already in progress"):
+        controller.revert()
+    release.set()
+    assert controller._reverting is not None
+    controller._reverting.join(5)
+    assert not controller.reverting() and controller.last_error == "rollout status timed out"
+    # a new attempt clears the previous error at once, then reports its own outcome
+    release.clear()
+    controller.revert()
+    assert controller.reverting() and controller.last_error is None
+    release.set()
+    controller._reverting.join(5)
+    assert not controller.reverting() and controller.last_error is None
+
+
 def test_scenario_matching(settings: Settings) -> None:
     catalog = ServiceCatalog.from_settings(settings)
     scenarios = ScenarioCatalog.load(CONFIG)
@@ -723,6 +773,7 @@ async def test_request_id_cors_and_openapi(ctx: ApiContext) -> None:
         "/api/approvals/{approval_id}/approve",
         "/api/approvals/{approval_id}/deny",
         "/api/scenarios",
+        "/api/scenarios/status",
         "/api/scenarios/{scenario_id}/inject",
         "/api/scenarios/revert",
     } <= paths

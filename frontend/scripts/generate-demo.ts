@@ -157,14 +157,25 @@ for (let i = 0; i < 33; i++) {
         created_at: iso(created),
       },
       status,
+      // partial: two agents failed, so the RCA has only a weak lead (the UI's detail view:
+      // src/lib/demo/partial.ts); the same summary as the backend's build_report
       report:
         status === "failed" || !t.report
           ? null
-          : {
-              summary: t.report.summary,
-              severity: vary(t.report.severity),
-              confidence: status === "partial" ? round(conf * 0.8, 2) : conf,
-            },
+          : status === "partial"
+            ? {
+                summary:
+                  `Abnormal signals on ${s.service} in ${s.environment} but no root cause ` +
+                  "identified: the evidence is too weak or inconsistent. Weak lead: " +
+                  (t.hypotheses[0]?.statement ?? "none"),
+                severity: vary(t.report.severity),
+                confidence: 0,
+              }
+            : {
+                summary: t.report.summary,
+                severity: vary(t.report.severity),
+                confidence: conf,
+              },
       affected_services: status === "failed" ? [] : (t.report?.affected_services ?? []),
       created_at: iso(created),
       completed_at: iso(created + duration),
@@ -237,7 +248,7 @@ const bySvc = services.map((svc) => {
   const counts = new Map<string, number>();
   for (const h of items) {
     const label = byId.get(h.scenario)?.rootCauseLabel;
-    if (label && h.summary.status !== "failed") counts.set(label, (counts.get(label) ?? 0) + 1);
+    if (label && h.summary.status === "completed") counts.set(label, (counts.get(label) ?? 0) + 1);
   }
   const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
   return { service: svc, investigations: items.length, top_root_cause: top };

@@ -27,6 +27,11 @@ UI loads it.
   by `NEXT_PUBLIC_DEMO_SPEED` (default 4×). Reloading the page replays past events first, like the
   real SSE endpoint. Clarify, cancel, ticket drafts and approvals work and live in
   `sessionStorage`.
+- **Failed and partial history items** are derived from a recording at load time. The one
+  **partial** run (`inv-5be7c43f7`, S2) has its Metrics and Kubernetes agents failed, so it has
+  abnormal signals but only a weak lead and no root cause (the report hero says "No root cause
+  identified"); it also stores old tickets first in its timeline, like pre-fix backends did, so
+  the UI's timeline ordering is exercised (`src/lib/demo/partial.ts`).
 
 ## Regenerating
 

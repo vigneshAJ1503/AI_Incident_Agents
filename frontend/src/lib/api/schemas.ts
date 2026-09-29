@@ -372,6 +372,14 @@ export const Scenario = z.object({
 export type Scenario = z.infer<typeof Scenario>;
 export const ScenarioList = z.array(Scenario);
 
+/** `GET /scenarios/status` (additive): fault injection progress; a revert runs for minutes. */
+export const FaultStatus = z.object({
+  active: nullableStr,
+  reverting: z.boolean().default(false),
+  last_error: nullableStr,
+});
+export type FaultStatus = z.infer<typeof FaultStatus>;
+
 export const CreateInvestigationRequest = z.object({
   question: z.string().min(3),
   service: z.string().optional(),

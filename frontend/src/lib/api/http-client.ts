@@ -16,6 +16,7 @@ import {
   AskResponse,
   CreateInvestigationResponse,
   DashboardSummary,
+  FaultStatus,
   Health,
   Investigation,
   InvestigationPage,
@@ -169,6 +170,16 @@ export class HttpClient implements ApiClient {
   }
   async revertScenarios() {
     await this.post("/scenarios/revert");
+  }
+  async scenarioStatus(): Promise<FaultStatus> {
+    try {
+      return await this.json(FaultStatus, "/scenarios/status");
+    } catch (err) {
+      if (!(err instanceof ApiError && err.status === 404)) throw err;
+      // an API without the status endpoint: the fault state clears when the revert finished
+      const active = (await this.scenarios()).find((s) => s.active)?.id ?? null;
+      return { active, reverting: active !== null, last_error: null };
+    }
   }
 
   /**

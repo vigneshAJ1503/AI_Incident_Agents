@@ -26,6 +26,17 @@ from aiops.core.signals import BENIGN_SIGNALS
 
 TIMELINE_LOOKBACK = timedelta(hours=24)
 MAX_TIMELINE = 25
+#: Related tickets/runbooks shown after the incident's own chain of events.
+MAX_TIMELINE_CONTEXT = 2
+TIMELINE_CONTEXT_KINDS = (EvidenceKind.TICKET, EvidenceKind.DOC)
+#: Tie-break at equal timestamps: cause before effect.
+CHAIN_ORDER = {
+    EvidenceKind.COMMIT: 0,
+    EvidenceKind.K8S_EVENT: 1,
+    EvidenceKind.METRIC: 2,
+    EvidenceKind.LOG: 3,
+    EvidenceKind.ALERT: 4,
+}
 IMPACT_KINDS = (EvidenceKind.METRIC, EvidenceKind.LOG)
 SECTIONS: dict[str, tuple[EvidenceKind, ...]] = {
     "Logs": (EvidenceKind.LOG,),
@@ -39,25 +50,39 @@ SECTIONS: dict[str, tuple[EvidenceKind, ...]] = {
 
 
 def build_timeline(inv: Investigation) -> list[TimelineEvent]:
-    """Chronological, from timestamped evidence around the investigated window."""
+    """The incident's own chain first, then at most ``MAX_TIMELINE_CONTEXT`` related items.
+
+    Observations of the system (changes, rollouts, metric/log anomalies, alerts) are the
+    chain of events, in time order; at equal times a change comes before its effects.
+    Tickets and runbooks are context: old tickets from the lookback window would otherwise
+    sort first and push the real chain down, so only the most relevant ones (the agents
+    return them ranked) follow the chain.
+    """
     if inv.context is None:
         return []
     start = inv.context.time_range.start - TIMELINE_LOOKBACK
     end = inv.context.time_range.end + timedelta(minutes=5)
-    events = [
-        TimelineEvent(
-            timestamp=e.timestamp,
-            description=e.summary[:220],
-            source=f"{r.agent}:{e.source}",
-            evidence_id=e.id,
-        )
-        for r in inv.results
-        if r.status is not AgentStatus.FAILED
-        for e in r.evidence
-        if e.timestamp is not None and start <= e.timestamp <= end
-    ]
-    events.sort(key=lambda t: (t.timestamp, t.source))
-    return events[:MAX_TIMELINE]
+    chain: list[tuple[int, TimelineEvent]] = []
+    context: list[TimelineEvent] = []
+    for r in inv.results:
+        if r.status is AgentStatus.FAILED:
+            continue
+        for e in r.evidence:
+            if e.timestamp is None or not start <= e.timestamp <= end:
+                continue
+            event = TimelineEvent(
+                timestamp=e.timestamp,
+                description=e.summary[:220],
+                source=f"{r.agent}:{e.source}",
+                evidence_id=e.id,
+            )
+            if e.kind in TIMELINE_CONTEXT_KINDS:
+                context.append(event)
+            else:
+                chain.append((CHAIN_ORDER.get(e.kind, len(CHAIN_ORDER)), event))
+    chain.sort(key=lambda item: (item[1].timestamp, item[0], item[1].source))
+    related = context[:MAX_TIMELINE_CONTEXT]
+    return [event for _, event in chain][: MAX_TIMELINE - len(related)] + related
 
 
 def peak_error_rate(inv: Investigation) -> float | None:

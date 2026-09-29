@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from aiops.agents.rca_agent import RCAAgent
-from aiops.agents.rca_agent.correlation import SOURCE_CONFIDENCE, correlate
+from aiops.agents.rca_agent.correlation import CONTEXT_KINDS, SOURCE_CONFIDENCE, correlate
 from aiops.core.config import Settings, load_settings
 from aiops.core.events import INVESTIGATION_EVENT_TYPES, EventBus
 from aiops.core.models import (
@@ -79,9 +79,12 @@ def test_s1_pool_misconfiguration_with_high_confidence(settings: Settings) -> No
     assert set(top.supporting_evidence_ids) <= evidence
     # time alignment: the change preceded the first error
     assert any(c.type == "change_before_first_error" for c in inv.claims)
-    # the timeline is chronological and comes from evidence
-    stamps = [t.timestamp for t in inv.timeline]
-    assert stamps == sorted(stamps) and all(t.evidence_id in evidence for t in inv.timeline)
+    # the timeline comes from evidence: the incident's chain in time order, then context
+    kinds = {e.id: e.kind for e in inv.evidence}
+    assert all(t.evidence_id in evidence for t in inv.timeline)
+    chain = [t for t in inv.timeline if kinds[t.evidence_id or ""] not in CONTEXT_KINDS]
+    stamps = [t.timestamp for t in chain]
+    assert stamps == sorted(stamps) and inv.timeline[: len(chain)] == chain
     # markdown has the PR-034 sections
     for section in (
         "## Summary",

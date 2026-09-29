@@ -1,9 +1,10 @@
 "use client";
 
 import { useQueryClient } from "@tanstack/react-query";
-import { FlaskConicalIcon, PlayIcon, SyringeIcon, Undo2Icon } from "lucide-react";
+import { FlaskConicalIcon, Loader2Icon, PlayIcon, SyringeIcon, Undo2Icon } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type * as React from "react";
 import { toast } from "sonner";
 
@@ -16,8 +17,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip } from "@/components/ui/tooltip";
 import { getClient } from "@/lib/api";
+import type { FaultStatus } from "@/lib/api/schemas";
 import { DEMO_MODE } from "@/lib/config";
-import { useCreateInvestigation, useHealth, useScenarios } from "@/lib/queries";
+import { POLL_MS, waitForInject, waitForRevert } from "@/lib/faults";
+import { qk, useCreateInvestigation, useFaultStatus, useHealth, useScenarios } from "@/lib/queries";
 
 /** The question each scenario's ground truth expects (scenarios/S*∕expected.yaml). */
 const QUESTIONS: Record<string, string> = {
@@ -31,21 +34,55 @@ const QUESTIONS: Record<string, string> = {
 export default function ScenariosPage() {
   const router = useRouter();
   const qc = useQueryClient();
-  const { data, isLoading, error, refetch } = useScenarios();
   const health = useHealth();
-  const create = useCreateInvestigation();
   const faults = health.data?.faults_enabled ?? false;
+  const status = useFaultStatus(faults);
+  // what this page started and is waiting for; `status.reverting` also covers a reload mid-revert
+  const [busy, setBusy] = useState<{ kind: "inject" | "revert"; id?: string } | null>(null);
+  const reverting = busy?.kind === "revert" || (status.data?.reverting ?? false);
+  const { data, isLoading, error, refetch } = useScenarios(busy || reverting ? POLL_MS : false);
+  const create = useCreateInvestigation();
   const disabledWhy = DEMO_MODE
     ? "Fault injection needs the backend and cluster; demo mode replays recordings instead."
     : "Disabled by the backend: set AIOPS_ENABLE_FAULTS=1 to allow live fault injection.";
 
-  const act = async (fn: () => Promise<void>, ok: string) => {
+  const track = (s: FaultStatus) => qc.setQueryData(qk.faultStatus, s);
+  const getStatus = () => getClient().scenarioStatus();
+
+  // The API confirms the outcome: a revert runs in the background for minutes (202), so the toast
+  // stays "Reverting…" until GET /scenarios/status says it finished (or why it failed).
+  const revert = async () => {
+    setBusy({ kind: "revert" });
+    const t = toast.loading("Reverting to the healthy baseline…", {
+      description: "Rolling the services back; this takes a few minutes.",
+    });
     try {
-      await fn();
-      toast.success(ok);
-      void qc.invalidateQueries({ queryKey: ["scenarios"] });
+      await getClient().revertScenarios();
+      await waitForRevert(getStatus, { onStatus: track });
+      toast.success("Reverted to the healthy baseline", { id: t, description: undefined });
     } catch (err) {
-      toast.error("Refused", { description: (err as Error).message });
+      toast.error("Revert failed", { id: t, description: (err as Error).message });
+    } finally {
+      setBusy(null);
+      void qc.invalidateQueries({ queryKey: qk.scenarios });
+    }
+  };
+
+  const inject = async (id: string) => {
+    setBusy({ kind: "inject", id });
+    const t = toast.loading(`Injecting ${id}…`);
+    try {
+      await getClient().injectScenario(id);
+      await waitForInject(id, getStatus, { onStatus: track });
+      toast.success(`${id} injected`, {
+        id: t,
+        description: "The incident develops over the next minutes.",
+      });
+    } catch (err) {
+      toast.error(`Could not inject ${id}`, { id: t, description: (err as Error).message });
+    } finally {
+      setBusy(null);
+      void qc.invalidateQueries({ queryKey: qk.scenarios });
     }
   };
 
@@ -78,12 +115,12 @@ export default function ScenariosPage() {
         actions={guard(
           <Button
             variant="outline"
-            disabled={!faults}
-            onClick={() =>
-              void act(() => getClient().revertScenarios(), "Reverted to the healthy baseline")
-            }
+            disabled={!faults || busy !== null || reverting}
+            aria-busy={reverting}
+            onClick={() => void revert()}
           >
-            <Undo2Icon /> Revert all
+            {reverting ? <Loader2Icon className="animate-spin" /> : <Undo2Icon />}
+            {reverting ? "Reverting…" : "Revert all"}
           </Button>,
         )}
       />
@@ -105,7 +142,13 @@ export default function ScenariosPage() {
                     <Badge tone="info" className="font-mono">
                       {s.id}
                     </Badge>
-                    {s.active && <Badge tone="danger">active</Badge>}
+                    {s.active && reverting ? (
+                      <Badge tone="warn">reverting…</Badge>
+                    ) : s.active ? (
+                      <Badge tone="danger">active</Badge>
+                    ) : busy?.kind === "inject" && busy.id === s.id ? (
+                      <Badge tone="warn">injecting…</Badge>
+                    ) : null}
                     <span className="ml-auto font-mono text-xs text-muted-foreground">
                       {s.service}
                     </span>
@@ -118,10 +161,8 @@ export default function ScenariosPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={!faults}
-                      onClick={() =>
-                        void act(() => getClient().injectScenario(s.id), `${s.id} injected`)
-                      }
+                      disabled={!faults || busy !== null || reverting}
+                      onClick={() => void inject(s.id)}
                     >
                       <SyringeIcon /> Inject
                     </Button>,

@@ -91,7 +91,12 @@ class ScenarioCatalog:
 
 
 class FaultController(Protocol):
+    #: Why the last background revert failed (None after a successful one).
+    last_error: str | None
+
     def active(self) -> str | None: ...
+
+    def reverting(self) -> bool: ...
 
     def inject(self, scenario_id: str) -> FaultState: ...
 
@@ -127,9 +132,13 @@ class KubectlFaultController:
     def inject(self, scenario_id: str) -> FaultState:
         return self._factory().inject(scenario_id, wait=False)
 
+    def reverting(self) -> bool:
+        return self._reverting is not None and self._reverting.is_alive()
+
     def revert(self) -> None:
-        if self._reverting is not None and self._reverting.is_alive():
+        if self.reverting():
             raise FaultError("A revert is already in progress.")
+        self.last_error = None  # a new attempt: the UI waits for this one's outcome
 
         def run() -> None:
             try:

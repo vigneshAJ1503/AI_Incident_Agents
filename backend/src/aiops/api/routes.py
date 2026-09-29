@@ -721,6 +721,19 @@ async def scenarios(ctx: Ctx) -> list[m.ScenarioOut]:
     ]
 
 
+@router.get("/scenarios/status", response_model=m.FaultStatus, tags=["scenarios"])
+async def scenario_status(ctx: Ctx) -> m.FaultStatus:
+    """Fault injection progress: poll it after ``POST /scenarios/revert`` (202) until
+    ``reverting`` is false, then ``last_error`` says whether the revert worked."""
+    try:
+        active = await asyncio.to_thread(ctx.faults.active)
+    except Exception:
+        active = None
+    return m.FaultStatus(
+        active=active, reverting=ctx.faults.reverting(), last_error=ctx.faults.last_error
+    )
+
+
 @router.post(
     "/scenarios/revert",
     status_code=202,

@@ -11,7 +11,7 @@ export const DialogTrigger = D.Trigger;
 export const DialogClose = D.Close;
 
 const overlay =
-  "fixed inset-0 z-50 bg-black/50 backdrop-blur-[2px] data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0";
+  "fixed inset-0 z-50 bg-black/40 dark:bg-black/55 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0";
 
 export function DialogContent({
   className,
@@ -24,7 +24,7 @@ export function DialogContent({
       <D.Overlay className={overlay} />
       <D.Content
         className={cn(
-          "fixed top-1/2 left-1/2 z-50 grid max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-xl border bg-popover p-6 text-popover-foreground shadow-xl",
+          "fixed top-1/2 left-1/2 z-50 grid max-h-[90vh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 gap-4 overflow-y-auto rounded-2xl border border-glass-border glass-chrome p-6 text-popover-foreground shadow-elev-4",
           "data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95",
           className,
         )}
@@ -78,10 +78,10 @@ export function SheetContent({
       <D.Overlay className={overlay} />
       <D.Content
         className={cn(
-          "fixed inset-y-0 z-50 flex w-full flex-col gap-4 overflow-y-auto bg-popover p-6 text-popover-foreground shadow-xl sm:max-w-lg",
+          "fixed inset-y-0 z-50 flex w-full flex-col gap-4 overflow-y-auto glass-chrome p-6 text-popover-foreground shadow-elev-4 sm:max-w-lg",
           side === "right"
-            ? "right-0 border-l data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
-            : "left-0 border-r data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
+            ? "right-0 border-l border-glass-border data-[state=closed]:animate-out data-[state=closed]:slide-out-to-right data-[state=open]:animate-in data-[state=open]:slide-in-from-right"
+            : "left-0 border-r border-glass-border data-[state=closed]:animate-out data-[state=closed]:slide-out-to-left data-[state=open]:animate-in data-[state=open]:slide-in-from-left",
           className,
         )}
         {...props}

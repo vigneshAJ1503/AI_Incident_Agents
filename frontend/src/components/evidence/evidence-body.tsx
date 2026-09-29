@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Evidence } from "@/lib/api/schemas";
 import {
@@ -43,27 +44,52 @@ export function DeepLink({ e, size = "sm" }: { e: Evidence; size?: "sm" | "defau
 
 export function DiffHunk({ hunk }: { hunk: string }) {
   return (
-    <pre
-      className="overflow-x-auto rounded-md border bg-muted/40 py-2 font-mono text-[12px] leading-5"
-      aria-label="Diff"
-    >
-      {hunk.split("\n").map((line, i) => (
-        <div
-          key={i}
-          className={cn(
-            "px-3 whitespace-pre",
-            line.startsWith("+") && "bg-ok-bg text-ok",
-            line.startsWith("-") && "bg-danger-bg text-danger",
-            line.startsWith("@@") && "text-info",
-          )}
-        >
-          <span aria-hidden className="mr-2 inline-block w-3 opacity-60 select-none">
-            {line.startsWith("+") ? "+" : line.startsWith("-") ? "−" : " "}
-          </span>
-          {line.startsWith("+") || line.startsWith("-") ? line.slice(1) : line}
-        </div>
-      ))}
-    </pre>
+    <div className="group/code relative">
+      <CopyButton
+        text={hunk}
+        label="Copy code change"
+        what="Code change copied"
+        className="absolute top-1 right-1 z-10 bg-card/80 opacity-70 group-hover/code:opacity-100 focus-visible:opacity-100"
+      />
+      <pre
+        className="overflow-x-auto rounded-md border bg-muted/40 py-2 pr-9 font-mono text-[12px] leading-5"
+        aria-label="Diff"
+      >
+        {hunk.split("\n").map((line, i) => (
+          <div
+            key={i}
+            className={cn(
+              "px-3 whitespace-pre",
+              line.startsWith("+") && "bg-ok-bg text-ok",
+              line.startsWith("-") && "bg-danger-bg text-danger",
+              line.startsWith("@@") && "text-info",
+            )}
+          >
+            <span aria-hidden className="mr-2 inline-block w-3 opacity-60 select-none">
+              {line.startsWith("+") ? "+" : line.startsWith("-") ? "−" : " "}
+            </span>
+            {line.startsWith("+") || line.startsWith("-") ? line.slice(1) : line}
+          </div>
+        ))}
+      </pre>
+    </div>
+  );
+}
+
+/** A monospace block (query, log samples) with a copy button. */
+export function CodeBlock({ code, label, what }: { code: string; label: string; what: string }) {
+  return (
+    <div className="group/code relative">
+      <CopyButton
+        text={code}
+        label={label}
+        what={what}
+        className="absolute top-1 right-1 z-10 bg-card/80 opacity-70 group-hover/code:opacity-100 focus-visible:opacity-100"
+      />
+      <pre className="overflow-x-auto rounded-md bg-muted/50 p-2.5 pr-10 font-mono text-[11.5px] leading-5 whitespace-pre-wrap">
+        {code}
+      </pre>
+    </div>
   );
 }
 
@@ -94,9 +120,11 @@ export function EvidenceBody({ e, compact = false }: { e: Evidence; compact?: bo
             {d.last_seen && <span>last {formatClock(d.last_seen)}</span>}
           </div>
           {!compact && d.samples.length > 0 && (
-            <pre className="overflow-x-auto rounded-md bg-muted/50 p-2.5 font-mono text-[11.5px] leading-5">
-              {d.samples.join("\n")}
-            </pre>
+            <CodeBlock
+              code={d.samples.join("\n")}
+              label="Copy log samples"
+              what="Log samples copied"
+            />
           )}
         </div>
       );

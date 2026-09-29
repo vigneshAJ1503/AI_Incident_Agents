@@ -31,6 +31,21 @@ test.describe("dashboard (demo mode)", () => {
     await expect(html).not.toHaveClass(/dark/);
   });
 
+  test("KPI sparklines and the density toggle", async ({ page }) => {
+    await page.goto("/");
+    await expect(
+      page.getByRole("img", { name: /Investigations per day over 14 days/ }),
+    ).toBeVisible();
+    const toggle = page.getByTestId("density-toggle");
+    await toggle.click();
+    await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
+    await page.reload();
+    await expect(page.locator("html")).toHaveAttribute("data-density", "compact");
+    await expect(toggle).toHaveAttribute("aria-pressed", "true");
+    await toggle.click();
+    await expect(page.locator("html")).toHaveAttribute("data-density", "comfortable");
+  });
+
   test("keyboard shortcuts and the command palette navigate", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { name: "Dashboard" })).toBeVisible();

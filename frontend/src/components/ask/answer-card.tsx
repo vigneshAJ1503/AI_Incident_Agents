@@ -91,7 +91,10 @@ function Item({ item, onAsk }: { item: AskItem; onAsk?: (q: string) => void }) {
   switch (item.type) {
     case "running_investigation":
       return (
-        <li className="rounded-lg border p-3" data-testid="running-item">
+        <li
+          className="rounded-lg border border-glass-border bg-card/50 p-3"
+          data-testid="running-item"
+        >
           <div className="flex flex-wrap items-center gap-2">
             <StatusDot status="running" />
             <span className="font-medium">{item.question}</span>
@@ -125,7 +128,7 @@ function Item({ item, onAsk }: { item: AskItem; onAsk?: (q: string) => void }) {
       );
     case "investigation":
       return (
-        <li className="flex flex-wrap items-center gap-2 rounded-lg border p-3">
+        <li className="flex flex-wrap items-center gap-2 rounded-lg border border-glass-border bg-card/50 p-3">
           <Link href={item.href as Route} className="font-medium hover:underline">
             {item.title}
           </Link>
@@ -143,7 +146,10 @@ function Item({ item, onAsk }: { item: AskItem; onAsk?: (q: string) => void }) {
       const meta = agentMeta(item.name);
       const Icon = meta.icon;
       return (
-        <li className="flex items-start gap-3 rounded-lg border p-3" data-testid="agent-item">
+        <li
+          className="flex items-start gap-3 rounded-lg border border-glass-border bg-card/50 p-3"
+          data-testid="agent-item"
+        >
           <Icon aria-hidden className="mt-0.5 size-4 text-primary" />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -181,7 +187,7 @@ function Item({ item, onAsk }: { item: AskItem; onAsk?: (q: string) => void }) {
           <button
             type="button"
             onClick={() => onAsk?.(item.question)}
-            className="flex cursor-pointer items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-left text-sm transition-colors hover:border-primary/40 hover:bg-accent"
+            className="flex cursor-pointer items-center gap-2 rounded-full border border-glass-border bg-card/70 px-3 py-1.5 text-left text-sm shadow-elev-1 transition-[background-color,border-color,transform] hover:-translate-y-px hover:border-primary/40 hover:bg-accent active:translate-y-0"
             data-testid="suggestion-chip"
           >
             {item.scenario ? (
@@ -211,7 +217,7 @@ export function AnswerCard({
     <section
       aria-label={answer.title}
       data-testid="answer-card"
-      className="rounded-2xl border bg-card p-4 shadow-xs"
+      className="rounded-2xl rounded-tl-sm glass p-4"
     >
       <h2 className="mb-2 flex items-center gap-2 text-base font-semibold">
         <SparklesIcon aria-hidden className="size-4 text-primary" />

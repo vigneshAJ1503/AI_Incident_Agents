@@ -1,9 +1,12 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { ArrowLeftIcon, HistoryIcon } from "lucide-react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 
+import { titleLayoutId } from "@/components/investigation-row";
 import { PageHeader } from "@/components/page-header";
 import { ErrorState } from "@/components/states";
 import { SeverityBadge, StatusBadge } from "@/components/status";
@@ -13,10 +16,19 @@ import type { Investigation } from "@/lib/api/schemas";
 import { formatDateTime, formatDuration } from "@/lib/format";
 import { isTerminal } from "@/lib/live/reducer";
 import { useLiveInvestigation } from "@/lib/live/use-live";
-import { useInvestigation } from "@/lib/queries";
+import { useCachedSummary, useInvestigation } from "@/lib/queries";
 
-import { LiveView } from "./live-view";
 import { ReportView } from "./report-view";
+
+// Most visits open a finished report: the live view (lanes, event log, feed) loads only when needed.
+const LiveView = dynamic(() => import("./live-view").then((m) => m.LiveView), {
+  loading: () => (
+    <div className="space-y-4" aria-busy="true" aria-label="Loading the live view">
+      <Skeleton className="h-24 w-full rounded-xl" />
+      <Skeleton className="h-40 w-full rounded-xl" />
+    </div>
+  ),
+});
 
 const LIVE_STATUSES = new Set<Investigation["status"]>([
   "pending",
@@ -26,6 +38,7 @@ const LIVE_STATUSES = new Set<Investigation["status"]>([
 
 export function InvestigationView({ id }: { id: string }) {
   const { data: inv, isLoading, error, refetch } = useInvestigation(id);
+  const cached = useCachedSummary(id);
   const [replay, setReplay] = useState(false);
   const liveFromApi = inv ? LIVE_STATUSES.has(inv.status) : false;
   const { state, stream, streamError } = useLiveInvestigation(id, liveFromApi || replay);
@@ -36,7 +49,15 @@ export function InvestigationView({ id }: { id: string }) {
     return (
       <div className="space-y-4" aria-busy="true" aria-label="Loading investigation">
         <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-10 w-2/3" />
+        {cached ? (
+          <h1 className="text-2xl font-semibold tracking-tight">
+            <motion.span layoutId={titleLayoutId(id)} className="inline-block">
+              {cached.incident.title}
+            </motion.span>
+          </h1>
+        ) : (
+          <Skeleton className="h-10 w-2/3" />
+        )}
         <Skeleton className="h-40 w-full rounded-xl" />
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           {Array.from({ length: 4 }, (_, i) => (
@@ -56,7 +77,11 @@ export function InvestigationView({ id }: { id: string }) {
         </Link>
       </Button>
       <PageHeader
-        title={inv.incident.title}
+        title={
+          <motion.span layoutId={titleLayoutId(inv.id)} className="inline-block">
+            {inv.incident.title}
+          </motion.span>
+        }
         description={
           <>
             {inv.incident.service ?? "service unknown"} ·{" "}

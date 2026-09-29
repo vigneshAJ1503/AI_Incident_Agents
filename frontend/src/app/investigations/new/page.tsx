@@ -1,6 +1,6 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import {
   ArrowUpIcon,
   ClockIcon,
@@ -8,10 +8,12 @@ import {
   LoaderCircleIcon,
   ServerIcon,
   SparklesIcon,
+  UserIcon,
 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
+import type * as React from "react";
 import { toast } from "sonner";
 
 import { AnswerCard } from "@/components/ask/answer-card";
@@ -22,6 +24,7 @@ import { Kbd } from "@/components/ui/kbd";
 import type { AskAnswer } from "@/lib/api/schemas";
 import { SCENARIO_QUESTIONS, TRY_ASKING } from "@/lib/ask/examples";
 import { useAsk, useServices } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 
 /** The scenario questions (scenarios/S1..S5) double as suggestions. */
 const SUGGESTIONS = [
@@ -32,6 +35,8 @@ const SUGGESTIONS = [
 interface Turn {
   id: number;
   question: string;
+  /** thinking → answered | error; "starting" = an investigation was created, opening it */
+  state: "thinking" | "starting" | "answered" | "error";
   answer?: AskAnswer;
   error?: string;
 }
@@ -52,22 +57,123 @@ export default function NewInvestigationPage() {
   );
 }
 
+function Avatar({ who }: { who: "user" | "assistant" }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "grid size-7 shrink-0 place-items-center rounded-full shadow-elev-1",
+        who === "user"
+          ? "bg-secondary text-secondary-foreground"
+          : "bg-(image:--brand-gradient) text-white",
+      )}
+    >
+      {who === "user" ? <UserIcon className="size-3.5" /> : <SparklesIcon className="size-3.5" />}
+    </span>
+  );
+}
+
+function TypingIndicator({ label }: { label: string }) {
+  return (
+    <div
+      role="status"
+      data-testid="typing"
+      className="inline-flex items-center gap-2.5 rounded-2xl rounded-tl-sm glass px-4 py-3 text-sm text-muted-foreground"
+    >
+      <span className="flex gap-1" aria-hidden>
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="size-1.5 animate-[typing-dot_1.2s_ease-in-out_infinite] rounded-full bg-primary motion-reduce:animate-none"
+            style={{ animationDelay: `${i * 0.15}s` }}
+          />
+        ))}
+      </span>
+      {label}
+    </div>
+  );
+}
+
+function Message({ turn, onAsk }: { turn: Turn; onAsk: (q: string) => void }) {
+  return (
+    <motion.li
+      layout="position"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="flex flex-col gap-3"
+    >
+      <div className="flex items-end justify-end gap-2">
+        <p className="max-w-[85%] rounded-2xl rounded-br-sm bg-primary px-3.5 py-2 text-sm text-primary-foreground shadow-elev-2">
+          <span className="sr-only">You asked: </span>
+          {turn.question}
+        </p>
+        <Avatar who="user" />
+      </div>
+      <div className="flex items-start gap-2">
+        <Avatar who="assistant" />
+        <div className="min-w-0 flex-1">
+          <AnimatePresence mode="wait" initial={false}>
+            {turn.state === "thinking" || turn.state === "starting" ? (
+              <motion.div key="typing" exit={{ opacity: 0 }}>
+                <TypingIndicator
+                  label={
+                    turn.state === "starting"
+                      ? "Starting the investigation, opening the live view…"
+                      : "Thinking…"
+                  }
+                />
+              </motion.div>
+            ) : turn.answer ? (
+              <motion.div
+                key="answer"
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <AnswerCard answer={turn.answer} onAsk={onAsk} />
+              </motion.div>
+            ) : (
+              <motion.p
+                key="error"
+                role="alert"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="rounded-2xl rounded-tl-sm border-danger/40 glass p-3 text-sm"
+              >
+                {turn.error ?? "No answer."}
+              </motion.p>
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
+    </motion.li>
+  );
+}
+
 function AskPage() {
   const router = useRouter();
   const params = useSearchParams();
   const services = useServices();
   const ask = useAsk();
+  const reduce = useReducedMotion();
   const [question, setQuestion] = useState("");
   const [service, setService] = useState("");
   const [environment, setEnvironment] = useState("");
   const [since, setSince] = useState("");
   const [turns, setTurns] = useState<Turn[]>([]);
   const ref = useRef<HTMLTextAreaElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
   const asked = useRef<string | null>(null);
+
+  const update = (id: number, patch: Partial<Turn>) =>
+    setTurns((ts) => ts.map((t) => (t.id === id ? { ...t, ...patch } : t)));
 
   const submit = async (q = question) => {
     const text = q.trim();
     if (text.length < 3 || ask.isPending) return;
+    // optimistic: the question shows at once with a typing indicator
+    const id = Date.now();
+    setTurns((t) => [...t, { id, question: text, state: "thinking" }]);
+    setQuestion("");
     try {
       const res = await ask.mutateAsync({
         question: text,
@@ -76,28 +182,44 @@ function AskPage() {
         ...(since ? { since } : {}),
       });
       if (res.investigation_id) {
+        update(id, { state: "starting" });
         router.push(`/investigations/${res.investigation_id}` as Route);
         return;
       }
-      setQuestion("");
-      setTurns((t) => [{ id: Date.now(), question: text, answer: res.answer ?? undefined }, ...t]);
+      update(id, { state: "answered", answer: res.answer ?? undefined });
     } catch (err) {
       const message = (err as Error).message;
-      setTurns((t) => [{ id: Date.now(), question: text, error: message }, ...t]);
+      update(id, { state: "error", error: message });
+      setQuestion(text); // give the question back so it can be retried
       toast.error("Could not answer", { description: message });
     }
   };
+
+  // keep the newest message in view
+  const count = turns.length;
+  const lastState = turns.at(-1)?.state;
+  useEffect(() => {
+    if (count > 0)
+      endRef.current?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "nearest" });
+  }, [count, lastState, reduce]);
 
   // ⌘K "Ask" hands the question over as ?q=… (asked once per question)
   const fromPalette = params.get("q");
   useEffect(() => {
     if (fromPalette && asked.current !== fromPalette) {
       asked.current = fromPalette;
-      setQuestion(fromPalette);
       void submit(fromPalette);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- run when the handed-over question changes
   }, [fromPalette]);
+
+  const quick = (q: string) => () => void submit(q);
+  const onKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      void submit();
+    }
+  };
 
   return (
     <div className="mx-auto flex max-w-3xl flex-col gap-8 pt-4 md:pt-10">
@@ -105,7 +227,7 @@ function AskPage() {
         <motion.span
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-md"
+          className="mx-auto mb-4 grid size-12 place-items-center rounded-2xl bg-(image:--brand-gradient) text-white shadow-elev-3"
         >
           <SparklesIcon aria-hidden className="size-6" />
         </motion.span>
@@ -119,12 +241,23 @@ function AskPage() {
         </p>
       </div>
 
+      {turns.length > 0 && (
+        <section aria-label="Conversation" data-testid="conversation">
+          <ol className="flex flex-col gap-6" aria-live="polite">
+            {turns.map((t) => (
+              <Message key={t.id} turn={t} onAsk={(q) => void submit(q)} />
+            ))}
+          </ol>
+          <div ref={endRef} />
+        </section>
+      )}
+
       <form
         onSubmit={(e) => {
           e.preventDefault();
           void submit();
         }}
-        className="rounded-2xl border bg-card p-3 shadow-sm focus-within:ring-[3px] focus-within:ring-ring/30"
+        className="sticky bottom-3 z-10 rounded-2xl border border-glass-border glass-chrome p-3 shadow-elev-3 transition-shadow focus-within:ring-[3px] focus-within:ring-ring/30"
       >
         <label htmlFor="question" className="sr-only">
           Your question
@@ -133,16 +266,15 @@ function AskPage() {
           id="question"
           ref={ref}
           autoFocus
-          rows={3}
+          rows={turns.length ? 2 : 3}
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              void submit();
-            }
-          }}
-          placeholder="e.g. Payment API is returning HTTP 500 in production"
+          onKeyDown={onKeyDown}
+          placeholder={
+            turns.length
+              ? "Ask a follow-up…"
+              : "e.g. Payment API is returning HTTP 500 in production"
+          }
           className="resize-none border-0 bg-transparent text-base shadow-none focus-visible:ring-0"
         />
         <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -199,6 +331,7 @@ function AskPage() {
             type="submit"
             size="icon"
             aria-label="Ask"
+            className="rounded-full"
             disabled={question.trim().length < 3 || ask.isPending}
           >
             {ask.isPending ? <LoaderCircleIcon className="animate-spin" /> : <ArrowUpIcon />}
@@ -207,52 +340,19 @@ function AskPage() {
       </form>
 
       <div className="-mt-5 flex flex-wrap items-center gap-2 text-xs" data-testid="try-asking">
-        <span className="text-muted-foreground">Try asking…</span>
+        <span className="text-muted-foreground">Quick replies</span>
         {TRY_ASKING.map((q) => (
           <button
             key={q}
             type="button"
-            onClick={() => {
-              setQuestion(q);
-              void submit(q);
-            }}
-            className="cursor-pointer rounded-full border bg-card px-2.5 py-1 transition-colors hover:border-primary/40 hover:bg-accent"
+            onClick={quick(q)}
+            disabled={ask.isPending}
+            className="cursor-pointer rounded-full border border-glass-border bg-glass px-2.5 py-1 shadow-elev-1 transition-[background-color,border-color,transform] hover:-translate-y-px hover:border-primary/40 hover:bg-accent active:translate-y-0 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {q}
           </button>
         ))}
       </div>
-
-      {turns.length > 0 && (
-        <div className="flex flex-col gap-4" aria-live="polite" data-testid="conversation">
-          {turns.map((t) => (
-            <motion.div
-              key={t.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex flex-col gap-2"
-            >
-              <p className="self-end rounded-2xl rounded-br-sm bg-primary px-3 py-2 text-sm text-primary-foreground">
-                {t.question}
-              </p>
-              {t.answer && (
-                <AnswerCard
-                  answer={t.answer}
-                  onAsk={(q) => {
-                    setQuestion(q);
-                    void submit(q);
-                  }}
-                />
-              )}
-              {t.error && (
-                <p role="alert" className="rounded-xl border border-danger/40 p-3 text-sm">
-                  {t.error}
-                </p>
-              )}
-            </motion.div>
-          ))}
-        </div>
-      )}
 
       <section aria-labelledby="suggestions">
         <h2 id="suggestions" className="mb-3 text-xs font-medium text-muted-foreground">
@@ -268,11 +368,8 @@ function AskPage() {
             <motion.li key={s.q} variants={itemVariants}>
               <button
                 type="button"
-                onClick={() => {
-                  setQuestion(s.q);
-                  void submit(s.q);
-                }}
-                className="group flex w-full cursor-pointer flex-col items-start gap-0.5 rounded-xl border bg-card p-3 text-left text-sm transition-colors hover:border-primary/40 hover:bg-accent"
+                onClick={quick(s.q)}
+                className="group flex w-full lift cursor-pointer flex-col items-start gap-0.5 rounded-xl glass p-3 text-left text-sm"
               >
                 <span className="font-medium group-hover:text-accent-foreground">{s.q}</span>
                 <span className="text-xs text-muted-foreground">{s.hint}</span>

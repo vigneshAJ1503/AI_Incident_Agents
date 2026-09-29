@@ -16,7 +16,13 @@ export default defineConfig({
   workers: process.env.CI ? 2 : 3,
   reporter: process.env.CI ? [["github"], ["html", { open: "never" }]] : [["list"]],
   timeout: 45_000,
-  expect: { timeout: 10_000 },
+  expect: {
+    timeout: 10_000,
+    // visual.spec.ts: small tolerance for anti-aliasing/GPU noise; animations are frozen
+    toHaveScreenshot: { maxDiffPixelRatio: 0.015, threshold: 0.2, animations: "disabled" },
+  },
+  // Linux-only baselines (see visual.spec.ts), so no per-platform suffix
+  snapshotPathTemplate: "{testDir}/__screenshots__/{arg}{ext}",
   use: {
     baseURL: `http://127.0.0.1:${PORT}`,
     trace: "retain-on-failure",

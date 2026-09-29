@@ -99,13 +99,17 @@ function resultLink(a: Approval): { key: string; url: string } | null {
   return null;
 }
 
-/** Approve/deny with a confirmation step, a toast and an optimistic update. */
+/** Approve/deny with a confirmation step, a toast and an optimistic update. ``inline``
+ * shows the confirmation in place (for use inside a dialog that already shows the draft),
+ * instead of stacking a second dialog on top. */
 export function ApprovalActions({
   approval,
   onDone,
+  inline = false,
 }: {
   approval: Approval;
   onDone?: (a: Approval) => void;
+  inline?: boolean;
 }) {
   const decision = useDecision();
   const [confirm, setConfirm] = useState<"approve" | "deny" | null>(null);
@@ -162,6 +166,46 @@ export function ApprovalActions({
     );
   }
 
+  const describe = (d: "approve" | "deny") =>
+    d === "approve"
+      ? `This runs ${approval.tool} on ${approval.capability}. The decision is recorded in the audit log.`
+      : "Nothing will be written. The decision is recorded in the audit log.";
+  const commentBox = (
+    <label className="block space-y-1 text-sm">
+      <span className="text-xs text-muted-foreground">Comment (optional)</span>
+      <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
+    </label>
+  );
+  const confirmButtons = (
+    <>
+      <Button variant="outline" onClick={() => setConfirm(null)}>
+        Cancel
+      </Button>
+      <Button
+        variant={confirm === "deny" ? "destructive" : "default"}
+        disabled={decision.isPending}
+        onClick={() => confirm && void run(confirm)}
+        data-testid="confirm-decision"
+      >
+        {decision.isPending && <LoaderCircleIcon className="animate-spin" />}
+        {confirm === "approve" ? "Approve" : "Deny"}
+      </Button>
+    </>
+  );
+
+  if (inline && confirm !== null) {
+    return (
+      <div className="space-y-3" data-testid="inline-confirm">
+        <p className="text-sm font-medium">
+          {confirm === "approve" ? "Approve and execute?" : "Deny this proposal?"}
+        </p>
+        <p className="text-xs text-muted-foreground">{describe(confirm)}</p>
+        {commentBox}
+        <div className="flex justify-end gap-2">{confirmButtons}</div>
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="flex gap-2">
@@ -176,37 +220,17 @@ export function ApprovalActions({
           <XIcon /> Deny
         </Button>
       </div>
-      <Dialog open={confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
+      <Dialog open={!inline && confirm !== null} onOpenChange={(o) => !o && setConfirm(null)}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
               {confirm === "approve" ? "Approve and execute?" : "Deny this proposal?"}
             </DialogTitle>
-            <DialogDescription>
-              {confirm === "approve"
-                ? `This runs ${approval.tool} on ${approval.capability}. The decision is recorded in the audit log.`
-                : "Nothing will be written. The decision is recorded in the audit log."}
-            </DialogDescription>
+            <DialogDescription>{confirm && describe(confirm)}</DialogDescription>
           </DialogHeader>
           <ApprovalPreview approval={approval} />
-          <label className="space-y-1 text-sm">
-            <span className="text-xs text-muted-foreground">Comment (optional)</span>
-            <Textarea value={comment} onChange={(e) => setComment(e.target.value)} rows={2} />
-          </label>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setConfirm(null)}>
-              Cancel
-            </Button>
-            <Button
-              variant={confirm === "deny" ? "destructive" : "default"}
-              disabled={decision.isPending}
-              onClick={() => confirm && void run(confirm)}
-              data-testid="confirm-decision"
-            >
-              {decision.isPending && <LoaderCircleIcon className="animate-spin" />}
-              {confirm === "approve" ? "Approve" : "Deny"}
-            </Button>
-          </DialogFooter>
+          {commentBox}
+          <DialogFooter>{confirmButtons}</DialogFooter>
         </DialogContent>
       </Dialog>
     </>

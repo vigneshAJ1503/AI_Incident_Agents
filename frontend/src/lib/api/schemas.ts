@@ -6,6 +6,10 @@
  */
 import { z } from "zod";
 
+// The CSP has no 'unsafe-eval': zod's JIT would probe `new Function` on first parse and log a CSP
+// violation (Lighthouse best-practices). The interpreted parser is plenty fast for our payloads.
+z.config({ jitless: true });
+
 const isoDate = z.string().min(1);
 const nullableStr = z.string().nullable().optional();
 

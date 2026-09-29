@@ -2,8 +2,9 @@
 
 import { MenuIcon, SearchIcon } from "lucide-react";
 import type { Route } from "next";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type * as React from "react";
 
 import { ModeBanner } from "@/components/system-status";
@@ -20,16 +21,76 @@ import { Kbd } from "@/components/ui/kbd";
 import { useApprovals } from "@/lib/queries";
 import { createSequencer } from "@/lib/shortcuts";
 
-import { CommandPalette } from "./command-palette";
+import { DensityToggle } from "./density-toggle";
 import { NAV } from "./nav";
 import { SidebarNav } from "./sidebar";
 import { ThemeToggle } from "./theme-toggle";
 
 const NEW_ROUTE = NAV.find((n) => n.href === ("/investigations/new" as Route))?.href ?? null;
 
+// cmdk + the recent-investigations query stay out of the critical path: the palette mounts (closed)
+// once the browser is idle after load, or at once on first use (⌘K or the search box).
+const CommandPalette = dynamic(() => import("./command-palette").then((m) => m.CommandPalette), {
+  ssr: false,
+});
+
+function useWhenIdle(): [boolean, () => void] {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    // not the first idle gap (that can come while the page still waits for its data, before
+    // LCP): give the page a head start, then wait for an idle moment
+    let id: number | undefined;
+    // the first sign of a user also fetches the chunk, so a quick ⌘K opens it without a wait
+    const preload = () => void import("./command-palette");
+    const events = ["pointermove", "keydown", "touchstart"] as const;
+    events.forEach((e) => window.addEventListener(e, preload, { once: true, passive: true }));
+    const t = setTimeout(() => {
+      if (w.requestIdleCallback)
+        id = w.requestIdleCallback(() => setReady(true), { timeout: 2000 });
+      else setReady(true);
+    }, 2500);
+    return () => {
+      events.forEach((e) => window.removeEventListener(e, preload));
+      clearTimeout(t);
+      if (id !== undefined) w.cancelIdleCallback?.(id);
+    };
+  }, []);
+  return [ready, useCallback(() => setReady(true), [])];
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [paletteOpen, setPaletteOpen] = useState(false);
+  const [paletteOpen, setPaletteOpenState] = useState(false);
+  const [paletteUsed, markPaletteUsed] = useWhenIdle();
+  // keys typed after ⌘K until the palette input has focus (it may still be loading) are buffered
+  // and handed to it, so a fast "⌘K + type" never loses characters
+  const paletteFocused = useRef(false);
+  const typedAhead = useRef("");
+  // mirrors paletteOpen synchronously: keys typed right after ⌘K (before a re-render) must
+  // already count as palette input, not as g-shortcuts
+  const openRef = useRef(false);
+  const setPaletteOpen = useCallback(
+    (o: boolean | ((prev: boolean) => boolean)) => {
+      markPaletteUsed();
+      const next = typeof o === "function" ? o(openRef.current) : o;
+      openRef.current = next;
+      if (next) paletteFocused.current = false;
+      setPaletteOpenState(next);
+    },
+    [markPaletteUsed],
+  );
+  const takeTypedAhead = useCallback(() => {
+    const s = typedAhead.current;
+    typedAhead.current = "";
+    return s;
+  }, []);
+  const onPaletteFocused = useCallback(() => {
+    paletteFocused.current = true;
+  }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const approvals = useApprovals("pending");
@@ -56,7 +117,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         setPaletteOpen((o) => !o);
         return;
       }
-      if (paletteOpen || helpOpen) return;
+      if (openRef.current && !paletteFocused.current) {
+        if (e.key.length === 1 && !e.metaKey && !e.ctrlKey && !e.altKey) {
+          e.preventDefault();
+          typedAhead.current += e.key;
+        } else if (e.key === "Backspace") typedAhead.current = typedAhead.current.slice(0, -1);
+        return;
+      }
+      if (openRef.current || helpOpen) return;
       const hit = seq(e);
       if (!hit) return;
       e.preventDefault();
@@ -68,18 +136,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [shortcuts, router, paletteOpen, helpOpen]);
+  }, [shortcuts, router, helpOpen, setPaletteOpen]);
 
   const badges = { "/approvals": pending };
   return (
     <div className="flex min-h-dvh">
+      <div aria-hidden className="aurora" />
       <a
         href="#main"
         className="sr-only z-50 rounded bg-primary px-3 py-2 text-primary-foreground focus:not-sr-only focus:fixed focus:top-2 focus:left-2"
       >
         Skip to content
       </a>
-      <aside className="hidden w-60 shrink-0 bg-sidebar md:block">
+      <aside className="hidden w-60 shrink-0 border-r border-glass-border bg-sidebar md:block">
         <div className="sticky top-0 h-dvh">
           <SidebarNav badges={badges} />
         </div>
@@ -91,7 +160,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </SheetContent>
       </Dialog>
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b bg-background/85 px-4 backdrop-blur md:px-6">
+        <header className="sticky top-0 z-30 flex h-14 items-center gap-2 border-b border-glass-border glass-chrome px-4 md:px-6">
           <Button
             variant="ghost"
             size="icon"
@@ -105,7 +174,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             type="button"
             onClick={() => setPaletteOpen(true)}
             data-testid="open-palette"
-            className="flex h-9 w-full max-w-md cursor-pointer items-center gap-2 rounded-md border bg-card px-3 text-sm text-muted-foreground shadow-xs transition-colors hover:bg-accent"
+            className="flex h-9 max-w-md min-w-0 flex-1 cursor-pointer items-center gap-2 rounded-lg border border-glass-border bg-card/70 px-3 text-sm text-muted-foreground shadow-elev-1 transition-[background-color,box-shadow] hover:bg-accent hover:shadow-elev-2"
           >
             <SearchIcon aria-hidden className="size-4" />
             <span className="flex-1 truncate text-left">
@@ -113,7 +182,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             </span>
             <Kbd>⌘K</Kbd>
           </button>
-          <div className="ml-auto flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-1">
+            <DensityToggle />
             <ThemeToggle />
           </div>
         </header>
@@ -122,11 +192,15 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           {children}
         </main>
       </div>
-      <CommandPalette
-        open={paletteOpen}
-        onOpenChange={setPaletteOpen}
-        canInvestigate={NEW_ROUTE !== null}
-      />
+      {paletteUsed && (
+        <CommandPalette
+          open={paletteOpen}
+          onOpenChange={setPaletteOpen}
+          canInvestigate={NEW_ROUTE !== null}
+          takeTypedAhead={takeTypedAhead}
+          onFocused={onPaletteFocused}
+        />
+      )}
       <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
         <DialogContent className="max-w-sm">
           <DialogHeader>

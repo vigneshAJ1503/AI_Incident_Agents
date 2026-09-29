@@ -392,6 +392,15 @@ ui-demo-data: ## Regenerate the Web UI demo dataset (frontend/src/demo/*.json, d
 ui-screenshots: ## Capture docs/ui/screenshots (dark + light) from a demo build
 	cd $(UI) && NEXT_PUBLIC_DEMO=1 npm run build && SCREENSHOTS=1 npx playwright test screenshots
 
+# Visual-regression baselines are Linux-only (CI compares them), so regenerate them in the same
+# pinned Playwright image; node_modules and .next stay in container volumes (no host clobbering).
+PLAYWRIGHT_IMAGE := mcr.microsoft.com/playwright:v1.63.0-noble
+.PHONY: ui-visual-update
+ui-visual-update: ## Regenerate frontend/e2e/__screenshots__ (visual baselines) in the Playwright container
+	docker run --rm --memory 2g --ipc=host -v "$(CURDIR)/$(UI):/work" -v /work/node_modules \
+	  -v /work/.next -w /work -e CI=1 -e VISUAL=1 -e NEXT_TELEMETRY_DISABLED=1 $(PLAYWRIGHT_IMAGE) \
+	  sh -c 'npm ci --no-audit --no-fund && NEXT_PUBLIC_DEMO=1 NEXT_PUBLIC_DEMO_SPEED=12 npm run build && npx playwright test visual --update-snapshots=all'
+
 # --- Orchestrator demo data (PR-034) -------------------------------------------------
 .PHONY: demo-seed
 demo-seed: ## Store S0-S5 replay investigations + a 14-day synthetic history (zero tokens)

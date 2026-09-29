@@ -76,7 +76,7 @@ export function LiveView({
   return (
     <div className="space-y-5" data-testid="live-view" data-phase={state.phase}>
       <div className="flex justify-end">
-        <div className="flex max-w-2xl items-start gap-2 rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-sm">
+        <div className="flex max-w-2xl items-start gap-2 rounded-2xl rounded-tr-sm bg-primary px-4 py-2.5 text-sm text-primary-foreground shadow-elev-2">
           <span className="sr-only">You asked:</span>
           {state.question ?? question}
           <UserIcon aria-hidden className="mt-0.5 size-4 shrink-0 opacity-70" />
@@ -136,7 +136,7 @@ export function LiveView({
             <motion.div
               className={cn(
                 "h-full rounded-full",
-                state.phase === "failed" ? "bg-danger" : "bg-primary",
+                state.phase === "failed" ? "bg-danger" : "bg-(image:--brand-gradient)",
               )}
               initial={false}
               animate={{ width: `${Math.max(4, ratio * 100)}%` }}

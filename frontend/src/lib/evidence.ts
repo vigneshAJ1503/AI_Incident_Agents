@@ -82,6 +82,14 @@ export function collectEvidence(inv: Investigation): Map<string, Evidence & { ag
   return out;
 }
 
+/** The next id in a citation trail (wraps around); the first one if `current` isn't in it. */
+export function stepTrail(trail: readonly string[], current: string, delta: 1 | -1): string | null {
+  if (trail.length === 0) return null;
+  const i = trail.indexOf(current);
+  if (i === -1) return trail[0]!;
+  return trail[(i + delta + trail.length) % trail.length]!;
+}
+
 export function linkLabel(e: Evidence): string {
   const link = e.link ?? "";
   if (link.includes(":5601")) return "View in Kibana";

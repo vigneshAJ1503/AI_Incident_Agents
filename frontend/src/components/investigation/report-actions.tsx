@@ -3,11 +3,11 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { CopyIcon, DownloadIcon, LoaderCircleIcon, RotateCcwIcon, TicketIcon } from "lucide-react";
 import type { Route } from "next";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { ApprovalActions, ApprovalPreview } from "@/components/approvals/approval-card";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,6 +19,14 @@ import {
 import { getClient } from "@/lib/api";
 import type { Approval, Investigation } from "@/lib/api/schemas";
 import { useCreateInvestigation } from "@/lib/queries";
+
+// The approval UI is only needed once a ticket is drafted: keep it out of the report's first load.
+const ApprovalPreview = dynamic(() =>
+  import("@/components/approvals/approval-card").then((m) => m.ApprovalPreview),
+);
+const ApprovalActions = dynamic(() =>
+  import("@/components/approvals/approval-card").then((m) => m.ApprovalActions),
+);
 
 export function ReportActions({ inv }: { inv: Investigation }) {
   const router = useRouter();
@@ -106,6 +114,7 @@ export function ReportActions({ inv }: { inv: Investigation }) {
               <ApprovalPreview approval={draft} />
               <ApprovalActions
                 approval={draft}
+                inline
                 onDone={(a) => setDraft(a.status === "pending" ? a : null)}
               />
             </>

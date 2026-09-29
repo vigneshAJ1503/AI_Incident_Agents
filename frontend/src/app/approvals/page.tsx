@@ -1,11 +1,13 @@
 "use client";
 
 import { ShieldCheckIcon } from "lucide-react";
+import Link from "next/link";
 
 import { ApprovalCard } from "@/components/approvals/approval-card";
 import { Stagger, StaggerItem } from "@/components/motion";
 import { PageHeader } from "@/components/page-header";
 import { EmptyState, ErrorState } from "@/components/states";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useApprovals } from "@/lib/queries";
 
@@ -34,7 +36,17 @@ export default function ApprovalsPage() {
               Pending · {pending.length}
             </h2>
             {pending.length === 0 ? (
-              <EmptyState icon={ShieldCheckIcon} title="Nothing waiting for approval" />
+              <EmptyState
+                icon={ShieldCheckIcon}
+                title="Nothing waiting for approval"
+                action={
+                  <Button asChild variant="outline" size="sm">
+                    <Link href="/investigations">Browse investigations</Link>
+                  </Button>
+                }
+              >
+                Write actions (like a Jira ticket from a report) wait here for your decision.
+              </EmptyState>
             ) : (
               <Stagger className="space-y-4">
                 {pending.map((a) => (

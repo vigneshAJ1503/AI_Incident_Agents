@@ -5,7 +5,8 @@ import { MoonIcon, SearchIcon, SparklesIcon, SunIcon } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { flushSync } from "react-dom";
 
 import { StatusBadge } from "@/components/status";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
@@ -23,14 +24,34 @@ export function CommandPalette({
   open,
   onOpenChange,
   canInvestigate,
+  takeTypedAhead,
+  onFocused,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   canInvestigate: boolean;
+  /** keys typed after ⌘K while the lazily loaded palette was still on its way (drains the buffer) */
+  takeTypedAhead?: () => string;
+  /** the input has focus: from now on keys go straight to it */
+  onFocused?: () => void;
 }) {
   const router = useRouter();
   const { resolvedTheme, setTheme } = useTheme();
   const [search, setSearch] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+  /**
+   * Instead of Radix's autofocus: commit the typed-ahead text first (flushSync, so the DOM input
+   * already holds it), then focus; keys typed until then keep landing in the shell's buffer.
+   */
+  const focusWithTypedAhead = (e: Event) => {
+    e.preventDefault();
+    setTimeout(() => {
+      const typed = takeTypedAhead?.() ?? "";
+      if (typed) flushSync(() => setSearch((s) => s + typed));
+      inputRef.current?.focus();
+      onFocused?.();
+    }, 0);
+  };
   const recent = useInvestigations({ limit: 8 });
 
   const go = (href: Route) => {
@@ -48,7 +69,11 @@ export function CommandPalette({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-xl overflow-hidden p-0" hideClose>
+      <DialogContent
+        className="max-w-xl overflow-hidden p-0"
+        hideClose
+        onOpenAutoFocus={focusWithTypedAhead}
+      >
         <DialogTitle className="sr-only">Command palette</DialogTitle>
         <DialogDescription className="sr-only">
           Ask a question, jump to a page or open an investigation.
@@ -57,6 +82,7 @@ export function CommandPalette({
           <div className="flex items-center gap-2 border-b px-4">
             <SearchIcon aria-hidden className="size-4 text-muted-foreground" />
             <Command.Input
+              ref={inputRef}
               value={search}
               onValueChange={setSearch}
               placeholder={

@@ -35,6 +35,11 @@ class FakeFaults:
     def __init__(self) -> None:
         self.state: str | None = None
         self.calls: list[str] = []
+        self.last_error: str | None = None
+        self.in_progress = False  # tests flip it to simulate a background revert
+
+    def reverting(self) -> bool:
+        return self.in_progress
 
     def active(self) -> str | None:
         return self.state

@@ -6,6 +6,7 @@ import type {
   CreateInvestigationRequest,
   CreateInvestigationResponse,
   DashboardSummary,
+  FaultStatus,
   Health,
   Investigation,
   InvestigationPage,
@@ -55,7 +56,9 @@ export interface ApiClient {
   decide(id: string, decision: Decision, body: { by: string; comment?: string }): Promise<Approval>;
   scenarios(): Promise<Scenario[]>;
   injectScenario(id: string): Promise<void>;
+  /** `POST /scenarios/revert` only starts the revert (202); poll this until it finished. */
   revertScenarios(): Promise<void>;
+  scenarioStatus(): Promise<FaultStatus>;
   /** Subscribe to the live event stream. Returns an unsubscribe function. */
   subscribe(id: string, handlers: StreamHandlers, lastSeq?: number): () => void;
 }

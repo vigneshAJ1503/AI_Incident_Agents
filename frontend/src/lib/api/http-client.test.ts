@@ -42,6 +42,26 @@ describe("HttpClient REST", () => {
     });
   });
 
+  it("reads the fault status; falls back to the scenario list on an older API", async () => {
+    const status = { active: "S1", reverting: true, last_error: null };
+    const c = new HttpClient({ baseUrl: "http://api", fetchImpl: async () => json(status) });
+    await expect(c.scenarioStatus()).resolves.toEqual(status);
+
+    const scenario = { id: "S1", title: "t", service: "payment-service", active: true };
+    const old = new HttpClient({
+      baseUrl: "http://api",
+      fetchImpl: async (url: string | URL | Request) =>
+        String(url).endsWith("/scenarios/status")
+          ? json({ error: { code: "not_found", message: "Not Found" } }, 404)
+          : json([scenario]),
+    });
+    await expect(old.scenarioStatus()).resolves.toEqual({
+      active: "S1",
+      reverting: true,
+      last_error: null,
+    });
+  });
+
   it("reports network failures as status 0", async () => {
     const c = new HttpClient({
       baseUrl: "http://api",

@@ -258,6 +258,15 @@ class ScenarioOut(_Out):
     injectable: bool = True  # additive: S0 (healthy) has no fault
 
 
+class FaultStatus(_Out):
+    """Additive: the progress of fault injection, polled by the Scenarios page while a
+    background revert runs (it takes minutes)."""
+
+    active: str | None = None  # the injected scenario (still set while it is reverted)
+    reverting: bool = False
+    last_error: str | None = None  # why the last revert failed; None after a success
+
+
 class FaultResult(_Out):
     scenario: str | None
     status: Literal["injected", "reverting", "reverted"]

@@ -30,6 +30,7 @@ import {
   type DemoSession,
   type Recording,
 } from "@/lib/demo/schedule";
+import { partialOf } from "@/lib/demo/partial";
 import { dayShift, shiftTimes } from "@/lib/demo/time";
 
 import {
@@ -324,6 +325,11 @@ export class DemoClient implements ApiClient {
         ),
       });
     }
+    if (summary.status === "partial") {
+      const partial = partialOf(merged, summary.report?.summary);
+      if (partial.report && summary.report) partial.report.severity = summary.report.severity;
+      return this.delay(partial);
+    }
     if (merged.report && summary.report) {
       merged.report = {
         ...merged.report,
@@ -501,6 +507,9 @@ export class DemoClient implements ApiClient {
       403,
       "forbidden",
     );
+  }
+  scenarioStatus() {
+    return this.delay({ active: this.activeScenario, reverting: false, last_error: null });
   }
   async revertScenarios() {
     await this.delay(undefined);

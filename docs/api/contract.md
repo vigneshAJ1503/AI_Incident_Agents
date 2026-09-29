@@ -69,6 +69,7 @@ The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the *
 | `POST /approvals/{id}/approve` · `/deny` | Body `{by, comment?}`. Approve executes the proposal and returns the updated approval (+ `result`, e.g. the ticket key/link) |
 | `GET /scenarios` | Demo/dev: `[{id: "S1", title, service, description, active: bool}]` |
 | `POST /scenarios/{id}/inject` · `POST /scenarios/revert` | Demo/dev live fault injection. **Only enabled when `AIOPS_ENABLE_FAULTS=1`**, otherwise `403` |
+| `GET /scenarios/status` | Demo/dev: fault injection progress `{active: "S1" \| null, reverting: bool, last_error: str \| null}` (additive, below) |
 
 ## Live events (SSE on `/investigations/{id}/events`)
 
@@ -165,6 +166,18 @@ Every response was checked against the Web UI's zod schemas (`frontend/src/lib/a
   seq de-duplication drops it). `Last-Event-ID` and `?last_event_id=` both work (the larger
   wins). With an API key configured, `/events` also accepts `?api_key=`.
 - `approval_requested` is only published while the investigation is still running.
+
+## Fault injection progress and the report timeline (live-demo fixes)
+Additive; older clients ignore it.
+- `GET /scenarios/status` → `{active, reverting, last_error}`. `POST /scenarios/revert`
+  answers `202` and rolls the baseline back in a background thread (minutes); poll this
+  until `reverting` is `false`, then `last_error` is `null` (reverted: `active` is `null`)
+  or the reason it failed. A new revert clears the previous `last_error`. Read-only, so it
+  needs neither `AIOPS_ENABLE_FAULTS` nor an API key. `active` stays set while the revert
+  runs (the fault state is cleared only once the rollouts finished).
+- `Investigation.timeline` puts the incident's own chain first, in time order (at equal
+  times: change → rollout → metric → log → alert), then at most **2** related tickets or
+  runbooks (the agents' relevance order). Old tickets no longer sort to the top.
 
 ## Ask: platform questions vs incidents (PR-041)
 Additive. The chat box and ⌘K call `POST /ask` instead of `POST /investigations` (which is

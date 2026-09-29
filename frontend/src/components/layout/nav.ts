@@ -7,6 +7,7 @@ import {
   LayoutDashboardIcon,
   ListChecksIcon,
   MessageSquarePlusIcon,
+  PlugIcon,
   type LucideIcon,
 } from "lucide-react";
 import type { Route } from "next";
@@ -66,6 +67,12 @@ export const NAV: NavItem[] = [
     label: "Scenarios",
     icon: FlaskConicalIcon,
     match: (p) => p.startsWith("/scenarios"),
+  },
+  {
+    href: "/settings/integrations",
+    label: "Integrations",
+    icon: PlugIcon,
+    match: (p) => p.startsWith("/settings"),
   },
 ];
 

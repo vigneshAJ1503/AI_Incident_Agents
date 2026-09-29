@@ -50,8 +50,8 @@ export function ModeBanner() {
       <>
         <KeyRoundIcon aria-hidden className="size-4" />
         <span>
-          <strong className="font-semibold">No LLM key</strong>: investigations run in replay mode
-          (recorded fixtures, fake LLM).
+          <strong className="font-semibold">No LLM key</strong>: investigations replay recorded data
+          with the deterministic analysis (no AI reasoning).
         </span>
       </>
     );

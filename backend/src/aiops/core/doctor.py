@@ -28,7 +28,7 @@ from typing import Any
 from aiops.core.catalog import ServiceCatalog, ServiceEntry
 from aiops.core.config import CapabilityConfig, ConfigError, LLMConfig, Settings
 from aiops.core.guardrails.audit import AuditSink, MemoryAuditSink
-from aiops.core.profiles import ValidationReport, validate_profile
+from aiops.core.profiles import ValidationReport, check_settings, validate_profile
 from aiops.llm._common import mask
 from aiops.llm.base import ChatMessage, LLMProvider
 from aiops.llm.factory import config_problems, create_provider
@@ -633,7 +633,8 @@ class Doctor:
     def _client(self, name: str, config: CapabilityConfig) -> MCPClient:
         target = self._overrides.get(name) or target_from_config(config.mcp)
         timeout = min(self.options.timeout_s, config.mcp.timeout_s)
-        return MCPClient(name, target, timeout_s=timeout, connect_attempts=1)
+        headers = {} if name in self._overrides else config.mcp.header_values()
+        return MCPClient(name, target, timeout_s=timeout, connect_attempts=1, headers=headers)
 
     async def _check_capability(
         self, name: str, services: list[ServiceEntry], environment: str | None
@@ -860,3 +861,31 @@ def _llm_endpoint(llm: LLMConfig) -> str:
     if llm.provider == "azure_openai":
         return f"{llm.base_url} api-version={llm.api_version}"
     return llm.base_url or "-"
+
+
+async def check_capability(
+    settings: Settings,
+    capability: str,
+    *,
+    timeout_s: float = 8.0,
+    overrides: Mapping[str, ServerTarget] | None = None,
+    audit: AuditSink | None = None,
+) -> DoctorReport:
+    """``aiops doctor -c <capability> --skip-llm`` on already-loaded ``settings`` (the Web
+    UI's "Test connection", PR-046): config checks of that capability, reachability,
+    contract, smoke and catalog rows; profile-level and LLM rows are left out. ``settings``
+    may carry unsaved changes, so the config checks run on it rather than on the YAML."""
+    try:
+        catalog: ServiceCatalog | None = ServiceCatalog.from_settings(settings)
+    except ConfigError:
+        catalog = None
+    doctor = Doctor(
+        settings,
+        DoctorOptions(capabilities=(capability,), timeout_s=timeout_s, skip_llm=True),
+        overrides=overrides,
+        audit=audit,
+        validation=check_settings(settings, catalog),
+    )
+    report = await doctor.run()
+    report.checks = [c for c in report.checks if c.capability == capability]
+    return report

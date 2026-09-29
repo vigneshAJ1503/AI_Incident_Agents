@@ -1,0 +1,1107 @@
+{
+  "profile": "demo",
+  "secrets_enabled": true,
+  "items": [
+    {
+      "capability": "logs",
+      "configured": true,
+      "provider": "elasticsearch",
+      "providers": [
+        "elasticsearch",
+        "loki"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8101/mcp",
+          "default": "http://localhost:8101/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 1000,
+          "default": 1000,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 48,
+          "default": 48,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.timestamp",
+          "value": "@timestamp",
+          "default": "@timestamp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.level",
+          "value": "level",
+          "default": "level",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.message",
+          "value": "message",
+          "default": "message",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.message_keyword",
+          "value": "message.keyword",
+          "default": "message.keyword",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.service",
+          "value": "service",
+          "default": "service",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.environment",
+          "value": "environment",
+          "default": "environment",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.trace_id",
+          "value": "trace_id",
+          "default": "trace_id",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.status_code",
+          "value": "status_code",
+          "default": "status_code",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.endpoint",
+          "value": "endpoint",
+          "default": "endpoint",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.version",
+          "value": "version",
+          "default": "version",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.fields.error_type",
+          "value": "error_type",
+          "default": "error_type",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.error_levels",
+          "value": [
+            "ERROR",
+            "FATAL",
+            "CRITICAL"
+          ],
+          "default": [
+            "ERROR",
+            "FATAL",
+            "CRITICAL"
+          ],
+          "type": "list",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.pattern_levels",
+          "value": [
+            "ERROR",
+            "FATAL",
+            "CRITICAL",
+            "WARN"
+          ],
+          "default": [
+            "ERROR",
+            "FATAL",
+            "CRITICAL",
+            "WARN"
+          ],
+          "type": "list",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.baseline_hours",
+          "value": 24,
+          "default": 24,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.startup_pattern",
+          "value": "Starting*",
+          "default": "Starting*",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": "http://localhost:5601/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))",
+          "default": "http://localhost:5601/app/discover#/?_g=(time:(from:'{start}',to:'{end}'))&_a=(query:(language:kuery,query:'{kql}'))",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "list_indices",
+        "get_mapping",
+        "search_logs",
+        "execute_esql"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    },
+    {
+      "capability": "metrics",
+      "configured": true,
+      "provider": "prometheus",
+      "providers": [
+        "prometheus"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8103/mcp",
+          "default": "http://localhost:8103/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 50,
+          "default": 50,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 20.0,
+          "default": 20.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 24,
+          "default": 24,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.service",
+          "value": "service",
+          "default": "service",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.namespace",
+          "value": "namespace",
+          "default": "namespace",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.status",
+          "value": "status",
+          "default": "status",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.k8s_app",
+          "value": "label_app",
+          "default": "label_app",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.requests",
+          "value": "http_requests_total",
+          "default": "http_requests_total",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.latency_histogram",
+          "value": "http_request_duration_seconds",
+          "default": "http_request_duration_seconds",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.db_pool_active",
+          "value": "db_pool_connections_active",
+          "default": "db_pool_connections_active",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.db_pool_max",
+          "value": "db_pool_connections_max",
+          "default": "db_pool_connections_max",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.db_pool_pending",
+          "value": "db_pool_connections_pending",
+          "default": "db_pool_connections_pending",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.cache_up",
+          "value": "redis_up",
+          "default": "redis_up",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.memory_rss",
+          "value": "process_resident_memory_bytes",
+          "default": "process_resident_memory_bytes",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.restarts",
+          "value": "kube_pod_container_status_restarts_total",
+          "default": "kube_pod_container_status_restarts_total",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.last_terminated_reason",
+          "value": "kube_pod_container_status_last_terminated_reason",
+          "default": "kube_pod_container_status_last_terminated_reason",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.metrics.pod_labels",
+          "value": "kube_pod_labels",
+          "default": "kube_pod_labels",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.error_status_regex",
+          "value": "5..",
+          "default": "5..",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.rate_window",
+          "value": "2m",
+          "default": "2m",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.step",
+          "value": "30s",
+          "default": "30s",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.baseline_minutes",
+          "value": 15,
+          "default": 15,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": "http://localhost:3000/d/aiops-service-overview/service-overview?orgId=1&var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}",
+          "default": "http://localhost:3000/d/aiops-service-overview/service-overview?orgId=1&var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.explore_link_template",
+          "value": "http://localhost:9090/query?g0.expr={query}&g0.tab=graph&g0.range_input={range}&g0.end_input={end_utc}",
+          "default": "http://localhost:9090/query?g0.expr={query}&g0.tab=graph&g0.range_input={range}&g0.end_input={end_utc}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.rps",
+          "value": 5,
+          "default": 5,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.error_rate",
+          "value": 6,
+          "default": 6,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.latency",
+          "value": 7,
+          "default": 7,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.db_pool",
+          "value": 9,
+          "default": 9,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.memory",
+          "value": 10,
+          "default": 10,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.panels.cache",
+          "value": 4,
+          "default": 4,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "query",
+        "query_range",
+        "list_metrics",
+        "metric_metadata",
+        "get_targets"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    },
+    {
+      "capability": "alerts",
+      "configured": true,
+      "provider": "alertmanager",
+      "providers": [
+        "alertmanager"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8105/mcp",
+          "default": "http://localhost:8105/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 20.0,
+          "default": 20.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 200,
+          "default": 200,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 15.0,
+          "default": 15.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 168,
+          "default": 168,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.service",
+          "value": "service",
+          "default": "service",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.severity",
+          "value": "severity",
+          "default": "severity",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.labels.alertname",
+          "value": "alertname",
+          "default": "alertname",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.critical_severities",
+          "value": [
+            "critical",
+            "page",
+            "P1"
+          ],
+          "default": [
+            "critical",
+            "page",
+            "P1"
+          ],
+          "type": "list",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": "http://localhost:9093/#/alerts?silenced=false&inhibited=false&filter={filter}",
+          "default": "http://localhost:9093/#/alerts?silenced=false&inhibited=false&filter={filter}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "list_alerts",
+        "get_alert",
+        "list_silences",
+        "get_alert_groups",
+        "alert_history"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    },
+    {
+      "capability": "k8s",
+      "configured": true,
+      "provider": "kubernetes",
+      "providers": [
+        "kubernetes"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8106/mcp",
+          "default": "http://localhost:8106/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 20.0,
+          "default": 20.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 200,
+          "default": 200,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 15.0,
+          "default": 15.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 48,
+          "default": 48,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.default_namespace",
+          "value": "prod",
+          "default": "prod",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.include_dependencies",
+          "value": true,
+          "default": true,
+          "type": "boolean",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.probe_startup_grace_s",
+          "value": 60,
+          "default": 60,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": null,
+          "default": null,
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "list_namespaces",
+        "list_pods",
+        "get_pod",
+        "list_events",
+        "list_deployments",
+        "get_deployment",
+        "get_pod_logs",
+        "list_services"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    },
+    {
+      "capability": "code",
+      "configured": true,
+      "provider": "git",
+      "providers": [
+        "git"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8107/mcp",
+          "default": "http://localhost:8107/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 200,
+          "default": 200,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 20.0,
+          "default": 20.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 2160,
+          "default": 2160,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.lookback_hours",
+          "value": 24,
+          "default": 24,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.release_tag_template",
+          "value": "{service}/{version}",
+          "default": "{service}/{version}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.max_diffs",
+          "value": 3,
+          "default": 3,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.suspect_threshold",
+          "value": 0.3,
+          "default": 0.3,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.include_dependencies",
+          "value": true,
+          "default": true,
+          "type": "boolean",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": null,
+          "default": null,
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "list_repositories",
+        "list_releases",
+        "search_commits",
+        "get_commit",
+        "get_diff"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    },
+    {
+      "capability": "tickets",
+      "configured": true,
+      "provider": "mock",
+      "providers": [
+        "jira",
+        "mock"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8109/mcp",
+          "default": "http://localhost:8109/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 20,
+          "default": 20,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 30.0,
+          "default": 30.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 168,
+          "default": 168,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.project_key",
+          "value": "OPS",
+          "default": "OPS",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.write_requires_approval",
+          "value": true,
+          "default": true,
+          "type": "boolean",
+          "overridden": false,
+          "editable": false,
+          "secret": false
+        },
+        {
+          "key": "settings.resolved_lookback_days",
+          "value": 90,
+          "default": 90,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": "http://localhost:8109/browse/{key}",
+          "default": "http://localhost:8109/browse/{key}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "jira_search",
+        "jira_get_issue"
+      ],
+      "secrets": [
+        {
+          "name": "Authorization",
+          "configured": true,
+          "last4": "9f2c",
+          "source": "ui",
+          "usable": true
+        }
+      ],
+      "overridden": [
+        "secrets.Authorization"
+      ],
+      "updated_at": "2026-09-29T09:12:00Z",
+      "updated_by": "demo-operator",
+      "notes": []
+    },
+    {
+      "capability": "knowledge",
+      "configured": true,
+      "provider": "postgres_fts",
+      "providers": [
+        "postgres_fts"
+      ],
+      "enabled": true,
+      "status": "ok",
+      "transport": "http",
+      "fields": [
+        {
+          "key": "mcp.url",
+          "value": "http://localhost:8108/mcp",
+          "default": "http://localhost:8108/mcp",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "mcp.timeout_s",
+          "value": 15.0,
+          "default": 15.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_results",
+          "value": 10,
+          "default": 10,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.query_timeout_s",
+          "value": 10.0,
+          "default": 10.0,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "limits.max_time_range_hours",
+          "value": 168,
+          "default": 168,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.ui_link_template",
+          "value": "https://github.com/vigneshAJ1503/AI_Incident_Agents/blob/main/{path}",
+          "default": "https://github.com/vigneshAJ1503/AI_Incident_Agents/blob/main/{path}",
+          "type": "string",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.search_k",
+          "value": 8,
+          "default": 8,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        },
+        {
+          "key": "settings.top_docs",
+          "value": 3,
+          "default": 3,
+          "type": "number",
+          "overridden": false,
+          "editable": true,
+          "secret": false
+        }
+      ],
+      "tool_allowlist": [
+        "search",
+        "get_doc",
+        "list_docs"
+      ],
+      "secrets": [],
+      "overridden": [],
+      "updated_at": null,
+      "updated_by": null,
+      "notes": []
+    }
+  ]
+}

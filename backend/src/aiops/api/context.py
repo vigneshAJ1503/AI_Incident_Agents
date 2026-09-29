@@ -8,6 +8,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from aiops.api.health import CapabilityHealth, llm_configured
+from aiops.api.integration_service import IntegrationService
 from aiops.api.runner import InvestigationRunner, OrchestratorFactory, default_orchestrator
 from aiops.api.scenarios import FaultController, KubectlFaultController, ScenarioCatalog
 from aiops.core.catalog import ServiceCatalog
@@ -19,6 +20,7 @@ from aiops.mcp.registry import MCPRegistry
 from aiops.observability.llm import instrument
 from aiops.orchestrator.intent import IntentClassifier
 from aiops.store.db import StoreError
+from aiops.store.integrations import IntegrationStore
 from aiops.store.repository import InvestigationStore
 
 log = logging.getLogger("aiops.api")
@@ -26,11 +28,13 @@ log = logging.getLogger("aiops.api")
 ExecutorFactory = Callable[[ApprovalService], ApprovalExecutor]
 
 
-def default_executor_factory(settings: Settings) -> ExecutorFactory:
-    """Approvals execute through the existing ``ApprovalExecutor`` (the only write path)."""
+def default_executor_factory(settings: Settings | Callable[[], Settings]) -> ExecutorFactory:
+    """Approvals execute through the existing ``ApprovalExecutor`` (the only write path).
+    A callable gives the *current* settings (integrations saved from the UI, PR-046)."""
 
     def build(service: ApprovalService) -> ApprovalExecutor:
-        return ApprovalExecutor(service, MCPRegistry(settings))
+        current = settings() if callable(settings) else settings
+        return ApprovalExecutor(service, MCPRegistry(current))
 
     return build
 
@@ -53,6 +57,19 @@ class ApiContext:
     reaper: bool = True
     #: The chat box's intent classifier (PR-041); built on first use.
     intent: IntentClassifier | None = None
+    #: Settings -> Integrations (PR-046): the overlay saved from the Web UI. ``settings``
+    #: is the profile with it applied; the YAML-only profile is ``integrations.base``.
+    integrations: IntegrationService | None = None
+
+    def apply_settings(self, settings: Settings) -> None:
+        """Swap in new settings for everything that starts from now on: new investigations,
+        health checks, approvals, the chat classifier. Running investigations keep the
+        orchestrator (and settings) they started with. Only capabilities change here, so
+        the API's own config (auth, CORS, limits) is untouched."""
+        self.settings = settings
+        self.runner.settings = settings
+        self.health.reconfigure(settings)
+        self.intent = None
 
     def classifier(self) -> IntentClassifier:
         """Rules + the ``fast`` LLM role as a fallback when a hosted LLM is configured."""
@@ -76,6 +93,11 @@ class ApiContext:
         except StoreError as exc:
             log.error("evidence store unavailable: %s", exc)
             self.store_ok = False
+        if self.store_ok and self.integrations is not None:
+            try:
+                self.apply_settings(await self.integrations.load())
+            except Exception as exc:  # the YAML profile still works without the overlay
+                log.error("integration overrides not loaded (using the YAML profile): %s", exc)
         if self.reaper and self.settings.api.stuck_after_s > 0:
             task = asyncio.create_task(self._reap_forever(), name="stuck-investigation-reaper")
             self.background.add(task)
@@ -109,12 +131,13 @@ def build_context(
     health: CapabilityHealth | None = None,
     executor_factory: ExecutorFactory | None = None,
     reaper: bool = True,
+    integrations: IntegrationService | None = None,
 ) -> ApiContext:
     """The production wiring (``AIOPS_PROFILE``); tests override pieces."""
     settings = settings or load_settings()
     store = store or InvestigationStore.from_settings(settings)
     bus = EventBus()
-    return ApiContext(
+    ctx = ApiContext(
         settings=settings,
         store=store,
         approvals=approvals or ApprovalService.from_settings(settings),
@@ -126,4 +149,9 @@ def build_context(
         faults=faults or KubectlFaultController(settings.config_dir.parent),
         executor_factory=executor_factory or default_executor_factory(settings),
         reaper=reaper,
+        integrations=integrations
+        or IntegrationService.from_env(settings, IntegrationStore(store.engine)),
     )
+    if executor_factory is None:
+        ctx.executor_factory = default_executor_factory(lambda: ctx.settings)
+    return ctx

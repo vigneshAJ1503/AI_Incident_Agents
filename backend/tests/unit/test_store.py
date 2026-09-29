@@ -54,6 +54,7 @@ def test_migrations_are_idempotent_and_create_every_table(tmp_path: Path) -> Non
     upgrade(url, "investigations")  # no-op the second time
     names = set(sa.inspect(sync_engine(url, "investigations")).get_table_names())
     assert set(tables.metadata.tables) | {"alembic_version"} <= names
+    assert set(tables.integration_metadata.tables) <= names  # 0002 (PR-046)
 
 
 def test_round_trip_filters_and_event_replay(

@@ -60,6 +60,9 @@ is **never** authority for writes, data signals or confidence.
 | **D** Request floods / expensive runs | Per-client token buckets (investigations, approvals, scenarios), `max_running_investigations`, 64 KB body limit, `Idempotency-Key` for safe retries | `api/security.py`; `test_rate_limits_per_client_and_group`, `test_body_size_limit`, `test_idempotency_key` |
 | **D** Stuck/orphaned runs | Reaper fails `running` investigations with no events for 15 min (reason recorded); graceful shutdown cancels and saves | `runner.reap_stuck`, `runner.shutdown`; `tests/unit/test_reliability.py` |
 | **E** Fault injection by anyone | Double guard: `AIOPS_ENABLE_FAULTS=1` **and** authenticated. Local cluster only, one scenario at a time (lock) | `routes._require_faults`; `test_fault_endpoints_need_the_flag_and_auth` |
+| **I** Integration secrets leak (PR-046) | Write-only: Fernet-encrypted at rest with `AIOPS_SECRETS_KEY` (refused without it), never returned (at most the last 4 chars), audit and logs carry field names only | `core/secrets.py`, `core/integrations.py`; `tests/unit/test_integrations.py` |
+| **E** Weakening guardrails from the UI (PR-046) | Allowlists and guardrail settings aren't editable; changes are validated like `profile validate`; save/test need an authenticated caller when auth is on; every change audited (who, field) | `core/integrations.plan_update`, `api/integrations.require_writer`; same tests |
+| **S** SSRF via "Test connection" (PR-046) | The API connects to a caller-supplied MCP URL: keep `api.auth` on outside a laptop (API bound to 127.0.0.1 locally); URLs with credentials are refused; the rate limit group `integrations` caps probing | `api/integrations.py`; ADR-0021 |
 
 ### Orchestrator and agents
 | Threat | Mitigation | Code / test |

@@ -41,6 +41,8 @@ services:
       - AIOPS_REPLAY_LLM=${AIOPS_REPLAY_LLM:-}
       - AIOPS_API_KEY=${AIOPS_API_KEY:-}
       - AIOPS_API_KEYS=${AIOPS_API_KEYS:-}
+      # Settings -> Integrations (PR-046): Fernet key for secrets saved from the Web UI.
+      - AIOPS_SECRETS_KEY=${AIOPS_SECRETS_KEY:-}
       # Replays started from the Web UI: seconds per recorded tool call, so the live view
       # unfolds at a watchable pace (0 = instant). make demo: docs/setup/demo.md
       - AIOPS_REPLAY_TOOL_DELAY_S=${AIOPS_REPLAY_TOOL_DELAY_S:-0.5}

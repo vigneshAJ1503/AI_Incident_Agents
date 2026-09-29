@@ -117,7 +117,7 @@ unless noted. `_template/profile.yaml` has each one commented.
 | code | `release_tag_template`, `lookback_hours`, `ui_link_template` | your tag scheme (`v{version}`, `{service}/{version}`), commit link `{repo}` `{sha}` |
 | tickets | `project_key`, `resolved_lookback_days`, `symptom_terms`, `ui_link_template` | the incident project, how far back "similar incidents" go, your symptom vocabulary, `{key}` link |
 | knowledge | `ui_link_template`, `search_k`, `top_docs` | where a cited runbook opens (`{path}`) |
-| every capability | `mcp.url`, `tool_allowlist`, `limits` | your MCP endpoint, the read-only tools agents may call, result/time caps |
+| every capability | `mcp.url`, `mcp.headers`, `tool_allowlist`, `limits` | your MCP endpoint (+ auth headers of an MCP server behind auth, `${VAR}` only), the read-only tools agents may call, result/time caps. Also editable in the Web UI (below), except the allowlist |
 | – | `llm.provider`, `llm.base_url`, `llm.api_version`, `llm.models.{fast,agent,rca}` | your approved LLM platform, its endpoint and models/deployments (must support tool calling); see docs/setup/llm-providers.md |
 
 ## The service catalog (`services.yaml`)
@@ -207,9 +207,47 @@ credentials). Ask for **read-only** access only:
 - [ ] **LLM**: the company-approved platform (docs/setup/llm-providers.md): a key scoped to the approved models with a spend limit, or for Bedrock an IAM role allowed only `bedrock:InvokeModel` on those models. Confirm the
       data-processing terms allow log snippets (redaction runs first: `guardrails.redact`).
 
+## Configure from the UI (Settings → Integrations, PR-046)
+
+Everything in "Which settings to change" that is per capability can also be set in the Web
+UI, **without editing YAML or restarting the API**: open **Integrations** in the sidebar
+(`/settings/integrations`). One card per capability (logs, metrics, alerts, k8s, code,
+tickets, knowledge; Slack arrives with PR-048) shows the provider, the live status (the
+`/health` check) and any secret (masked). **Configure** opens the form:
+
+- **Provider** (implemented ones only), **enabled**, the **MCP server URL** and timeout,
+  three **limits**, and every `settings.*` key of the profile (field names, labels, metric
+  names, link templates, ...), each with the profile's value next to it.
+- **Test connection** runs `aiops doctor`'s checks for that capability (config, reachability,
+  tool contract, a read-only smoke call, catalog identifiers) on what you typed, before saving.
+- **Secrets**: HTTP headers sent to an MCP server behind auth (`Authorization: Bearer ...`).
+  Write-only: after saving, only "configured" and at most the last 4 characters are shown.
+- **Save** validates like `aiops profile validate`, stores the change, audits it (who, which
+  field, never the value) and applies it to **new** investigations at once.
+- **Reset to profile** drops the UI overrides of that capability.
+
+How it works (ADR-0021): the YAML profile stays the source of defaults; the UI stores only
+overrides, per profile and capability, in Postgres (`investigations.integration_override`,
+Alembic revision `0002`). Not editable in the UI, on purpose: tool allowlists, write
+allowlists and guardrail settings (the agents' read-only boundary stays in reviewed YAML),
+the service catalog and the LLM block.
+
+| Setting | Where |
+|---|---|
+| `AIOPS_SECRETS_KEY` | env of the API (a Fernet key; `.env.example` shows how to generate one). Without it, secrets are refused with that hint; the rest works. Rotating it means typing UI secrets again. |
+| `api.auth` | with auth on, only an authenticated caller may save or test (use a named key for a named audit entry) |
+| `api.rate_limits.integrations` | default `30/minute` per client |
+
+The API endpoints are in docs/api/contract.md ("Settings → Integrations"). The CLI (`aiops
+doctor`, `aiops investigate`) reads the YAML only; run the API's test connection (or copy the
+values into `profile.yaml`) to check a UI override from the command line.
+
 ## Secrets
 
 - Secrets appear in YAML **only** as `${VAR}` references. Never paste a token in a profile.
+- Or type them in the Web UI (Settings → Integrations): stored Fernet-encrypted with
+  `AIOPS_SECRETS_KEY`, never shown again (PR-046). They become the MCP server's `mcp.headers`
+  (`headers: {Authorization: "Bearer ${LOGS_MCP_TOKEN}"}` is the YAML equivalent).
 - Values come from, in order: the shell / secret manager > `profiles/<company>/.env` > the
   repo `.env`. Both `.env` files are gitignored; `init` never copies a `.env`.
 - `aiops profile show --resolved` and `diff` mask `api_key` and any key that looks like a
@@ -231,7 +269,8 @@ credentials). Ask for **read-only** access only:
 4. [ ] **Run the MCP servers** next to the stack (compose/Helm), each with its server-side
        guardrails (allowed indices/namespaces/projects, limits).
 5. [ ] **Map fields and labels** in `profile.yaml` (logs fields, metric/label names, alert
-       labels, tag scheme, link templates). Fill `profiles/<company>/.env`.
+       labels, tag scheme, link templates), or in the Web UI (Settings → Integrations, with
+       **Test connection**). Fill `profiles/<company>/.env`.
 6. [ ] **Generate `services.yaml`**: `aiops catalog import --from kubernetes -n <ns> --dry-run`
        (or `--from backstage --path|--url`), review the diff, run it without `--dry-run`,
        then hand-edit aliases, `depends_on`, runbooks and per-environment identifiers

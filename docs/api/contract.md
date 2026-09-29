@@ -69,6 +69,10 @@ The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the *
 | `POST /approvals/{id}/approve` · `/deny` | Body `{by, comment?}`. Approve executes the proposal and returns the updated approval (+ `result`, e.g. the ticket key/link) |
 | `GET /scenarios` | Demo/dev: `[{id: "S1", title, service, description, active: bool}]` |
 | `POST /scenarios/{id}/inject` · `POST /scenarios/revert` | Demo/dev live fault injection. **Only enabled when `AIOPS_ENABLE_FAULTS=1`**, otherwise `403` |
+| `GET /integrations` · `GET /integrations/{capability}` | Settings → Integrations (PR-046): `{profile, secrets_enabled, items: Integration[]}`; secrets never returned (below) |
+| `PUT /integrations/{capability}` | Save overrides `{enabled?, provider?, fields?, secrets?, reset?}` → `{integration, changes, warnings}`; `422` with a readable message when invalid |
+| `POST /integrations/{capability}/test` | `aiops doctor` for one capability (+ an optional unsaved draft, same body) → `{capability, status, duration_ms, checks}` |
+| `GET /integrations/audit?capability=&limit=50` | Who changed which field (never a value), newest first |
 
 ## Live events (SSE on `/investigations/{id}/events`)
 
@@ -208,6 +212,68 @@ created_at, elapsed_s, round, agents: [{agent, round, status, tool}], href}` (fr
 - **Precise replay reasons:** the `no_matching_scenario` / `live_unavailable` messages now say
   exactly why live mode is off: `no LLM is configured (<missing setting>)` and/or `the
   capabilities are unreachable: <names>` (was "No LLM configured or a capability is down").
+
+## Settings → Integrations (PR-046)
+Additive. Configure capabilities from the Web UI instead of editing YAML (ADR-0021). The
+profile YAML stays the source of defaults; the API stores only overrides (Postgres
+`integration_override`) and applies them to **new** investigations right after a save (no
+restart; running investigations keep their settings).
+
+`GET /integrations` → `200`:
+
+```jsonc
+{
+  "profile": "local",
+  "secrets_enabled": true,              // AIOPS_SECRETS_KEY is set: secrets can be saved
+  "items": [                            // logs, metrics, alerts, k8s, code, tickets, knowledge (+ extra profile capabilities)
+    {
+      "capability": "logs", "configured": true, "enabled": true,
+      "provider": "elasticsearch", "providers": ["elasticsearch", "loki"],   // implemented ones
+      "status": "ok | down | disabled | not_configured",                     // the /health check
+      "transport": "http | stdio | null",
+      "fields": [                       // editable (or shown) values, typed like the profile
+        { "key": "mcp.url", "value": "http://localhost:8101/mcp", "default": "http://localhost:8101/mcp",
+          "type": "string | number | boolean | list | json", "overridden": false, "editable": true, "secret": false },
+        { "key": "settings.fields.level", "value": "log.level", "default": "level", "type": "string", "overridden": true, "editable": true }
+      ],
+      "tool_allowlist": ["list_indices", "…"],          // read-only here (the security boundary)
+      "secrets": [ { "name": "Authorization", "configured": true, "last4": "9f2c | null",
+                     "source": "profile | ui", "usable": true } ],
+      "overridden": ["settings.fields.level", "secrets.Authorization"],
+      "updated_at": "…", "updated_by": "alice", "notes": []
+    }
+  ]
+}
+```
+
+- **Field keys:** `mcp.url`, `mcp.timeout_s`, `limits.{max_results,query_timeout_s,
+  max_time_range_hours}` and every `settings.*` key the profile declares (dotted). Tool/write
+  allowlists and guardrail settings (`*approval*`, `*allowlist*`, `read_only`) are not
+  editable; credential-looking settings are never shown as values.
+- **`PUT /integrations/{capability}`** body `{enabled?, provider?, fields?: {key: value|null},
+  secrets?: {header: value|null}, reset?: bool}`. `null` = back to the profile value (clears a
+  UI secret); `reset: true` drops every override first. The result is validated with the
+  profile's Pydantic models and `profile validate` checks: `422 invalid_integration` (type,
+  unknown field, URL with credentials, not an implemented provider, a required provider
+  setting missing, ...), `422 secrets_key_missing` (a secret without `AIOPS_SECRETS_KEY`),
+  `409 not_configured` (the capability isn't in the profile). `200 {integration, changes:
+  [{field, change: set|updated|reverted|cleared}], warnings}`; no changes = nothing stored.
+- **Secrets** are HTTP headers sent to the capability's MCP server (`mcp.headers`, e.g.
+  `Authorization`). Write-only: stored Fernet-encrypted, never returned; `last4` only for
+  values of 12+ characters. `usable: false` = stored but not decryptable with the current key.
+- **`POST /integrations/{capability}/test`** runs the `aiops doctor` checks of that capability
+  (config, reachability, contract, smoke, catalog; no LLM row) on the saved settings, or on
+  the saved settings + the draft in the body (nothing is stored). `status` = the worst check
+  (`skip` when the capability is disabled or not configured). Each check:
+  `{check, status: ok|warn|fail|skip, detail, hint, latency_ms}`.
+- **Auth:** with `api.auth` on, `PUT` and `/test` need an authenticated principal (`401`
+  otherwise); the principal's name is the audit's actor. Rate limit group `integrations`
+  (default `30/minute`).
+- **Audit:** `GET /integrations/audit` → `[{id, recorded_at, capability, actor, action:
+  update|reset, changes: [{field, change}]}]`. Never a value.
+- **Demo mode:** the Web UI's `DemoClient` serves `frontend/src/demo/integrations.json`
+  (generated from this API over the `local` profile; a backend test keeps it on the
+  contract) and applies the same rules in the tab (secrets reduced to `last4` at once).
 
 ## Demo data
 

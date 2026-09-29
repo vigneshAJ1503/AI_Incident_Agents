@@ -123,6 +123,10 @@ capabilities:
       transport: http
       url: ${LOGS_MCP_URL}                    # mcp-servers/elasticsearch-mcp, run by you
       timeout_s: 30
+      # An MCP server behind auth: HTTP headers sent with every request (values are secrets:
+      # ${VAR} references only, or type them in the Web UI's Settings -> Integrations, which
+      # stores them encrypted with AIOPS_SECRETS_KEY; PR-046). Works for every capability.
+      # headers: { Authorization: "Bearer ${LOGS_MCP_TOKEN}" }
     tool_allowlist: [list_indices, get_mapping, search_logs, execute_esql]
     limits:
       max_results: 1000
@@ -325,6 +329,7 @@ api:
     investigations: 10/minute     # POST /investigations, clarify
     approvals: 30/minute          # approve, deny, ticket drafts
     scenarios: 6/minute           # fault inject/revert
+    integrations: 30/minute       # Settings -> Integrations: save, test connection (PR-046)
   max_body_bytes: 65536           # HTTP 413 above
   idempotency_ttl_s: 86400        # Idempotency-Key memory for POST /investigations
   stuck_after_s: 900              # reaper: running with no events this long -> failed (0 = off)

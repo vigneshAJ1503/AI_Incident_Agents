@@ -43,7 +43,7 @@ Postgres by container name (`deploy/compose/docker-compose.app.yml`).
 | `auth` | | `auto` | `auto` (= `api_key` when a key is set, else `none`), `none`, `api_key`; `oidc` is reserved for PR-045 |
 | `api_key` | `AIOPS_API_KEY` | empty = off | Shared secret: `X-API-Key` on every `/api` route except `/api/health` and the docs; SSE also accepts `?api_key=`. No identity |
 | `api_keys` | `AIOPS_API_KEYS` | empty | Named keys `name:KEY,...` (16+ chars): each is an identity (approvals, rate limits) |
-| `rate_limits` | | investigations `10/minute`, approvals `30/minute`, scenarios `6/minute` | Token bucket per client (key name, else peer IP) -> `429 rate_limited` + `Retry-After` |
+| `rate_limits` | | investigations `10/minute`, approvals `30/minute`, scenarios `6/minute`, integrations `30/minute` | Token bucket per client (key name, else peer IP) -> `429 rate_limited` + `Retry-After` |
 | `max_body_bytes` | | 65536 | Larger bodies -> `413 payload_too_large` |
 | `idempotency_ttl_s` | | 86400 | How long an `Idempotency-Key` of `POST /investigations` is remembered |
 | `stuck_after_s` / `reaper_interval_s` | | 900 / 60 | Reaper: `pending`/`running`, not running here, no event for 15 min -> `failed` (reason in an `error` event); 0 = off |
@@ -51,6 +51,7 @@ Postgres by container name (`deploy/compose/docker-compose.app.yml`).
 | `heartbeat_s` | | 15 | SSE keep-alive |
 | `health_cache_s` | | 30 | `/health` caches capability reachability |
 | | `AIOPS_ENABLE_FAULTS` | `0` | `1` enables `POST /api/scenarios/{id}/inject` and `/revert` (else 403). Also needs API auth (double guard) |
+| | `AIOPS_SECRETS_KEY` | empty = secrets off | Fernet key that encrypts secrets saved in Settings → Integrations (PR-046, ADR-0021). Empty: the UI refuses to save secrets |
 | | `AIOPS_UI_API_KEY` | empty | Web UI container: the `X-API-Key` its server-side proxy adds (never reaches the browser) |
 | | `AIOPS_FAULTS_KUBE_CONTEXT` | `aiops` | kubectl context of the fault endpoints |
 | | `AIOPS_REPLAY_TOOL_DELAY_S` | `0` (compose: `0.5`) | Seconds per recorded tool call of a replay, so the Web UI's live view animates (max 10) |
@@ -72,6 +73,10 @@ The threat model is `docs/security/threat-model.md`. The API's part of the bound
   - `decided_by` / `requested_by` are the key's name, and the body's `by` is ignored.
   - The shared `api_key` gets `403 approver_identity_required`.
   - With auth off (local), the self-declared `by` is kept.
+- **Integrations** (PR-046, ADR-0021): `PUT /api/integrations/{capability}` and `/test` need an
+  authenticated caller when auth is on (the audit's actor); secrets are write-only (Fernet,
+  `AIOPS_SECRETS_KEY`) and never returned; every change is audited by field name. `/test`
+  makes the API connect to the URL given, so keep auth on outside a laptop.
 - **Fault endpoints** need `AIOPS_ENABLE_FAULTS=1` **and** an authenticated caller.
   `/health` reports `faults_enabled: true` only when both hold. `make demo-live` generates
   a one-off named key for the Web UI's proxy.
@@ -168,8 +173,8 @@ Always `{"error": {"code": "...", "message": "..."}}` with the HTTP status:
 | 403 | `faults_disabled`, `faults_need_auth`, `approver_identity_required` |
 | 413 | `payload_too_large` |
 | 404 | `not_found`, `unknown_scenario` |
-| 409 | `live_unavailable`, `already_running`, `not_running`, `not_waiting_for_clarification`, `report_not_ready`, `nothing_to_draft`, `invalid_state` (approval), `fault_error`, `capability_disabled` |
-| 422 | `validation_error`, `no_matching_scenario`, `policy_rejected`, `not_injectable`, `idempotency_key_reused` |
+| 409 | `not_configured` (integration), `live_unavailable`, `already_running`, `not_running`, `not_waiting_for_clarification`, `report_not_ready`, `nothing_to_draft`, `invalid_state` (approval), `fault_error`, `capability_disabled` |
+| 422 | `invalid_integration`, `secrets_key_missing`, `secrets_key_invalid`, `validation_error`, `no_matching_scenario`, `policy_rejected`, `not_injectable`, `idempotency_key_reused` |
 | 429 | `too_many_investigations`, `rate_limited` (with `Retry-After`) |
 | 503 | `store_unavailable` (Postgres down; `/health` says `degraded`), `shutting_down` |
 

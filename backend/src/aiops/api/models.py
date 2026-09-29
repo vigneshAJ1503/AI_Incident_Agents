@@ -364,3 +364,100 @@ class AskResponse(_Out):
     investigation_id: str | None = None
     mode: Literal["live", "replay"] | None = None
     scenario: str | None = None
+
+
+# --------------------------------------------------------------------------- integrations (PR-046)
+
+#: A value a request may set (structured "json" settings stay in profile.yaml).
+FieldValue = str | int | float | bool | list[str | int | float] | None
+IntegrationStatus = Literal["ok", "down", "disabled", "not_configured"]
+
+
+class IntegrationField(_Out):
+    """One editable (or shown) value of a capability. ``default`` = the profile's value."""
+
+    key: str  # mcp.url | mcp.timeout_s | limits.<name> | settings.<dotted>
+    value: Any
+    default: Any
+    type: Literal["string", "number", "boolean", "list", "json"]
+    overridden: bool
+    editable: bool
+    secret: bool = False
+
+
+class IntegrationSecret(_Out):
+    """A write-only secret: never its value, at most the last 4 characters."""
+
+    name: str  # the HTTP header sent to the MCP server, e.g. Authorization
+    configured: bool
+    last4: str | None
+    source: Literal["profile", "ui"]
+    usable: bool
+
+
+class IntegrationOut(_Out):
+    capability: str
+    configured: bool
+    provider: str | None
+    providers: list[str]
+    enabled: bool
+    status: IntegrationStatus
+    transport: Literal["http", "stdio"] | None
+    fields: list[IntegrationField]
+    tool_allowlist: list[str]
+    secrets: list[IntegrationSecret]
+    overridden: list[str]
+    updated_at: datetime | None
+    updated_by: str | None
+    notes: list[str]
+
+
+class IntegrationList(_Out):
+    profile: str
+    secrets_enabled: bool  # AIOPS_SECRETS_KEY is set: secrets can be saved
+    items: list[IntegrationOut]
+
+
+class IntegrationUpdateRequest(_In):
+    """``fields``/``secrets``: a ``null`` value reverts to the profile (clears a secret)."""
+
+    enabled: bool | None = None
+    provider: str | None = Field(default=None, max_length=64)
+    fields: dict[str, FieldValue] = Field(default_factory=dict, max_length=200)
+    secrets: dict[str, str | None] = Field(default_factory=dict, max_length=10)
+    reset: bool = False
+
+
+class FieldChangeOut(_Out):
+    field: str
+    change: Literal["set", "updated", "reverted", "cleared"]
+
+
+class IntegrationSaved(_Out):
+    integration: IntegrationOut
+    changes: list[FieldChangeOut]
+    warnings: list[str]
+
+
+class IntegrationCheck(_Out):
+    check: str  # config | reachability | contract | smoke | catalog
+    status: Literal["ok", "warn", "fail", "skip"]
+    detail: str
+    hint: str
+    latency_ms: float | None
+
+
+class IntegrationTestResult(_Out):
+    capability: str
+    status: Literal["ok", "warn", "fail", "skip"]
+    duration_ms: float
+    checks: list[IntegrationCheck]
+
+
+class IntegrationAuditOut(_Out):
+    id: str
+    recorded_at: datetime
+    capability: str
+    actor: str
+    action: str
+    changes: list[FieldChangeOut]

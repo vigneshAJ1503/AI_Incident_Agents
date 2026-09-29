@@ -81,7 +81,7 @@ There is no Grafana MCP. Evidence links are built from two templates:
 4. **Signals** (authoritative, data-derived): `error_rate_up`, `latency_up`, `traffic_drop`, `traffic_spike`, `db_pool_saturated`, `memory_pressure`, `cache_down`, `dependency_latency_up`, `no_anomaly`.
 5. The LLM gets the overview and at most ~3 follow-up queries, then `finalize` restores the data signals and status.
 
-A series with **no data before the window** (Prometheus or the service just started) has no baseline: it is noted, never flagged.
+A series with **no data before the window** (Prometheus, the cluster or the service just started) has no baseline. A baseline is never invented: the window is judged against **absolute thresholds** instead (`absolute_thresholds` in the settings; defaults: 5xx ratio > 5 %, p95 > 2 s, DB pool use ≥ 90 %, DB pool waiters > 0, cache up < 0.5; `null` disables one; traffic and memory have none), with the same ~1.5 min sustained rule, and reported as "no baseline; above the absolute threshold X" (`basis: absolute`, `threshold` in the evidence). Healthy values on a fresh cluster stay `no_anomaly`.
 
 ### Portability (another company = configuration only)
 
@@ -92,6 +92,7 @@ Nothing vendor-specific is in the agent code: it asks the provider selected by `
 | `labels.service`, `labels.namespace`, `labels.status`, `labels.pod`, `labels.k8s_app` | `service`, `namespace`, `status`, `pod`, `label_app` | your instrumentation uses e.g. `job`/`app`, `code`/`status_code`, `k8s_namespace` |
 | `metrics.requests`, `metrics.latency_histogram`, `metrics.db_pool_*`, `metrics.cache_up`, `metrics.memory_rss`, `metrics.restarts`, `metrics.last_terminated_reason`, `metrics.pod_labels` | the sample services' / kube-state-metrics names | e.g. `http_server_requests_seconds` (Spring/Micrometer), `http_server_duration` (OpenTelemetry) |
 | `error_status_regex`, `rate_window`, `step`, `baseline_minutes` | `5..`, `2m`, `30s`, `15` | a slower scrape interval needs a wider `rate_window` (≥ 4 scrapes) |
+| `absolute_thresholds.{error_rate,latency_p95,latency_p99,db_pool_utilization,db_pool_pending,cache_up}` | `0.05`, `2.0`, `null`, `0.9`, `0`, `0.5` | your SLOs differ (used only when a series has no baseline) |
 | `ui_link_template`, `explore_link_template`, `panels` | local Grafana / Prometheus UI | your Grafana dashboard uid and panel ids |
 
 The queries are plain PromQL over the standard HTTP query API (`/api/v1/query_range`), so any **Prometheus-compatible** backend works by pointing `METRICS_PROM_URL` at it: Prometheus, Thanos Query, Grafana Mimir / Grafana Cloud Metrics (the `/prometheus` path prefix), VictoriaMetrics (auth: `METRICS_PROM_BEARER_TOKEN` or `METRICS_PROM_USERNAME`/`METRICS_PROM_PASSWORD`, passed to prometheus-mcp as `PROM_*`; multi-tenant Mimir/Cortex: `METRICS_PROM_ORG_ID` → `X-Scope-OrgID`). Metrics a company doesn't have (e.g. no DB pool gauges) simply return no series and are reported as "no data", never as anomalies. Detection thresholds (`RULES` in `analysis.py`) are unit-based (ratios, seconds, bytes), not vendor-based.

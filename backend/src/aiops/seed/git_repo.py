@@ -1120,6 +1120,19 @@ class RepoBuilder:
         return RepoSummary(path=self.path, scenario=scenario, now=now, commits=commits)
 
 
+def repo_marker(path: Path) -> tuple[str, datetime] | None:
+    """(scenario, anchor) a generated repo was built for; None if not ours / unreadable."""
+    try:
+        text = (path / ".git" / MARKER).read_text()
+    except OSError:
+        return None
+    fields = dict(line.split("=", 1) for line in text.splitlines() if "=" in line)
+    try:
+        return fields["scenario"], datetime.fromisoformat(fields["now"])
+    except (KeyError, ValueError):
+        return None
+
+
 def build_sample_repo(path: Path, scenario: str, now: datetime) -> RepoSummary:
     return RepoBuilder(path).build(scenario, now)
 

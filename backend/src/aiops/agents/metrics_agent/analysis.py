@@ -5,6 +5,12 @@ the baseline (median of the window before the incident window), whether and when
 series left it (change point: the first point that starts a sustained run of anomalous
 points), the magnitude (median during the anomaly, peak, ratio, z-score), and the
 signals. The agent reports them; the LLM reasons over them.
+
+A series with no data before the window (a fresh cluster or service) has no baseline. It
+is then judged against ABSOLUTE thresholds (``capabilities.metrics.settings.
+absolute_thresholds``, defaults in ``ABSOLUTE_DEFAULTS``) with the same sustained-run
+rule, and reported as "no baseline; above the absolute threshold X". A baseline is never
+invented.
 """
 
 from __future__ import annotations
@@ -16,6 +22,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from typing import Any, Literal
 
+from aiops.core.config import ConfigError
 from aiops.core.models import TimeRange
 from aiops.providers.metrics import Values
 
@@ -93,6 +100,73 @@ RULES: dict[str, tuple[Rule, ...]] = {
 }
 
 
+#: No-baseline fallback: metric -> comparison against an absolute threshold. Only these
+#: metrics can have one (traffic and memory have no universal "too high").
+ABSOLUTE_OPS: dict[str, Literal[">", ">=", "<"]] = {
+    "error_rate": ">",  # 5xx ratio
+    "latency_p95": ">",  # seconds (a latency SLO)
+    "latency_p99": ">",
+    "db_pool_utilization": ">=",  # active / max
+    "db_pool_pending": ">",  # requests waiting for a connection
+    "cache_up": "<",  # 1 = reachable
+}
+#: Defaults, overridable per profile; ``null`` disables one. Healthy local values: 5xx 0 %,
+#: p95 <= 1 s (the sample services' top histogram bucket), pool <= 35 %, 0 waiters.
+ABSOLUTE_DEFAULTS: dict[str, float | None] = {
+    "error_rate": 0.05,
+    "latency_p95": 2.0,
+    "latency_p99": None,
+    "db_pool_utilization": 0.9,
+    "db_pool_pending": 0.0,
+    "cache_up": 0.5,
+}
+
+
+def absolute_thresholds(raw: object) -> dict[str, float]:
+    """Merge ``settings.absolute_thresholds`` over the defaults (readable errors)."""
+    where = "capabilities.metrics.settings.absolute_thresholds"
+    if raw is None:
+        raw = {}
+    if not isinstance(raw, dict):
+        raise ConfigError(f"{where} must be a mapping of metric -> number (or null)")
+    unknown = sorted(str(k) for k in set(raw) - set(ABSOLUTE_OPS))
+    if unknown:
+        raise ConfigError(
+            f"{where}: unknown metric(s) {', '.join(unknown)}; known: {', '.join(ABSOLUTE_OPS)}"
+        )
+    merged: dict[str, object] = {**ABSOLUTE_DEFAULTS, **raw}
+    out: dict[str, float] = {}
+    for key, value in merged.items():
+        if value is None:
+            continue  # disabled
+        if isinstance(value, bool) or not isinstance(value, int | float) or value < 0:
+            raise ConfigError(f"{where}.{key} must be a non-negative number or null, not {value!r}")
+        out[key] = float(value)
+    return out
+
+
+def _beyond(op: str, value: float, threshold: float) -> bool:
+    if op == ">":
+        return value > threshold
+    if op == ">=":
+        return value >= threshold
+    return value < threshold
+
+
+def _sustained_start(flags: list[bool]) -> int | None:
+    """Index of the first point that starts a sustained anomalous run, if any."""
+    return next(
+        (
+            i
+            for i, flag in enumerate(flags)
+            if flag
+            and sum(flags[i : i + SUSTAIN_OF]) >= min(SUSTAIN, len(flags) - i)
+            and sum(flags[i:]) >= SUSTAIN
+        ),
+        None,
+    )
+
+
 def iso(ts: float | datetime) -> str:
     moment = ts if isinstance(ts, datetime) else datetime.fromtimestamp(ts, UTC)
     return moment.astimezone(UTC).isoformat(timespec="seconds").replace("+00:00", "Z")
@@ -112,6 +186,11 @@ def fmt(value: float | None, unit: str) -> str:
     if unit == "bool":
         return "up" if value >= 0.5 else "DOWN"
     return f"{value:g}"
+
+
+def fmt_threshold(value: float, unit: str) -> str:
+    """Like ``fmt``, but a bool threshold (0.5) stays a number, not "up"/"DOWN"."""
+    return f"{value:g}" if unit == "bool" else fmt(value, unit)
 
 
 def downsample(values: Values, points: int = CHART_POINTS) -> list[list[float | None]]:
@@ -136,6 +215,8 @@ class Anomaly:
     ongoing: bool
     unit: str
     zscore: float | None = None
+    #: Set when there was no baseline and an absolute threshold was crossed instead.
+    threshold: float | None = None
 
     @property
     def ratio(self) -> float | None:
@@ -144,6 +225,13 @@ class Anomaly:
         return self.current / self.baseline
 
     def describe(self) -> str:
+        text = self._describe()
+        if self.threshold is not None:
+            side = "above" if self.direction == "up" else "below"
+            text += f"; no baseline; {side} the absolute threshold {fmt_threshold(self.threshold, self.unit)}"
+        return text
+
+    def _describe(self) -> str:
         if self.metric == "oom_killed":
             return f"container OOMKilled (first seen {iso(self.start_time)})"
         if self.metric == "cache_up":
@@ -154,6 +242,11 @@ class Anomaly:
         change = "up" if self.direction == "up" else "down"
         ratio = f", x{self.ratio:.1f}" if self.ratio is not None else ""
         state = "ongoing" if self.ongoing else "recovered"
+        if self.threshold is not None:  # no baseline to compare with: never print one
+            return (
+                f"{self.metric.replace('_', ' ')} {fmt(self.current, self.unit)} "
+                f"(peak {fmt(self.peak, self.unit)}) since {iso(self.start_time)}, {state}"
+            )
         return (
             f"{self.metric.replace('_', ' ')} {change}: {fmt(self.baseline, self.unit)} -> "
             f"{fmt(self.current, self.unit)} (peak {fmt(self.peak, self.unit)}{ratio}) "
@@ -185,6 +278,9 @@ class SeriesStats:
             "ongoing": a.ongoing if a else None,
             "ratio": round(a.ratio, 2) if a and a.ratio is not None else None,
             "zscore": round(a.zscore, 1) if a and a.zscore is not None else None,
+            # "absolute" = there was no baseline; judged against ``threshold`` instead
+            "basis": ("absolute" if a.threshold is not None else "baseline") if a else None,
+            "threshold": a.threshold if a else None,
             "note": self.note,
         }
 
@@ -199,8 +295,12 @@ def detect(
     unit: str,
     values: Values,
     window: TimeRange,
+    absolute: dict[str, float] | None = None,
 ) -> SeriesStats:
-    """Baseline = points before ``window.start``; change point searched inside the window."""
+    """Baseline = points before ``window.start``; change point searched inside the window.
+
+    Without a baseline, ``absolute[metric]`` (if set) is the fallback threshold.
+    """
     start_ts = window.start.timestamp()
     base = [v for t, v in values if t < start_ts and v is not None]
     inside = [(t, v) for t, v in values if t >= start_ts and v is not None]
@@ -216,22 +316,14 @@ def detect(
     )
     if baseline is None:
         # Nothing to compare with (series newer than the window, e.g. Prometheus or the
-        # service just started): never an anomaly, or every fresh series would be one.
+        # service just started). Never invent a baseline: judge the window against this
+        # metric's absolute threshold, if one is configured; otherwise just note it.
         if inside:
-            stats.note = f"{metric.replace('_', ' ')}: no baseline data before the window"
+            return _detect_absolute(stats, inside, (absolute or {}).get(metric))
         return stats
     for rule in RULES.get(metric, ()):
         flags = [rule.anomalous(v, baseline) for _, v in inside]
-        start = next(
-            (
-                i
-                for i, flag in enumerate(flags)
-                if flag
-                and sum(flags[i : i + SUSTAIN_OF]) >= min(SUSTAIN, len(flags) - i)
-                and sum(flags[i:]) >= SUSTAIN
-            ),
-            None,
-        )
+        start = _sustained_start(flags)
         if start is None:
             continue
         during = [v for (_, v), flag in zip(inside[start:], flags[start:], strict=True) if flag]
@@ -252,6 +344,41 @@ def detect(
         )
         stats.current, stats.peak = current, peak
         break
+    return stats
+
+
+def _detect_absolute(
+    stats: SeriesStats, inside: list[tuple[float, float]], threshold: float | None
+) -> SeriesStats:
+    stats.note = f"{stats.metric.replace('_', ' ')}: no baseline data before the window"
+    op = ABSOLUTE_OPS.get(stats.metric)
+    if threshold is None or op is None:
+        return stats
+    flags = [_beyond(op, v, threshold) for _, v in inside]
+    start = _sustained_start(flags)
+    side = "below" if op == "<" else "above"
+    limit = fmt_threshold(threshold, stats.unit)
+    if start is None:
+        stats.note += f"; not {side} the absolute threshold {limit}"
+        return stats
+    direction: Direction = "down" if op == "<" else "up"
+    during = [v for (_, v), flag in zip(inside[start:], flags[start:], strict=True) if flag]
+    current = statistics.median(during)
+    peak = max(during) if direction == "up" else min(during)
+    stats.anomaly = Anomaly(
+        metric=stats.metric,
+        service=stats.service,
+        direction=direction,
+        baseline=None,
+        current=current,
+        peak=peak,
+        start_time=datetime.fromtimestamp(inside[start][0], UTC),
+        ongoing=all(flags[-2:]),
+        unit=stats.unit,
+        threshold=threshold,
+    )
+    stats.current, stats.peak = current, peak
+    stats.note += f"; {side} the absolute threshold {limit}"
     return stats
 
 
@@ -381,6 +508,10 @@ class MetricsAnalysis:
             f"{NO_ANOMALY_PHRASE} for {self.service}{deps}: error rate, latency, traffic, "
             "saturation and memory stayed within their baseline."
         )
+        if any(s.baseline is None and s.points and s.metric in ABSOLUTE_OPS for s in self.stats):
+            sentence = sentence[:-1] + (
+                " (or, where there was no baseline yet, within the absolute thresholds)."
+            )
         noisy = [d for d in self.dependencies if d not in quiet]
         if noisy:  # e.g. a traffic change on a dependency that didn't reach this service
             sentence += f" Dependency deviations without impact here: {', '.join(noisy)}."

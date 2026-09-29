@@ -191,6 +191,15 @@ capabilities:
       rate_window: 2m
       step: 30s
       baseline_minutes: 30
+      # Only when a series has NO data before the window (new cluster/service): judge the
+      # window against absolute limits instead (never an invented baseline). null = off.
+      absolute_thresholds:
+        error_rate: 0.05                      # 5xx ratio
+        latency_p95: 2.0                      # seconds: your latency SLO
+        latency_p99: null
+        db_pool_utilization: 0.9
+        db_pool_pending: 0
+        cache_up: 0.5
       # {service} {namespace} {from_ms} {to_ms} {panel}; set to "" if you have no dashboard.
       ui_link_template: "${GRAFANA_URL}/d/<dashboard-uid>/service-overview?var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}"
       # {query} {range} {end_utc}: opens the exact query of a piece of evidence.

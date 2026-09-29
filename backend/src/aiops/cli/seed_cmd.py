@@ -13,7 +13,12 @@ from aiops.cli.common import console, err_console
 from aiops.seed.alertmanager import AlertmanagerSeeder
 from aiops.seed.alerts import DEFAULT_TTL, NAMESPACE, scenario_alerts
 from aiops.seed.elasticsearch import ElasticsearchSeeder, SeedError
-from aiops.seed.git_repo import RepoSeedError, build_sample_repo, default_repo_path
+from aiops.seed.git_repo import (
+    RepoSeedError,
+    build_sample_repo,
+    default_repo_path,
+    repo_marker,
+)
 from aiops.seed.k8s_logs import (
     DEFAULT_RETENTION,
     K8S_ILM_POLICY,
@@ -184,6 +189,13 @@ def seed_repo(
     path: Path | None = typer.Option(
         None, help="Where to build the repo. Default: <project>/.data/sample-repo."
     ),
+    if_older_than: float | None = typer.Option(
+        None,
+        "--if-older-than",
+        help="Hours. Keep the repo if it was built for this scenario less than this long ago "
+        "(make demo-live: a healthy S0 repo whose history ends 'now'; fault injection adds "
+        "the incident commits on top).",
+    ),
 ) -> None:
     """(Re)build the deterministic sample Git repo: ~2 weeks of history + the scenario's change."""
     scenario = scenario.upper()
@@ -191,6 +203,14 @@ def seed_repo(
         raise typer.BadParameter(f"scenario must be one of {SCENARIOS}")
     anchor = (now.replace(tzinfo=UTC) if now.tzinfo is None else now) if now else datetime.now(UTC)
     target = (path or default_repo_path()).expanduser().resolve()
+    if if_older_than is not None:
+        built = repo_marker(target)
+        if built and built[0] == scenario and anchor - built[1] < timedelta(hours=if_older_than):
+            console.print(
+                f"Sample repo {target} is a {scenario} repo from {built[1]:%Y-%m-%d %H:%M} UTC "
+                f"(< {if_older_than:g} h old): kept."
+            )
+            return
     try:
         summary = build_sample_repo(target, scenario, anchor)
     except RepoSeedError as exc:

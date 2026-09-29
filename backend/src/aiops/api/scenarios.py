@@ -7,6 +7,7 @@ Fault injection reuses ``aiops.faults`` as it is: the same injector, the same cl
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import threading
@@ -18,10 +19,12 @@ from typing import Protocol
 from aiops.core.catalog import ServiceCatalog
 from aiops.evals.runner import EvalPaths
 from aiops.evals.scenario import Scenario, load_scenarios
+from aiops.fault_commits import DemoRepo
 from aiops.faults import FAULTS, FaultError, FaultInjector, FaultState, kubectl_runner
 
 FAULTS_ENV = "AIOPS_ENABLE_FAULTS"
 KUBE_CONTEXT_ENV = "AIOPS_FAULTS_KUBE_CONTEXT"
+logger = logging.getLogger(__name__)
 _WORD = re.compile(r"[a-z0-9]+")
 _STOP = {"the", "is", "a", "an", "in", "on", "of", "and", "or", "to", "why", "what", "are"}
 #: Minimum word overlap for a question to select a scenario without a service.
@@ -116,7 +119,13 @@ class KubectlFaultController:
         self.repo_root = repo_root
         self.context = context or os.environ.get(KUBE_CONTEXT_ENV, "aiops")
         self._factory = injector_factory or (
-            lambda: FaultInjector(self.repo_root, kubectl_runner(self.context), log=lambda _: None)
+            lambda: FaultInjector(
+                self.repo_root,
+                kubectl_runner(self.context),
+                log=lambda _: None,
+                # demo: the fault also lands as a commit in the sample repo git-mcp reads
+                code_repo=DemoRepo.for_root(self.repo_root, log=logger.info),
+            )
         )
         self._reverting: threading.Thread | None = None
         self.last_error: str | None = None

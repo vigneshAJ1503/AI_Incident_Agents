@@ -17,6 +17,7 @@ if ! docker network inspect "$NETWORK" >/dev/null 2>&1; then
   exit 1
 fi
 
+started=0
 if [[ "$(minikube status -p "$PROFILE" --format '{{.Host}}' 2>/dev/null || true)" != "Running" ]]; then
   echo "==> starting minikube profile '$PROFILE' (${MEMORY} MB, ${CPUS} CPUs, Kubernetes ${K8S_VERSION})"
   minikube start -p "$PROFILE" --driver=docker --kubernetes-version="$K8S_VERSION" \
@@ -24,6 +25,7 @@ if [[ "$(minikube status -p "$PROFILE" --format '{{.Host}}' 2>/dev/null || true)
     --network="$NETWORK" --static-ip="$STATIC_IP" \
     --addons=default-storageclass,storage-provisioner \
     --wait=apiserver,system_pods,default_sa
+  started=1
 fi
 
 echo "==> building $IMAGE inside the cluster (no registry needed)"
@@ -46,3 +48,13 @@ echo "==> deploying kube-state-metrics (namespace monitoring, NodePort 30080)"
 "${KUBECTL[@]}" -n monitoring rollout status deployment/kube-state-metrics --timeout=180s >/dev/null
 "${KUBECTL[@]}" -n prod get pods -o wide
 echo "==> NodePorts on ${STATIC_IP}: payment 30081, order 30082, user 30083, inventory 30084, kube-state-metrics 30080"
+
+# The read-only kubeconfig of kubernetes-mcp: a (re)started cluster can reject the old
+# ServiceAccount token, so always write a new one then; otherwise only when it is missing,
+# rejected or about to expire. kubernetes-mcp re-reads it without a restart.
+if ((started)); then
+  echo "==> Minikube (re)started: new read-only kubeconfig for kubernetes-mcp"
+  ./scripts/k8s-reader-kubeconfig.sh
+else
+  ./scripts/k8s-reader-kubeconfig.sh --if-needed
+fi

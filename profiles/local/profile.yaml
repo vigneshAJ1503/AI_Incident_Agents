@@ -213,6 +213,17 @@ capabilities:
       rate_window: 2m              # rate() window (>= 4 scrapes at 30 s)
       step: 30s                    # query_range resolution
       baseline_minutes: 15         # compared window: [start - baseline, start]
+      # Used ONLY for a series with no data before the window (a freshly started cluster or
+      # service): the window is judged against these instead (sustained ~1.5 min), reported
+      # as "no baseline; above the absolute threshold X". null disables one. These are the
+      # defaults; set your SLOs here.
+      absolute_thresholds:
+        error_rate: 0.05           # 5xx ratio > 5 %
+        latency_p95: 2.0           # seconds; p95 above the latency SLO
+        latency_p99: null
+        db_pool_utilization: 0.9   # active / max >= 90 %
+        db_pool_pending: 0         # requests waiting for a DB connection > 0
+        cache_up: 0.5              # below = cache unreachable
       # Deep links. Grafana is optional locally (make ui-up); agents never need it.
       #   {service} {namespace} {from_ms} {to_ms} {panel} are filled in.
       ui_link_template: "${GRAFANA_URL:-http://localhost:3000}/d/aiops-service-overview/service-overview?orgId=1&var-namespace={namespace}&var-service={service}&from={from_ms}&to={to_ms}&viewPanel={panel}"

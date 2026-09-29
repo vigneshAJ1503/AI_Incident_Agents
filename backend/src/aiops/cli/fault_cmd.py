@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import os
 import subprocess
+from pathlib import Path
 
 import typer
 from rich.table import Table
 
 from aiops.cli.common import console, err_console
 from aiops.core.config import find_config_dir
+from aiops.fault_commits import DemoRepo
 from aiops.faults import FAULT_TYPES, FAULTS, FaultError, FaultInjector, FaultState, kubectl_runner
 
 app = typer.Typer(
@@ -19,8 +21,19 @@ app = typer.Typer(
 ContextOption = typer.Option("aiops", "--context", help="kubectl context (Minikube profile).")
 
 
-def _injector(context: str) -> FaultInjector:
-    return FaultInjector(find_config_dir().parent, kubectl_runner(context), log=console.print)
+#: The checkout whose .data/ holds the cluster lock, the fault state and the sample repo
+#: (default: this one). Git worktrees share ONE cluster: point them at the main clone.
+ROOT_VAR = "AIOPS_FAULT_ROOT"
+
+
+def _injector(context: str, *, git_commits: bool = True) -> FaultInjector:
+    root = Path(os.environ.get(ROOT_VAR) or find_config_dir().parent).expanduser().resolve()
+    return FaultInjector(
+        root,
+        kubectl_runner(context),
+        log=console.print,
+        code_repo=DemoRepo.for_root(root, log=console.print) if git_commits else None,
+    )
 
 
 @app.command("list")
@@ -48,11 +61,21 @@ def inject(
     no_wait: bool = typer.Option(
         False, "--no-wait", help="Don't wait for the incident to develop."
     ),
+    no_git_commit: bool = typer.Option(
+        False,
+        "--no-git-commit",
+        help="Don't also commit the change to the demo sample repo "
+        "(or set AIOPS_FAULT_GIT_COMMITS=0).",
+    ),
     context: str = ContextOption,
 ) -> None:
-    """Inject one fault and leave it active (revert with `aiops fault revert`)."""
+    """Inject one fault and leave it active (revert with `aiops fault revert`).
+
+    Local demo: the change is also committed to .data/sample-repo (read by git-mcp), like
+    a real change arriving through git; the revert commits a `git revert` of it.
+    """
     try:
-        state = _injector(context).inject(fault, wait=not no_wait)
+        state = _injector(context, git_commits=not no_git_commit).inject(fault, wait=not no_wait)
     except FaultError as exc:
         err_console.print(f"[red]{exc}[/red]")
         raise typer.Exit(code=1) from exc
@@ -78,6 +101,9 @@ def status(context: str = ContextOption) -> None:
     state = _injector(context).state()
     if state.scenario:
         console.print(f"[yellow]{state.scenario} active[/yellow] since {state.injected_at}")
+        if state.commits:
+            shas = ", ".join(sha[:10] for sha in state.commits)
+            console.print(f"  sample-repo commits (reverted with the fault): {shas}")
     else:
         console.print("[green]No fault active (healthy baseline).[/green]")
 

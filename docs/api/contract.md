@@ -40,7 +40,7 @@ The contract the **orchestrator** (PR-030–034), the **API** (PR-035) and the *
   "clarification_candidates": [],               // NEW (PR-030): catalog services to pick from
   "claims": [ /* Finding: kind FACT|OBSERVATION|CORRELATION|HYPOTHESIS|RECOMMENDATION, description, evidence_ids */ ],  // NEW (PR-033)
   "versions": { "model": "…", "prompts": "…" },
-  "usage": { "input_tokens": 0, "output_tokens": 0, "calls": 0 },   // aggregated (NEW, serialized)
+  "usage": { "input_tokens": 0, "output_tokens": 0, "calls": 0, "cost_usd": 0.0 },   // aggregated (NEW, serialized); cost_usd: PR-041
   "duration_ms": 8420,                                               // NEW
   "created_at": "…", "completed_at": "…",
   "mode": "live | replay | demo"                                     // NEW: where the data came from
@@ -83,7 +83,7 @@ Every event: `{"type": "...", "investigation_id": "...", "timestamp": "...", "se
 | `agent_started` | `{step_id, objective, round}` |
 | `tool_called` | `{step_id, tool, status, duration_ms}` |
 | `evidence_added` | `{step_id, evidence: Evidence}` |
-| `agent_finished` | `{step_id, status, summary, signals, evidence_count, duration_ms, tokens}` |
+| `agent_finished` | `{step_id, status, summary, signals, evidence_count, duration_ms, tokens, cost_usd}` (`cost_usd` additive, PR-041) |
 | `rca_started` | `{}` |
 | `hypothesis_ranked` | `{hypotheses: Hypothesis[]}` |
 | `report_ready` | `{report}` |
@@ -104,10 +104,21 @@ The stream ends after `investigation_finished`. Clients reconnect with `Last-Eve
   "by_day": [ { "date": "2026-09-15", "investigations": 3, "critical": 1, "high": 1, "medium": 0, "low": 1 } ],
   "by_service": [ { "service": "payment-service", "investigations": 14, "top_root_cause": "DB pool misconfiguration" } ],
   "top_signals": [ { "signal": "db_timeout_errors_up", "count": 11 } ],
-  "agents": [ { "name": "logs", "runs": 40, "success_rate": 0.97, "p50_ms": 2100, "tokens": 0 } ],
-  "recent": [ /* InvestigationSummary × 5 */ ]
+  "agents": [ { "name": "logs", "runs": 40, "success_rate": 0.97, "p50_ms": 2100, "tokens": 0,
+                "cost_usd": 0.0, "avg_cost_usd": 0.0 } ],                 // cost: PR-041
+  "recent": [ /* InvestigationSummary × 5 */ ],
+  "cost": { "total_usd": 0.0, "avg_usd_per_investigation": 0.0,        // NEW (PR-041)
+            "tokens": 0, "avg_tokens_per_investigation": 0 }
 }
 ```
+
+### Cost (PR-041, additive)
+Every `TokenUsage` (the investigation's `usage` and each agent result's `usage`) carries
+`cost_usd`: an estimate from the profile's `cost.pricing` table (USD per 1M tokens, model id >
+provider host > `*`; unlisted = $0, so the free tiers report $0). Each LLM call is priced at
+its own model's price, then summed like the tokens. `ToolCall.cached` is `true` when the
+investigation's tool cache answered an identical read-only call. See
+[docs/observability.md](../observability.md).
 
 ## Additions requested by the Web UI (PR-036)
 Backwards compatible; the UI treats all of them as optional.

@@ -47,6 +47,7 @@ def root_cause_label(inv: Investigation) -> str | None:
 
 def agent_stats(investigations: Sequence[Investigation]) -> list[dict[str, Any]]:
     runs: dict[str, list[tuple[bool, float, int]]] = {}
+    costs: dict[str, float] = {}
     last: dict[str, datetime] = {}
     for inv in investigations:
         for result in inv.results:
@@ -57,6 +58,7 @@ def agent_stats(investigations: Sequence[Investigation]) -> list[dict[str, Any]]
                     result.usage.total_tokens,
                 )
             )
+            costs[result.agent] = costs.get(result.agent, 0.0) + result.usage.cost_usd
             if inv.completed_at and (
                 result.agent not in last or inv.completed_at > last[result.agent]
             ):
@@ -71,10 +73,26 @@ def agent_stats(investigations: Sequence[Investigation]) -> list[dict[str, Any]]
                 "success_rate": round(sum(ok for ok, _, _ in items) / len(items), 3),
                 "p50_ms": round(statistics.median(d for _, d, _ in items), 1),
                 "tokens": sum(t for _, _, t in items),
+                # PR-041: estimated LLM cost of the agent's runs (cost.pricing) and per run.
+                "cost_usd": round(costs.get(name, 0.0), 6),
+                "avg_cost_usd": round(costs.get(name, 0.0) / len(items), 6),
                 "last_run_at": last[name].isoformat() if name in last else None,
             }
         )
     return stats
+
+
+def cost_summary(investigations: Sequence[Investigation]) -> dict[str, Any]:
+    """PR-041: LLM spend of the window (estimates from ``cost.pricing``; $0 on free tiers)."""
+    total = sum(i.usage.cost_usd for i in investigations)
+    tokens = sum(i.usage.total_tokens for i in investigations)
+    count = len(investigations)
+    return {
+        "total_usd": round(total, 6),
+        "avg_usd_per_investigation": round(total / count, 6) if count else 0.0,
+        "tokens": tokens,
+        "avg_tokens_per_investigation": round(tokens / count) if count else 0,
+    }
 
 
 def _top_root_cause(items: Sequence[Investigation]) -> str | None:
@@ -149,5 +167,6 @@ def dashboard_summary(
         ],
         "top_signals": [{"signal": s, "count": c} for s, c in signals.most_common(10)],
         "agents": [{k: v for k, v in a.items() if k != "last_run_at"} for a in agent_stats(window)],
+        "cost": cost_summary(window),
         "recent": [summary_of(i) for i in window[:5]],
     }

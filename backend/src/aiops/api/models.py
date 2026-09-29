@@ -123,6 +123,17 @@ class DashboardAgent(_Out):
     success_rate: float
     p50_ms: float
     tokens: int = 0
+    cost_usd: float = 0.0  # additive (PR-041): estimated LLM cost of the runs
+    avg_cost_usd: float = 0.0  # additive (PR-041): per run
+
+
+class DashboardCost(_Out):
+    """Additive (PR-041): LLM spend of the window, from the profile's ``cost.pricing``."""
+
+    total_usd: float = 0.0
+    avg_usd_per_investigation: float = 0.0
+    tokens: int = 0
+    avg_tokens_per_investigation: int = 0
 
 
 class SummaryReport(_Out):
@@ -153,6 +164,7 @@ class DashboardSummary(_Out):
     top_signals: list[DashboardSignal]
     agents: list[DashboardAgent]
     recent: list[InvestigationSummary]
+    cost: DashboardCost = Field(default_factory=DashboardCost)  # additive (PR-041)
 
 
 # --------------------------------------------------------------------------- investigations

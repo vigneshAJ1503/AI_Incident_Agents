@@ -279,6 +279,8 @@ orchestrator:
   # step_timeout_s: 75         # default: the agent's max_execution_s + 15 s
   max_rounds: 2                # 1 = round 1 only (no gap analysis / follow-ups)
   max_tokens: 200000           # token budget of one investigation (agents + planner + RCA)
+  max_cost_usd: 0              # cost budget of one investigation, USD (cost.pricing); 0 = no cost cap
+  tool_cache_ttl_s: 120        # identical read-only tool calls of one investigation are cached (0 = off)
   round2_agents: [knowledge, tickets]   # need round-1 findings as input
   llm_planner_fallback: true   # fast model only when the rules find no service
   llm_rca: true                # rca model ranks/phrases the rule-based hypotheses
@@ -360,12 +362,30 @@ agents:
       max_execution_s: 120
       max_tokens: 40000
 
-# System evaluation (PR-040, `aiops evaluate`, docs/evals.md).
-evals:
-  # Cost estimate, USD per 1M tokens. Keys, most specific first: model id, provider host
-  # (e.g. api.groq.com), "*". Unlisted = 0: the free tiers this project uses cost nothing.
+# ------------------------------------------------------------------------------ cost
+# LLM cost estimates (PR-041, docs/observability.md): every LLM call is priced, and the cost
+# shows per agent and per investigation (API, Web UI, /metrics). USD per 1M tokens. Keys,
+# most specific first: model id, provider host (e.g. api.groq.com), "*". Unlisted = $0.
+cost:
   pricing:
+    api.groq.com: { input: 0.0, output: 0.0 }   # Groq free tier: $0
     "*": { input: 0.0, output: 0.0 }
     # some-paid-model: { input: 0.60, output: 0.80 }   # illustrative; use your price page
+
+# ------------------------------------------------------------------------------ observability
+# PR-041, docs/observability.md. Prometheus metrics on the API's /metrics (on by default,
+# bounded labels). OpenTelemetry traces only when an OTLP/HTTP endpoint is set, e.g.
+# AIOPS_OTLP_ENDPOINT=http://localhost:4318 with the opt-in Jaeger (`make tracing-up`).
+observability:
+  metrics:
+    enabled: true
+  tracing:
+    otlp_endpoint: ${AIOPS_OTLP_ENDPOINT:-}
+    service_name: aiops
+    sample_ratio: 1.0
+
+# System evaluation (PR-040, `aiops evaluate`, docs/evals.md). Its cost column uses the
+# `cost.pricing` table above (`evals.pricing` is still read, but deprecated).
+evals:
   llm_judge: false   # also grade root causes with an LLM (needs a key; `--judge`)
   tolerance: 0.0     # regression gate: tolerated drop/rise of a rate vs the baseline

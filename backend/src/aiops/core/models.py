@@ -223,6 +223,9 @@ class TokenUsage(_Model):
     input_tokens: int = 0
     output_tokens: int = 0
     calls: int = 0
+    #: Estimated USD from the profile's ``cost.pricing`` table, priced per LLM call (each
+    #: call at its own model's price) and summed like the tokens (PR-041). 0 on free tiers.
+    cost_usd: float = Field(default=0.0, ge=0)
 
     @property
     def total_tokens(self) -> int:
@@ -233,6 +236,7 @@ class TokenUsage(_Model):
             input_tokens=self.input_tokens + other.input_tokens,
             output_tokens=self.output_tokens + other.output_tokens,
             calls=self.calls + other.calls,
+            cost_usd=round(self.cost_usd + other.cost_usd, 8),
         )
 
 
@@ -250,6 +254,9 @@ class ToolCall(_Model):
     #: Prompt-injection heuristics that fired on the output (PR-042), e.g.
     #: ``["ignore_instructions"]``. The output was still treated as data only.
     suspected_injection: list[str] = Field(default_factory=list)
+    #: Served from the investigation's short-lived tool cache: an identical read-only call
+    #: already ran in this investigation (PR-041, ``orchestrator.tool_cache_ttl_s``).
+    cached: bool = False
 
 
 class AgentTask(_Model):

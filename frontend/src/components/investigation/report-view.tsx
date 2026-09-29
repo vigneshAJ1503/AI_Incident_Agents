@@ -37,6 +37,7 @@ import { formatClock, formatDuration, formatPercent, humanizeSignal } from "@/li
 import { cn } from "@/lib/utils";
 
 import { agentMeta } from "./agent-meta";
+import { CostCard } from "./cost-card";
 import { ReportActions } from "./report-actions";
 
 type Ev = Evidence & { agent: string };
@@ -307,6 +308,7 @@ function SummaryTab({ inv }: { inv: Investigation }) {
             </ul>
           </CardContent>
         </Card>
+        <CostCard inv={inv} />
       </div>
     </div>
   );

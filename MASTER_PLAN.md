@@ -1434,6 +1434,36 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
   - model routing, query and result caching, and per-agent budgets
 - ✅ Cost and latency per investigation and per agent are visible.
 
+> **As built (PR-041) ✅ ([docs/observability.md](docs/observability.md), ADR-0020):**
+> - **Cost.** One `InstrumentedLLM` wrapper (`aiops/observability/`) prices every LLM call
+>   with the profile's new `cost.pricing` table (model > provider host > `*`; unlisted and
+>   the Groq free tier = $0; `evals.pricing` is a deprecated alias). The cost rides on the
+>   existing `TokenUsage` (new `cost_usd`) to agent results, `Investigation.usage`, the
+>   store, the API (`agent_finished.cost_usd`, dashboard `agents[].cost_usd` + `cost`), the
+>   CLI and the Web UI: a **Cost & tokens** card on the report and **Cost by agent** on the
+>   dashboard.
+> - **Metrics.** Prometheus `/metrics` on the API: agent/LLM/tool latency histograms,
+>   errors, tokens by model/role, cost, agent + report confidence, deterministic
+>   fallbacks, budget skips, tool-cache hits, and approval decisions (override rate =
+>   denied / all). Labels are bounded; no investigation ids.
+> - **Grafana + traces.** Scrape job `aiops-api` (container or host) and a provisioned
+>   **AI Observability** dashboard (17 panels, every query checked against a live scrape).
+>   OpenTelemetry spans `investigation > plan / invoke_agent / rca > chat / execute_tool`
+>   (GenAI conventions; the MCP SDK's client spans join the trace). They are off unless
+>   `observability.tracing.otlp_endpoint` / `AIOPS_OTLP_ENDPOINT` is set. The opt-in
+>   backend is Jaeger v2 (`make tracing-up`, in-memory, mem_limit 128m, measured 16-17 MiB).
+> - **Controls.** A spent agent `max_tokens`, or a spent investigation budget (a live
+>   per-LLM-call ledger: `orchestrator.max_tokens` + new `max_cost_usd`), now finishes the
+>   agent through the existing deterministic fallback, with a note, instead of PARTIAL.
+>   A per-investigation short-TTL tool cache (`tool_cache_ttl_s`, 120 s) serves identical
+>   read-only calls as audited `ToolCall(cached=true)`. Routing stays role-based and is
+>   visible on every span and metric.
+> - **Replay gate unchanged:** 5/5, 0 FP, $0. Replays have no duplicate tool calls, so the
+>   cache never fires there.
+> - **Deviations:** the override rate counts only approve/deny, because the approval flow
+>   has no "edit" action yet. "Query and result caching" is the tool-call cache; LLM
+>   responses aren't cached, since identical prompts are rare and would hide model changes.
+
 #### PR-042 · Security boundary + reliability
 - **Branch:** `feat/042-security-reliability`
 - **Scope:**
@@ -1545,7 +1575,7 @@ portability parts of PR-043 moved ahead of the RCA phases and are split into fou
 | S0 false positives | 0 |
 | Claims with valid evidence citations | ≥ 95% |
 | p50 investigation time | < 90 s |
-| Average cost per investigation | tracked; set a budget after PR-041 |
+| Average cost per investigation | tracked (PR-041: `usage.cost_usd`, dashboard, `/metrics`); cap with `orchestrator.max_cost_usd` |
 
 ---
 

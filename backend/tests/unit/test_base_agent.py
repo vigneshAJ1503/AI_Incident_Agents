@@ -172,12 +172,18 @@ async def test_execution_timeout_is_partial_or_failed(tmp_path: Path) -> None:
     assert "time limit" in result.summary or result.tool_calls[0].status == "timeout"
 
 
-async def test_token_budget(tmp_path: Path) -> None:
+async def test_token_budget_finishes_with_the_deterministic_analysis(tmp_path: Path) -> None:
+    """PR-041: a spent agent budget no longer ends PARTIAL: the agent finishes like a
+    replay (the stand-in LLM submits the deterministic analysis) and says why."""
     llm = FakeLLMProvider(responder=search_then_submit)
-    deps, _, _ = make_deps(tmp_path, llm, settings=make_settings(max_tokens=10))
+    deps, events, _ = make_deps(tmp_path, llm, settings=make_settings(max_tokens=10))
     result = await EchoAgent(deps).run(make_task())
-    assert result.status is AgentStatus.PARTIAL
-    assert "Token budget" in result.summary
+    assert result.status is AgentStatus.NO_SIGNAL
+    assert len(llm.requests) == 1  # the real LLM is not called again once the budget is spent
+    assert result.usage.total_tokens == 15  # what the real LLM spent; the stand-in is free
+    assert any("Token budget of the agent (10) spent" in f for f in result.suggested_followups)
+    fallbacks = [e.data.get("fallback") for e in events.events if e.type == "llm_called"]
+    assert "agent_budget" in fallbacks
 
 
 async def test_unreachable_mcp_server_fails_cleanly(tmp_path: Path) -> None:

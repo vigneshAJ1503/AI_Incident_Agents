@@ -5,6 +5,7 @@
 # network) and are reached through NodePorts:
 #   30081-30084  the four sample services' /metrics
 #   30080        kube-state-metrics (deploy/k8s/monitoring, `make monitoring-up`)
+# plus the aiops API's own /metrics (PR-041): agents, LLM calls, tools, cost, overrides.
 # Change the addresses here if your node IP differs (`minikube -p aiops ip`).
 
 global:
@@ -43,3 +44,16 @@ scrape_configs:
     honor_labels: true
     static_configs:
       - targets: ["172.21.0.100:30080"]
+
+  # PR-041 (docs/observability.md): the aiops API's own metrics, for the Grafana dashboard
+  # "AI Observability". Two targets, whichever is running: the `api` container on the
+  # `aiops` network (make demo / make api-up), or the API on the host (make api, make
+  # demo-live). The other one simply shows as down. Labels are bounded (agent, role,
+  # model, capability, tool, status): never investigation ids.
+  - job_name: aiops-api
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["aiops-api:8000"]
+        labels: { deployment: container }
+      - targets: ["host.docker.internal:8000"]
+        labels: { deployment: host }

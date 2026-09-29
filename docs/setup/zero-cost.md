@@ -45,6 +45,7 @@ The whole platform runs inside **5 GB** of Docker memory. Optional UIs are off b
 | **Always-on total** | **~3.7 GB** | measured: 1.4 GB before Minikube |
 | Kibana (`make ui-up`) | +0.6 GB | optional, on demand |
 | Grafana (`make ui-up` / `make grafana-up`, from PR-020) | +0.2 GB (measured) | optional, on demand |
+| Jaeger trace backend (`make tracing-up`, PR-041) | +0.02 GB (measured 16-17 MiB) | optional, on demand; `mem_limit: 128m`, in-memory traces ([observability.md](../observability.md)) |
 
 Agents, tests and evals never need the UIs. Use `make ui-up` to look at logs and dashboards, and `make ui-down` when you're done.
 

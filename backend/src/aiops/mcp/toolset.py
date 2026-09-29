@@ -1,13 +1,15 @@
 """Allowlisted, guarded view of one capability's MCP tools, as seen by an agent.
 
-Every call is: allowlist check -> circuit breaker -> timeout -> redaction -> injection
-scan -> truncation -> audit. Output is wrapped in <tool_output> so prompts can treat it as
+Every call is: allowlist check -> (investigation tool cache) -> circuit breaker -> timeout
+-> redaction -> injection scan -> truncation -> audit, inside an ``execute_tool`` span and
+counted in the tool-call metrics (PR-041). Output is wrapped in <tool_output> so prompts can treat it as
 data, never instructions; any spelling of a <tool_output> tag inside the data is escaped,
 and output that looks like instructions to the model is flagged (``suspected_injection``).
 """
 
 from __future__ import annotations
 
+import copy
 import json
 import logging
 import time
@@ -24,6 +26,9 @@ from aiops.core.models import ToolCall, new_id
 from aiops.llm.base import ToolSpec
 from aiops.mcp.breaker import CircuitBreaker
 from aiops.mcp.client import MCPClient, MCPClientError
+from aiops.observability import metrics
+from aiops.observability.cache import ToolCallCache, cache_key
+from aiops.observability.tracing import Attributes, mark, set_attributes, span
 
 log = logging.getLogger(__name__)
 
@@ -79,10 +84,12 @@ class Toolset:
         allowlist: Iterable[str] | None = None,
         watch_tools: Iterable[str] = (),
         breaker: CircuitBreaker | None = None,
+        cache: ToolCallCache | None = None,
     ) -> None:
         """``allowlist`` overrides ``config.tool_allowlist``; only the approval executor
         passes one (``config.write_allowlist``, see MCPRegistry.write_toolset).
-        ``watch_tools``: the profile's write tools; data that names one is flagged."""
+        ``watch_tools``: the profile's write tools; data that names one is flagged.
+        ``cache``: the investigation tool cache; read-only (agent) toolsets only."""
         self.capability = capability
         self.config = config
         self._client = client
@@ -93,6 +100,7 @@ class Toolset:
         self._allowed = set(config.tool_allowlist if allowlist is None else allowlist)
         self._watch_tools = sorted({*watch_tools, *config.write_allowlist})
         self._breaker = breaker
+        self._cache = cache if investigation_id else None
 
     async def specs(self) -> list[ToolSpec]:
         """Tool definitions for the LLM — only allowlisted tools the server actually has."""
@@ -128,9 +136,47 @@ class Toolset:
             tool=tool,
             arguments=redactor.data(arguments),
         )
-        started = time.perf_counter()
-        outcome = await self._execute(call, tool, arguments, redactor)
-        outcome.tool_call.duration_ms = round((time.perf_counter() - started) * 1000, 2)
+        # Bounded label/span name: a tool outside the allowlist is never a new series.
+        label = tool if self.is_allowed(tool) else metrics.UNLISTED_TOOL
+        key = None
+        if self._cache is not None and self._investigation_id and self.is_allowed(tool):
+            key = cache_key(self._investigation_id, self.capability, tool, arguments)
+        attributes: Attributes = {
+            "gen_ai.operation.name": "execute_tool",
+            "gen_ai.tool.name": label,
+            "aiops.capability": self.capability,
+            "aiops.agent": self._agent,
+        }
+        with span(f"execute_tool {label}", attributes) as current:
+            started = time.perf_counter()
+            hit = self._cache.get(key) if self._cache is not None and key else None
+            if hit is not None:
+                outcome = _from_cache(call, hit)
+            else:
+                outcome = await self._execute(call, tool, arguments, redactor)
+                if self._cache is not None and key:
+                    self._cache.put(key, outcome)
+            elapsed = time.perf_counter() - started
+            outcome.tool_call.duration_ms = round(elapsed * 1000, 2)
+            set_attributes(
+                current,
+                {
+                    "aiops.tool.cached": outcome.tool_call.cached,
+                    "aiops.tool.result_chars": outcome.tool_call.result_chars,
+                    "aiops.tool.suspected_injection": ",".join(
+                        outcome.tool_call.suspected_injection
+                    )
+                    or None,
+                },
+            )
+            mark(current, outcome.tool_call.status, outcome.tool_call.error)
+        metrics.record_tool_call(
+            capability=self.capability,
+            tool=label,
+            status=outcome.tool_call.status,
+            cached=outcome.tool_call.cached,
+            duration_s=elapsed,
+        )
         self._audit.record(
             AuditRecord(
                 request_id=request_id,
@@ -223,3 +269,20 @@ class Toolset:
                 ", ".join(h.kind for h in hits),
             )
         return hits
+
+
+def _from_cache(call: ToolCall, hit: ToolOutcome) -> ToolOutcome:
+    """A new, audited ToolCall answered with a cached outcome (data copied: agents may
+    keep references to it in their evidence)."""
+    call.status = hit.tool_call.status
+    call.result_chars = hit.tool_call.result_chars
+    call.suspected_injection = list(hit.tool_call.suspected_injection)
+    call.cached = True
+    return ToolOutcome(
+        tool_call=call,
+        ok=hit.ok,
+        content=hit.content,
+        data=copy.deepcopy(hit.data),
+        text=hit.text,
+        injection=dict(hit.injection),
+    )

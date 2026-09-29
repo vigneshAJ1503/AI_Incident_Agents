@@ -14,6 +14,7 @@ import {
 import dynamic from "next/dynamic";
 import Link from "next/link";
 
+import { AgentCostCard } from "@/components/agent-cost-card";
 import { InvestigationListItem } from "@/components/investigation-row";
 import { NumberTicker, Stagger, StaggerItem } from "@/components/motion";
 import { PageHeader } from "@/components/page-header";
@@ -284,6 +285,8 @@ export default function DashboardPage() {
               </CardContent>
             </Card>
           </div>
+
+          <AgentCostCard agents={data.agents} cost={data.cost} />
 
           <Card>
             <CardHeader className="flex-row items-center justify-between">

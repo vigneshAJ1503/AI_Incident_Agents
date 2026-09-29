@@ -337,6 +337,8 @@ orchestrator:
   # step_timeout_s: 75         # default: the agent's max_execution_s + 15 s
   max_rounds: 2                # 1 = round 1 only (no gap analysis / follow-ups)
   max_tokens: 200000           # token budget of one investigation (agents + planner + RCA)
+  max_cost_usd: 0              # cost budget of one investigation, USD (cost.pricing); 0 = no cost cap
+  tool_cache_ttl_s: 120        # identical read-only tool calls of one investigation are cached (0 = off)
   round2_agents: [knowledge, tickets]   # need round-1 findings as input
   llm_planner_fallback: true   # fast model only when the rules find no service
   llm_rca: true                # rca model ranks/phrases the rule-based hypotheses
@@ -363,12 +365,28 @@ agents:
     limits: { max_steps: 6, max_tool_calls: 10, max_execution_s: 60, max_tokens: 40000 }
   # tickets: { prompt_version: v1 }
 
-# System evaluation (PR-040, `aiops evaluate`, docs/evals.md).
-# evals:
-#   # Cost estimate, USD per 1M tokens. Keys, most specific first: model id, provider host
-#   # (e.g. api.groq.com), "*". Unlisted = 0: the free tiers this project uses cost nothing.
+# ------------------------------------------------------------------------------ cost
+# LLM cost estimates (PR-041, docs/observability.md), USD per 1M tokens. Keys, most specific
+# first: model id (or Azure deployment name), provider host, "*". Unlisted = $0. Put YOUR
+# contract prices here: they drive the cost per agent/investigation, /metrics and the
+# `orchestrator.max_cost_usd` budget.
+# cost:
 #   pricing:
 #     "*": { input: 0.0, output: 0.0 }
-#     # some-paid-model: { input: 0.60, output: 0.80 }   # illustrative; use your price page
+#     # your-agent-model: { input: 3.00, output: 15.00 }   # illustrative; use your price page
+#     # your-fast-model:  { input: 0.25, output: 1.25 }
+
+# ------------------------------------------------------------------------------ observability
+# Prometheus metrics on the API's /metrics (default on); OpenTelemetry traces over OTLP/HTTP
+# to your collector (Jaeger, Tempo, Honeycomb, Datadog agent, ...) when an endpoint is set.
+# observability:
+#   metrics: { enabled: true }
+#   tracing:
+#     otlp_endpoint: ${AIOPS_OTLP_ENDPOINT:-}   # e.g. http://otel-collector:4318
+#     service_name: aiops
+#     sample_ratio: 1.0
+
+# System evaluation (PR-040, `aiops evaluate`, docs/evals.md). Cost uses `cost.pricing`.
+# evals:
 #   llm_judge: false   # also grade root causes with an LLM (needs a key; `--judge`)
 #   tolerance: 0.0     # regression gate: tolerated drop/rise of a rate vs the baseline

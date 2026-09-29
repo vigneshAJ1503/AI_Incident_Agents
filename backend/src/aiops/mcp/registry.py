@@ -12,6 +12,7 @@ from aiops.mcp.breaker import BREAKERS, CircuitBreaker
 from aiops.mcp.client import MCPClient, MCPClientError, ServerTarget
 from aiops.mcp.fixtures import RecordingMCPClient, ReplayMCPClient
 from aiops.mcp.toolset import Toolset
+from aiops.observability.cache import ToolCallCache
 
 
 class MCPRegistry:
@@ -39,6 +40,9 @@ class MCPRegistry:
         self._replay_dir = replay_dir
         self._replay_delay_s = replay_delay_s
         self._replay_lenient = replay_lenient
+        #: The investigation's tool cache (PR-041): set by the orchestrator per investigation,
+        #: used by agent (read-only) toolsets only, never by ``write_toolset``.
+        self.tool_cache: ToolCallCache | None = None
 
     @classmethod
     def _default_audit(cls, settings: Settings) -> AuditSink:
@@ -146,4 +150,5 @@ class MCPRegistry:
                 investigation_id=investigation_id,
                 watch_tools=self.write_tools(),
                 breaker=self.breaker(capability),
+                cache=self.tool_cache,
             )

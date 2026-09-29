@@ -1,0 +1,51 @@
+# Jaeger v2 for the local stack (PR-041, docs/observability.md). OPT-IN: `make tracing-up`
+# (compose profile "tracing"); never part of `make demo`. Lean: OTLP/HTTP in, a capped
+# in-memory store (traces vanish on restart), the UI, a health check. Nothing else listens.
+#   UI    http://localhost:16686
+#   OTLP  http://localhost:4318  (AIOPS_OTLP_ENDPOINT for `make api` on the host;
+#         http://aiops-jaeger:4318 from containers on the `aiops` network)
+
+service:
+  extensions: [jaeger_storage, jaeger_query, healthcheckv2]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch]
+      exporters: [jaeger_storage_exporter]
+  telemetry:
+    metrics:
+      level: none
+    logs:
+      level: warn
+
+extensions:
+  jaeger_query:
+    storage:
+      traces: memstore
+    http:
+      endpoint: 0.0.0.0:16686
+
+  jaeger_storage:
+    backends:
+      memstore:
+        memory:
+          # ~1 investigation = 1 trace of 50-150 spans; 2000 traces stay well inside mem_limit.
+          max_traces: 2000
+
+  healthcheckv2:
+    use_v2: true
+    http:
+      endpoint: 0.0.0.0:13133
+
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  batch:
+
+exporters:
+  jaeger_storage_exporter:
+    trace_storage: memstore

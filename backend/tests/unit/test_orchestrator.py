@@ -171,6 +171,7 @@ def test_two_rounds_hints_symptoms_and_events(settings: Settings) -> None:
         "evidence_count",
         "duration_ms",
         "tokens",
+        "cost_usd",  # additive (PR-041)
     }
     started = next(e for e in events if e.type == "agent_started")
     assert set(started.data) == {"step_id", "objective", "round"}

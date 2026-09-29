@@ -86,6 +86,11 @@ The threat model is `docs/security/threat-model.md`. The API's part of the bound
   (`frontend/next.config.ts`).
 - **In-process state**: rate-limit buckets and idempotency keys live in the API process.
   One API process per deployment today; a shared store is the multi-replica follow-up.
+- **`GET /metrics`** (PR-041, [../observability.md](../observability.md)): Prometheus
+  text format, outside `/api`, so no API key is needed (like a liveness probe). It carries
+  bounded labels only (no ids, questions or data). The Web UI's `/api/*` proxy never forwards
+  it, and the port is bound to 127.0.0.1. Turn it off with `observability.metrics.enabled:
+  false`.
 
 ## Live or replay?
 

@@ -338,8 +338,18 @@ class OrchestratorConfig(_Strict):
     step_timeout_s: float | None = Field(default=None, gt=0)
     max_rounds: int = Field(default=2, ge=1, le=2)
     #: Token budget of ONE investigation (agents + planner + RCA). Steps that would start
-    #: after it is spent are skipped and the investigation becomes PARTIAL.
+    #: after it is spent are skipped and the investigation becomes PARTIAL; agents already
+    #: running finish with their deterministic analysis (PR-041).
     max_tokens: int = Field(default=200_000, gt=0)
+    #: Cost budget of ONE investigation in USD, from the ``cost.pricing`` table (PR-041).
+    #: Same effect as ``max_tokens`` once spent. 0 = no cost cap (the token budget still
+    #: applies); with the free tiers' $0 prices it never triggers.
+    max_cost_usd: float = Field(default=0.0, ge=0)
+    #: Identical read-only tool calls (same capability, tool and arguments) within ONE
+    #: investigation are answered from a short-lived cache for this long (PR-041). 0 = off.
+    tool_cache_ttl_s: float = Field(default=120.0, ge=0)
+    #: Most cached tool results kept per API process (least recently used are evicted).
+    tool_cache_max_entries: int = Field(default=512, gt=0)
     #: Agents that need round-1 findings as input (hints/symptoms) run in round 2.
     round2_agents: list[str] = Field(default_factory=lambda: ["knowledge", "tickets"])
     #: Extra/overriding gap-analysis rules: signal -> follow-ups (merged over the defaults).
@@ -359,12 +369,49 @@ class ModelPrice(_Strict):
     output: float = Field(default=0.0, ge=0)
 
 
+class CostConfig(_Strict):
+    """LLM cost estimates (PR-041, docs/observability.md): per call, agent, investigation."""
+
+    #: USD per 1M tokens. Keys, most specific first: the model id
+    #: (``llama-3.3-70b-versatile``), the provider host (``api.groq.com``), ``*``.
+    #: Unlisted = 0 (the free tiers this project uses). Override per company profile.
+    pricing: dict[str, ModelPrice] = Field(default_factory=dict)
+
+
+class TracingConfig(_Strict):
+    """OpenTelemetry spans: investigation -> agent -> tool call / LLM call (PR-041)."""
+
+    #: OTLP/HTTP endpoint, e.g. ``http://localhost:4318`` (``/v1/traces`` is appended).
+    #: Unset = tracing off (a no-op tracer, nothing is exported). Falls back to the standard
+    #: ``OTEL_EXPORTER_OTLP_ENDPOINT`` env var.
+    otlp_endpoint: str | None = None
+    service_name: str = "aiops"
+    #: Fraction of investigations traced (parent-based: a trace is kept or dropped whole).
+    sample_ratio: float = Field(default=1.0, ge=0, le=1)
+
+    @field_validator("otlp_endpoint")
+    @classmethod
+    def _http_url(cls, value: str | None) -> str | None:
+        if value is not None and not re.match(r"^https?://[^\s]+$", value.strip()):
+            raise ValueError(f"otlp_endpoint must be an http(s) URL, got {value!r}")
+        return value.strip() if value else None
+
+
+class MetricsConfig(_Strict):
+    """Prometheus metrics on the API's ``/metrics`` (PR-041)."""
+
+    enabled: bool = True
+
+
+class ObservabilityConfig(_Strict):
+    tracing: TracingConfig = Field(default_factory=TracingConfig)
+    metrics: MetricsConfig = Field(default_factory=MetricsConfig)
+
+
 class EvalsConfig(_Strict):
     """The system evaluation (PR-040, ``aiops evaluate``, docs/evals.md)."""
 
-    #: Price table for the cost estimate, USD per 1M tokens. Keys, most specific first: the
-    #: model id (``llama-3.3-70b-versatile``), the provider host (``api.groq.com``), ``*``.
-    #: Unlisted = 0 (the free tiers this project uses).
+    #: Deprecated (PR-041): use ``cost.pricing``. Still read; ``cost.pricing`` wins per key.
     pricing: dict[str, ModelPrice] = Field(default_factory=dict)
     #: Also score root causes with an LLM judge (needs a hosted LLM key; skipped otherwise).
     llm_judge: bool = False
@@ -545,6 +592,8 @@ class Settings(_Strict):
     storage: StorageConfig = Field(default_factory=StorageConfig)
     api: ApiConfig = Field(default_factory=ApiConfig)
     evals: EvalsConfig = Field(default_factory=EvalsConfig)
+    cost: CostConfig = Field(default_factory=CostConfig)
+    observability: ObservabilityConfig = Field(default_factory=ObservabilityConfig)
     service_catalog: str = "local"
 
     # Set by the loader, not by YAML.
@@ -587,6 +636,10 @@ class Settings(_Strict):
 
     def agent_limits(self, name: str) -> AgentLimits:
         return self.agent(name).limits or self.limits
+
+    def pricing(self) -> dict[str, ModelPrice]:
+        """The price table: ``cost.pricing`` over the deprecated ``evals.pricing``."""
+        return {**self.evals.pricing, **self.cost.pricing}
 
     def repo_path(self, path: str) -> Path:
         """A configured path (e.g. '.data/approvals.json'): relative = relative to the repo."""

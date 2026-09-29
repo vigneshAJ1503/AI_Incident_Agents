@@ -108,6 +108,36 @@ llm:
 `models` are **deployment names** from Azure AI Foundry / the Azure portal, not model
 names. Entra ID (keyless) auth is not supported yet: use a key from Key Vault.
 
+## A second provider as a fallback (`llm.fallbacks`)
+
+Free tiers cap tokens per minute **and per day**, per provider. Extra keys for the same
+provider (`fallback_api_keys`) help with the per-minute cap. When a whole provider's quota is
+spent, `llm.fallbacks` moves each call to the next provider instead:
+
+```yaml
+llm:
+  provider: openai_compat          # Groq first
+  base_url: https://api.groq.com/openai/v1
+  api_key: ${OPENAI_COMPAT_API_KEY:-}
+  models: {agent: openai/gpt-oss-20b}
+  fallbacks:                       # then Gemini's free tier
+    - provider: openai_compat
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: ${GEMINI_API_KEY:-}
+      models: {agent: gemini-2.5-flash}
+```
+
+- Each entry is a full provider config, with its own models, keys, limits and `extra`. Any
+  provider type works: an enterprise profile can fall back from Azure OpenAI to Bedrock.
+- A rate-limited provider rests for 30 s before it is tried again, and outages (5xx,
+  timeouts) move on without resting. A rejected tool call is **not** a reason to switch: the
+  agent corrects the same model.
+- An entry whose key isn't set is skipped, so `profiles/local` lists Gemini and it stays
+  inert until you set `GEMINI_API_KEY` (free: <https://aistudio.google.com/apikey>).
+- The model that actually answered shows in the report's *Cost & tokens* card, the
+  `aiops_llm_*` metrics and the traces. Only when every provider fails does an agent finish
+  with the deterministic analysis.
+
 ## Data residency and privacy
 
 - Tool output is **redacted before it reaches any LLM** (`guardrails.redact`: emails, IPs,

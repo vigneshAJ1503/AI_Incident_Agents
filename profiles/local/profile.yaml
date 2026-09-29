@@ -33,6 +33,18 @@ llm:
   # are much faster and cheaper with reasoning_effort: low. Empty = not sent.
   extra:
     reasoning_effort: ${LLM_REASONING_EFFORT:-}
+  # Other hosted providers, in order, used when the one above is rate-limited or down
+  # (free tiers cap tokens per minute AND per day). One with no key is skipped, so this
+  # is inert until GEMINI_API_KEY is set. Free key: https://aistudio.google.com/apikey
+  fallbacks:
+    - provider: openai_compat
+      base_url: https://generativelanguage.googleapis.com/v1beta/openai/
+      api_key: ${GEMINI_API_KEY:-}
+      max_concurrent_requests: 2
+      models:
+        agent: ${GEMINI_MODEL:-gemini-2.5-flash}
+      timeout_s: 60
+      max_retries: 1
 
 limits:
   max_steps: 8

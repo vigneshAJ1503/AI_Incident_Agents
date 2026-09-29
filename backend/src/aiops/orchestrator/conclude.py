@@ -24,7 +24,7 @@ async def conclude(orchestrator: Orchestrator, run: InvestigationRun) -> None:
     use_llm = (
         settings.orchestrator.llm_rca
         and not orchestrator.deterministic_only
-        and inv.usage.total_tokens < settings.orchestrator.max_tokens
+        and not run.budget_exhausted(settings.orchestrator.max_tokens)
     )
     prompts = PromptLoader(
         settings.config_dir / "prompts", overrides=settings.prompt_override_dirs()

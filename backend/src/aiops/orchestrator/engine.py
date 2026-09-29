@@ -8,8 +8,13 @@ Executor rules:
     timeout per step, and cancellation (``Orchestrator.cancel``);
   * one failing agent never crashes the investigation: its step fails, the others go
     on and the investigation becomes PARTIAL (the report says what's missing);
-  * a token budget per investigation (``orchestrator.max_tokens``): steps that would
-    start after it is spent are skipped (PARTIAL);
+  * a token budget per investigation (``orchestrator.max_tokens``, plus an optional cost
+    budget ``max_cost_usd``): steps that would start after it is spent are skipped
+    (PARTIAL), and agents already running finish with their deterministic analysis;
+  * observability (PR-041): one ``investigation`` span with ``plan``, ``invoke_agent``,
+    ``rca`` children (tool and LLM spans below them), Prometheus metrics per agent and
+    investigation, every LLM call priced and attributed to its caller, and a short-TTL
+    cache for identical read-only tool calls of the investigation;
   * every state change is published on the ``EventBus`` with exactly the SSE event
     types of docs/api/contract.md.
 
@@ -52,6 +57,11 @@ from aiops.llm.base import LLMProvider
 from aiops.llm.factory import create_provider
 from aiops.llm.fake import FakeLLMProvider
 from aiops.mcp.registry import MCPRegistry
+from aiops.observability import metrics
+from aiops.observability.budget import InvestigationBudget, llm_scope
+from aiops.observability.cache import ToolCallCache
+from aiops.observability.llm import instrument
+from aiops.observability.tracing import mark, set_attributes, span, usage_attributes
 from aiops.orchestrator.gaps import GapAnalysis, analyze_gaps
 from aiops.orchestrator.planner import Plan, Planner, PlanRequest
 from aiops.orchestrator.replay import ReplaySource, replay_llm_enabled, shift_result
@@ -87,6 +97,12 @@ class InvestigationRun:
     cancelled: bool = False
     tasks: set[asyncio.Task[AgentResult | None]] = field(default_factory=set)
     started: float = field(default_factory=time.perf_counter)
+    #: Live token/cost ledger (every LLM call), checked by the executor and the agents.
+    budget: InvestigationBudget = field(
+        default_factory=lambda: InvestigationBudget(max_tokens=200_000)
+    )
+    #: Identical read-only tool calls of this investigation (None = off).
+    tool_cache: ToolCallCache | None = None
 
     @property
     def id(self) -> str:
@@ -94,6 +110,9 @@ class InvestigationRun:
 
     def spent(self) -> int:
         return self.investigation.usage.total_tokens
+
+    def budget_exhausted(self, max_tokens: int) -> bool:
+        return self.spent() >= max_tokens or self.budget.exhausted
 
 
 class Orchestrator:
@@ -129,7 +148,8 @@ class Orchestrator:
         if llm is None:
             self.deterministic_only = True
             llm = FakeLLMProvider(responder=echo_responder())
-        self.llm = llm
+        #: Every call is priced, traced and measured, attributed to its caller (PR-041).
+        self.llm = instrument(llm, settings)
         self.bus = bus or EventBus()
         self.registry = registry
         self.catalog = catalog or ServiceCatalog.from_settings(settings)
@@ -172,23 +192,55 @@ class Orchestrator:
         )
         if investigation_id:
             investigation.id = investigation_id
-        run = InvestigationRun(investigation)
+        run = InvestigationRun(
+            investigation,
+            budget=InvestigationBudget(
+                max_tokens=self.config.max_tokens, max_cost_usd=self.config.max_cost_usd
+            ),
+            tool_cache=(
+                ToolCallCache(self.config.tool_cache_ttl_s, self.config.tool_cache_max_entries)
+                if self.config.tool_cache_ttl_s > 0
+                else None
+            ),
+        )
         self._runs[run.id] = run
-        self._publish(run, "investigation_started", question=question)
-        try:
-            await self._investigate(run, request)
-        except asyncio.CancelledError:
-            run.cancelled = True
-        except Exception as exc:  # the orchestrator reports, never crashes the caller
-            log.exception("Investigation %s crashed", run.id)
-            investigation.status = InvestigationStatus.FAILED
-            self._publish(run, "error", message=f"{type(exc).__name__}: {exc}", recoverable=False)
-        finally:
-            self._runs.pop(run.id, None)
-        if run.cancelled:
-            investigation.status = InvestigationStatus.CANCELLED
-            self._publish(run, "error", message="Investigation cancelled", recoverable=False)
-        return self._finish(run)
+        attributes = {
+            "aiops.investigation.id": run.id,
+            "aiops.mode": request.mode,
+            "aiops.profile": self.settings.profile,
+        }
+        with span("investigation", attributes) as current, llm_scope("orchestrator", run.budget):
+            self._publish(run, "investigation_started", question=question)
+            try:
+                await self._investigate(run, request)
+            except asyncio.CancelledError:
+                run.cancelled = True
+            except Exception as exc:  # the orchestrator reports, never crashes the caller
+                log.exception("Investigation %s crashed", run.id)
+                investigation.status = InvestigationStatus.FAILED
+                self._publish(
+                    run, "error", message=f"{type(exc).__name__}: {exc}", recoverable=False
+                )
+            finally:
+                self._runs.pop(run.id, None)
+            if run.cancelled:
+                investigation.status = InvestigationStatus.CANCELLED
+                self._publish(run, "error", message="Investigation cancelled", recoverable=False)
+            finished = self._finish(run)
+            report = finished.report
+            set_attributes(
+                current,
+                {
+                    **usage_attributes(finished.usage),
+                    "aiops.service": finished.context.service if finished.context else None,
+                    "aiops.agents": len(finished.results),
+                    "aiops.confidence": report.confidence if report else None,
+                    "aiops.severity": report.severity if report else None,
+                    "aiops.tool_cache.hits": run.tool_cache.hits if run.tool_cache else None,
+                },
+            )
+            mark(current, finished.status.value)
+        return finished
 
     # -- the flow ----------------------------------------------------------------------------
 
@@ -208,7 +260,17 @@ class Orchestrator:
 
     async def _investigate(self, run: InvestigationRun, request: InvestigationRequest) -> None:
         inv = run.investigation
-        plan = await self.planner.plan(self._plan_request(request))
+        with span("plan") as plan_span, llm_scope("planner"):
+            plan = await self.planner.plan(self._plan_request(request))
+            set_attributes(
+                plan_span,
+                {
+                    **usage_attributes(plan.usage),
+                    "aiops.service": plan.context.service,
+                    "aiops.steps": len(plan.steps),
+                    "aiops.needs_clarification": plan.needs_clarification,
+                },
+            )
         run.plan = plan
         run.notes.extend(plan.notes)
         inv.usage = inv.usage + plan.usage
@@ -248,12 +310,21 @@ class Orchestrator:
             if run.cancelled:
                 return
 
-        if self.concluder is not None:
-            await self.concluder(run)
-        else:  # RCA (PR-033) + response builder (PR-034)
-            from aiops.orchestrator.conclude import conclude
+        with span("rca") as rca_span, llm_scope("rca"):
+            if self.concluder is not None:
+                await self.concluder(run)
+            else:  # RCA (PR-033) + response builder (PR-034)
+                from aiops.orchestrator.conclude import conclude
 
-            await conclude(self, run)
+                await conclude(self, run)
+            report = inv.report
+            set_attributes(
+                rca_span,
+                {
+                    "aiops.hypotheses": len(inv.hypotheses),
+                    "aiops.confidence": report.confidence if report else None,
+                },
+            )
 
     async def _round2(self, run: InvestigationRun, results1: list[AgentResult]) -> None:
         inv = run.investigation
@@ -425,14 +496,20 @@ class Orchestrator:
             if run.cancelled:
                 self._close_step(step, StepStatus.SKIPPED)
                 return None
-            if run.spent() >= self.config.max_tokens:
+            if run.budget_exhausted(self.config.max_tokens):
+                spent = (
+                    run.budget.describe()
+                    if run.budget.exhausted
+                    else f"token budget ({self.config.max_tokens})"
+                )
                 self._close_step(step, StepStatus.SKIPPED)
-                run.missing.append(f"{step.agent}: token budget ({self.config.max_tokens}) spent")
+                run.missing.append(f"{step.agent}: {spent} spent")
+                metrics.record_budget_skip(step.agent)
                 self._publish(
                     run,
                     "error",
                     agent=step.agent,
-                    message=f"Token budget of the investigation spent; {step.agent} skipped.",
+                    message=f"The investigation's {spent} is spent; {step.agent} skipped.",
                     recoverable=True,
                 )
                 return None
@@ -441,11 +518,11 @@ class Orchestrator:
             sink = CallbackEventSink(lambda event: self._on_agent_event(run, step, event))
             started = time.perf_counter()
             try:
-                agent = self.registry.get(step.agent)(
-                    self._deps(step.agent, task.context.service, sink)
-                )
-                async with asyncio.timeout(self._step_timeout(step.agent)):
-                    result = await agent.run(task)
+                deps = self._observed(run, self._deps(step.agent, task.context.service, sink))
+                agent = self.registry.get(step.agent)(deps)
+                with llm_scope(step.agent, run.budget):
+                    async with asyncio.timeout(self._step_timeout(step.agent)):
+                        result = await agent.run(task)
             except TimeoutError:
                 result = self._failed_result(
                     step, task, f"timed out after {self._step_timeout(step.agent):.0f}s", started
@@ -460,6 +537,7 @@ class Orchestrator:
         result = shift_result(result, offset)
         inv.results.append(result)
         inv.usage = inv.usage + result.usage
+        metrics.record_agent(result)
         failed = result.status is AgentStatus.FAILED
         self._close_step(step, StepStatus.FAILED if failed else StepStatus.DONE)
         if result.status in (AgentStatus.FAILED, AgentStatus.PARTIAL):
@@ -483,8 +561,18 @@ class Orchestrator:
             evidence_count=len(result.evidence),
             duration_ms=result.duration_ms,
             tokens=result.usage.total_tokens,
+            cost_usd=result.usage.cost_usd,
         )
         return result
+
+    def _observed(self, run: InvestigationRun, deps: AgentDeps) -> AgentDeps:
+        """An agent's deps with the priced/traced LLM, the investigation's budget and its
+        tool cache (PR-041)."""
+        deps.llm = instrument(deps.llm, self.settings)
+        deps.budget = run.budget
+        if isinstance(deps.mcp, MCPRegistry):
+            deps.mcp.tool_cache = run.tool_cache
+        return deps
 
     @staticmethod
     def _failed_result(
@@ -550,6 +638,7 @@ class Orchestrator:
         inv.completed_at = utcnow()
         inv.duration_ms = round((time.perf_counter() - run.started) * 1000, 2)
         inv.versions = {**inv.versions, **self._versions(inv)}  # keeps the RCA version
+        metrics.record_investigation(inv)
         self._publish(
             run, "investigation_finished", status=inv.status.value, duration_ms=inv.duration_ms
         )

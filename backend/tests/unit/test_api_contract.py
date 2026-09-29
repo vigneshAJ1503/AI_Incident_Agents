@@ -155,6 +155,7 @@ def test_lists_and_dashboard_match_the_contract_models(responses: dict[str, Any]
         "top_signals",
         "agents",
         "recent",
+        "cost",  # additive (PR-041)
     }
     incident = json_schema("Incident")
     for item in responses["page"]["items"]:

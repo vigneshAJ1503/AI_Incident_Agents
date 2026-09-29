@@ -7,7 +7,10 @@ Evidence-first by construction:
   * the LLM finishes by calling ``submit`` with typed findings that cite those ids;
   * a report citing unknown ids, or a FACT without evidence, is rejected and retried.
 
-Bounded: max_steps (LLM turns), max_tool_calls, max_execution_s and max_tokens.
+Bounded: max_steps (LLM turns), max_tool_calls, max_execution_s and max_tokens. When the
+agent's token budget, or its investigation's token/cost budget, is spent, the agent
+finishes with its deterministic analysis (as in replay) and says so in a note (PR-041).
+Every run is an ``invoke_agent`` span (tokens, cost, model, role, status).
 """
 
 from __future__ import annotations
@@ -43,6 +46,9 @@ from aiops.llm.structured import SUBMIT_TOOL, submit_tool
 from aiops.mcp.client import MCPClientError
 from aiops.mcp.registry import MCPRegistry
 from aiops.mcp.toolset import ToolOutcome, Toolset, truncate
+from aiops.observability import metrics
+from aiops.observability.budget import InvestigationBudget
+from aiops.observability.tracing import Attributes, mark, set_attributes, span, usage_attributes
 from aiops.providers import PROVIDER_REGISTRY, Provider
 
 log = logging.getLogger(__name__)
@@ -103,6 +109,8 @@ class AgentDeps:
     prompts: PromptLoader
     catalog: ServiceCatalog
     events: EventSink = field(default_factory=NullEventSink)
+    #: The investigation's live token/cost ledger (set by the orchestrator, PR-041).
+    budget: InvestigationBudget | None = None
 
 
 class AgentRun:
@@ -118,6 +126,8 @@ class AgentRun:
         self.usage = TokenUsage()
         self.model: str | None = None
         self.prompt_ref: str | None = None
+        #: Finishing with the deterministic analysis (the stand-in LLM): no budget checks.
+        self.fallback = False
         self._tool_index: dict[str, Toolset] = {}
 
     async def attach(self, toolsets: dict[str, Toolset]) -> list[ToolSpec]:
@@ -243,6 +253,30 @@ class BaseAgent(ABC):
     # -- lifecycle ----------------------------------------------------------------------
 
     async def run(self, task: AgentTask) -> AgentResult:
+        attributes: Attributes = {
+            "gen_ai.operation.name": "invoke_agent",
+            "gen_ai.agent.name": self.name,
+            "aiops.agent.version": self.spec.version,
+            "aiops.llm.role": self.deps.settings.agent(self.name).model_role,
+            "aiops.round": task.round,
+            "aiops.investigation.id": task.investigation_id,
+        }
+        with span(f"invoke_agent {self.name}", attributes) as current:
+            result = await self._run(task)
+            set_attributes(
+                current,
+                {
+                    **usage_attributes(result.usage),
+                    "gen_ai.response.model": result.model,
+                    "aiops.agent.confidence": result.confidence,
+                    "aiops.agent.evidence": len(result.evidence),
+                    "aiops.agent.tool_calls": len(result.tool_calls),
+                },
+            )
+            mark(current, result.status.value, result.error)
+        return result
+
+    async def _run(self, task: AgentTask) -> AgentResult:
         settings = self.deps.settings
         limits = settings.agent_limits(self.name)
         run = AgentRun(self, task, limits)
@@ -354,26 +388,60 @@ class BaseAgent(ABC):
     # -- the loop -----------------------------------------------------------------------
 
     async def _deterministic_fallback(
-        self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str, exc: LLMError
+        self,
+        run: AgentRun,
+        tool_specs: list[ToolSpec],
+        system: str,
+        user: str,
+        *,
+        reason: str,
+        note: str,
+        label: str,
     ) -> AgentResult:
-        """Finish from the evidence already gathered, as in zero-LLM (replay) mode."""
+        """Finish from the evidence already gathered, as in zero-LLM (replay) mode.
+
+        ``reason`` is the metric label (llm_error | agent_budget | investigation_budget),
+        ``label`` the ``fallback`` value of the ``llm_called`` event, ``note`` is appended
+        to the result's follow-ups so the report says why the LLM stopped."""
         from aiops.evals.replay import echo_responder  # local: avoids an import cycle
         from aiops.llm.fake import FakeLLMProvider
 
-        log.warning("Agent %s: LLM failed (%s); using the deterministic analysis", self.name, exc)
-        self.emit("llm_called", run.task, step=0, tool_calls=0, fallback=type(exc).__name__)
+        log.warning("Agent %s: %s", self.name, note)
+        metrics.record_fallback(self.name, reason)
+        self.emit("llm_called", run.task, step=0, tool_calls=0, fallback=label)
         original = self.deps.llm
         self.deps.llm = FakeLLMProvider(responder=echo_responder())
         usage_before = run.usage
+        run.usage = TokenUsage()  # the stand-in's loop starts with an empty agent budget
+        run.fallback = True
         try:
             result = await self.llm_loop(run, tool_specs, system, user)
         finally:
             self.deps.llm = original
             run.usage = usage_before  # the stand-in spends no real tokens
-        note = f"LLM unavailable ({type(exc).__name__}): finished with the deterministic analysis."
+            run.fallback = False
         return result.model_copy(
             update={"suggested_followups": [*result.suggested_followups, note]}
         )
+
+    def _budget_spent(self, run: AgentRun) -> tuple[str, str] | None:
+        """(metric reason, note) when the agent's or the investigation's budget is spent."""
+        if run.fallback:
+            return None
+        if run.usage.total_tokens >= run.limits.max_tokens:
+            return (
+                "agent_budget",
+                f"Token budget of the agent ({run.limits.max_tokens}) spent: finished with "
+                "the deterministic analysis.",
+            )
+        budget = self.deps.budget
+        if budget is not None and budget.exhausted:
+            return (
+                "investigation_budget",
+                f"The investigation's {budget.describe()} is spent: finished with the "
+                "deterministic analysis.",
+            )
+        return None
 
     async def llm_loop(
         self, run: AgentRun, tool_specs: list[ToolSpec], system: str, user: str
@@ -384,8 +452,12 @@ class BaseAgent(ABC):
         role = self.deps.settings.agent(self.name).model_role
 
         for step in range(1, run.limits.max_steps + 1):
-            if run.usage.total_tokens >= run.limits.max_tokens:
-                return run.partial(f"Token budget ({run.limits.max_tokens}) reached.")
+            spent = self._budget_spent(run)
+            if spent is not None:
+                reason, note = spent
+                return await self._deterministic_fallback(
+                    run, tool_specs, system, user, reason=reason, note=note, label=reason
+                )
             # Last step (or no tool budget left): only `submit` is offered, so a real model
             # that keeps exploring still ends with an evidence-cited report.
             final = step == run.limits.max_steps or len(run.tool_calls) >= run.limits.max_tool_calls
@@ -415,7 +487,20 @@ class BaseAgent(ABC):
             except LLMError as exc:
                 # Rate limit / outage / unusable output: never let the LLM make the result
                 # WORSE than no LLM. Finish with the deterministic analysis instead.
-                return await self._deterministic_fallback(run, tool_specs, system, user, exc)
+                if run.fallback:
+                    raise
+                return await self._deterministic_fallback(
+                    run,
+                    tool_specs,
+                    system,
+                    user,
+                    reason="llm_error",
+                    note=(
+                        f"LLM unavailable ({type(exc).__name__}): finished with the "
+                        "deterministic analysis."
+                    ),
+                    label=type(exc).__name__,
+                )
             run.usage = run.usage + response.usage
             run.model = response.model or run.model
             self.emit("llm_called", run.task, step=step, tool_calls=len(response.tool_calls))

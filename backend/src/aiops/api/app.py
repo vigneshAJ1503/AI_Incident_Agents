@@ -7,6 +7,10 @@ Middleware, outermost first: CORS (``api.cors_origins``, exact origins only) -> 
 + structured access log -> security headers -> request-size limit (``api.max_body_bytes``)
 -> authentication (``api.auth``: none | api_key; OIDC in PR-045, see ``api/auth.py``).
 Rate limits and idempotency keys are per route (``api/security.py``).
+
+Observability (PR-041, docs/observability.md): Prometheus metrics on ``/metrics`` (outside
+``/api``: no API key, like a liveness probe; the Web UI's proxy never forwards it) and
+OpenTelemetry tracing when ``observability.tracing.otlp_endpoint`` is set.
 """
 
 from __future__ import annotations
@@ -20,11 +24,13 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from aiops import __version__
+from aiops.agents.registry import AGENTS
+from aiops.agents.tickets_agent.draft import ACTIONS
 from aiops.api.auth import PUBLIC_PATHS, AuthMiddleware, build_authenticator
 from aiops.api.context import ApiContext, build_context
 from aiops.api.errors import install_error_handlers
@@ -35,6 +41,9 @@ from aiops.api.security import (
     RateLimiter,
     SecurityHeadersMiddleware,
 )
+from aiops.observability import metrics
+from aiops.observability.metrics import render
+from aiops.observability.tracing import setup_tracing, shutdown_tracing
 
 access_log = logging.getLogger("aiops.api.access")
 
@@ -97,11 +106,13 @@ def create_app(ctx: ApiContext | None = None) -> FastAPI:
 
     @asynccontextmanager
     async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+        setup_tracing(context.settings.observability.tracing)
         await context.startup()
         try:
             yield
         finally:
             await context.shutdown()
+            shutdown_tracing()
 
     app = FastAPI(
         title="AI Incident Agents API",
@@ -118,6 +129,16 @@ def create_app(ctx: ApiContext | None = None) -> FastAPI:
     app.state.idempotency = IdempotencyStore(api.idempotency_ttl_s)
     install_error_handlers(app)
     app.include_router(router)
+    if context.settings.observability.metrics.enabled:
+        metrics.initialize(
+            context.settings, [spec.name for spec in AGENTS.specs()], sorted(set(ACTIONS.values()))
+        )
+
+        @app.get("/metrics", include_in_schema=False)
+        async def prometheus_metrics() -> Response:
+            """Prometheus text format: agents, LLM calls, tools, cost, overrides."""
+            body, content_type = render()
+            return Response(content=body, media_type=content_type)
 
     app.add_middleware(AuthMiddleware, authenticator=build_authenticator(api))
     app.add_middleware(BodySizeLimitMiddleware, limit=api.max_body_bytes)

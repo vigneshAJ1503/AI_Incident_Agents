@@ -118,6 +118,8 @@ services:
       - --web.external-url=${PROMETHEUS_URL:-http://localhost:9090}
       - --query.timeout=30s
       - --query.max-samples=5000000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"   # scrape `make api` on the host (PR-041)
     ports:
       - "127.0.0.1:${PROMETHEUS_PORT:-9090}:9090"
     volumes:
@@ -194,6 +196,33 @@ services:
       timeout: 3s
       retries: 40
       start_period: 15s
+
+  # PR-041. Optional trace backend (docs/observability.md): the API/CLI export OpenTelemetry
+  # spans over OTLP/HTTP when AIOPS_OTLP_ENDPOINT is set. Opt-in (`make tracing-up`, profile
+  # "tracing"); never part of `make demo`. In-memory, capped store: traces vanish on restart.
+  jaeger:
+    image: jaegertracing/jaeger:${JAEGER_VERSION:-2.21.0}
+    container_name: aiops-jaeger
+    profiles: ["tracing"]
+    user: "10001:10001"
+    command: ["--config", "/etc/jaeger/jaeger.yaml"]
+    ports:
+      - "127.0.0.1:${JAEGER_UI_PORT:-16686}:16686"   # UI
+      - "127.0.0.1:${JAEGER_OTLP_PORT:-4318}:4318"   # OTLP/HTTP in
+    volumes:
+      - ./config/jaeger/jaeger.yaml:/etc/jaeger/jaeger.yaml:ro
+    environment:
+      - GOMEMLIMIT=${JAEGER_GOMEMLIMIT:-96MiB}
+    mem_limit: ${JAEGER_MEM_LIMIT:-128m}
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "-", "http://localhost:13133/status"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
 
 volumes:
   loki-data:

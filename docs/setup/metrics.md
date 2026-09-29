@@ -48,6 +48,8 @@ How real and seeded alerts coexist is described in [alerts.md](alerts.md#real-al
 
 ## Grafana (optional)
 
+The **AI Observability** dashboard (PR-041) shows the platform itself: agents, LLM calls, tools, cost and overrides from the API's `/metrics`. See [../observability.md](../observability.md).
+
 Provisioned from git, nothing is clicked together by hand:
 
 - datasources `Prometheus` (uid `prometheus`, default) and `Elasticsearch logs` (uid `elasticsearch`, indices `*-prod-*,logs-k8s-*`);

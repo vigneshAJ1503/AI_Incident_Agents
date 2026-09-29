@@ -39,6 +39,8 @@ from aiops.core.models import Investigation, InvestigationStatus, utcnow
 from aiops.evals.scenario import Scenario
 from aiops.faults import FaultError
 from aiops.mcp import tickets
+from aiops.observability import metrics
+from aiops.observability.budget import llm_scope
 from aiops.orchestrator.dashboard import dashboard_summary
 from aiops.orchestrator.engine import InvestigationRequest
 from aiops.store.repository import summary_of
@@ -536,7 +538,8 @@ async def ask(ctx: Ctx, body: m.AskRequest) -> m.AskResponse:
     """The chat box: a platform question is answered from live platform data (no
     investigation); an incident question starts one exactly like ``POST /investigations``.
     In replay mode without a matching scenario, the answer lists the recorded ones."""
-    c = await ctx.classifier().classify(body.question)
+    with llm_scope("intent"):  # LLM calls attributed to the chat classifier (PR-041)
+        c = await ctx.classifier().classify(body.question)
     if c.kind == "platform":
         return m.AskResponse(
             kind="platform",
@@ -649,7 +652,10 @@ async def approve(
     is the authenticated identity (``by`` is ignored)."""
     by = decided_by(request, body.by)
     try:
-        await asyncio.to_thread(ctx.approvals.approve, approval_id, by, body.comment or "")
+        approved = await asyncio.to_thread(
+            ctx.approvals.approve, approval_id, by, body.comment or ""
+        )
+        metrics.record_approval(approved.action, "approved")
         executor = ctx.executor_factory(ctx.approvals)
         proposal = await executor.execute(approval_id, by)
     except ApprovalError as exc:
@@ -672,6 +678,7 @@ async def deny(
         proposal = await asyncio.to_thread(ctx.approvals.deny, approval_id, by, body.comment or "")
     except ApprovalError as exc:
         raise _approval_error(exc) from exc
+    metrics.record_approval(proposal.action, "denied")  # a human override (PR-041)
     return approval_out(proposal)
 
 

@@ -86,6 +86,7 @@ def test_grafana_dashboards_are_provisioned_with_stable_uids() -> None:
     assert {d["uid"] for d in dashboards.values()} == {
         "aiops-service-overview",
         "aiops-k8s-workloads",
+        "aiops-ai-observability",
     }
     for dashboard in dashboards.values():
         ids = [p["id"] for p in dashboard["panels"]]
@@ -93,3 +94,35 @@ def test_grafana_dashboards_are_provisioned_with_stable_uids() -> None:
         for panel in dashboard["panels"]:
             assert panel["datasource"]["uid"] == "prometheus"
             assert all(t["expr"] for t in panel["targets"])
+
+
+def test_prometheus_scrapes_the_aiops_api_and_the_ai_dashboard_uses_its_metrics() -> None:
+    """PR-041: the API's /metrics is scraped (container or host), and every metric the
+    "AI Observability" dashboard queries is one the API exports (no typos, no ids)."""
+    import re
+
+    from aiops.observability import metrics
+
+    job = scrape_jobs()["aiops-api"]
+    assert job["metrics_path"] == "/metrics"
+    targets = [t for c in job["static_configs"] for t in c["targets"]]
+    # One target: the container publishes :8000 on the host, so a second target (the
+    # container name) would reach the same process and count every metric twice.
+    assert targets == ["host.docker.internal:8000"]
+    exported = set()
+    for collector in vars(metrics).values():
+        describe = getattr(collector, "describe", None)
+        if describe is None or not hasattr(collector, "_name"):
+            continue
+        for family in describe():
+            base = family.name
+            exported |= {base, f"{base}_total", f"{base}_bucket", f"{base}_sum", f"{base}_count"}
+    dashboard = json.loads((GRAFANA_DIR / "dashboards/ai-observability.json").read_text())
+    queried = {
+        name
+        for panel in dashboard["panels"]
+        for t in panel["targets"]
+        for name in re.findall(r"\b(aiops_[a-z_]+)", t["expr"])
+    }
+    assert queried and queried <= exported, sorted(queried - exported)
+    assert "investigation_id" not in json.dumps(dashboard)

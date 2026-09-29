@@ -71,6 +71,8 @@ def _isolate_env(monkeypatch: pytest.MonkeyPatch) -> None:
         "AIOPS_ENABLE_FAULTS",
         "LLM_REASONING_EFFORT",
         "AIOPS_API_KEYS",
+        "AIOPS_OTLP_ENDPOINT",
+        "OTEL_EXPORTER_OTLP_ENDPOINT",
     ]:
         monkeypatch.delenv(var, raising=False)
     # No test may read a developer's .env (it can hold a real LLM key). Block every

@@ -44,6 +44,9 @@ services:
       # Replays started from the Web UI: seconds per recorded tool call, so the live view
       # unfolds at a watchable pace (0 = instant). make demo: docs/setup/demo.md
       - AIOPS_REPLAY_TOOL_DELAY_S=${AIOPS_REPLAY_TOOL_DELAY_S:-0.5}
+      # PR-041: OpenTelemetry traces (off when empty). With `make tracing-up`:
+      # AIOPS_OTLP_ENDPOINT_IN_NETWORK=http://aiops-jaeger:4318. /metrics is always served.
+      - AIOPS_OTLP_ENDPOINT=${AIOPS_OTLP_ENDPOINT_IN_NETWORK:-}
       - AIOPS_API_CORS_ORIGINS=${AIOPS_API_CORS_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000,http://localhost:3100,http://127.0.0.1:3100}
     ports:
       - "127.0.0.1:${API_PORT:-8000}:8000"

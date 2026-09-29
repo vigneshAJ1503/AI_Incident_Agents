@@ -27,7 +27,6 @@ from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
-from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field, ValidationError
 
@@ -35,7 +34,6 @@ from aiops.agents.registry import AGENTS
 from aiops.core.catalog import ServiceCatalog
 from aiops.core.config import (
     ConfigError,
-    ModelPrice,
     Settings,
     format_validation_error,
     load_yaml,
@@ -55,6 +53,7 @@ from aiops.evals.runner import (
 from aiops.evals.scenario import Scenario, load_scenarios
 from aiops.evals.scoring import Check
 from aiops.llm.base import LLMProvider
+from aiops.observability.pricing import cost_usd, price_for, provider_host
 from aiops.orchestrator.planner import Planner, PlanRequest
 
 PLANNER_CASES_FILE = "planner-cases.yaml"
@@ -72,27 +71,8 @@ def _rate(numerator: int, denominator: int) -> float | None:
 # --------------------------------------------------------------------------- cost
 
 
-def provider_host(settings: Settings) -> str:
-    """The LLM provider as recorded in reports: ``fake`` or the API host (api.groq.com)."""
-    llm = settings.llm
-    if llm.provider == "fake":
-        return "fake"
-    return urlparse(llm.base_url or "").hostname or llm.provider
-
-
-def price_for(settings: Settings, model: str | None) -> ModelPrice:
-    """``evals.pricing``: model id, then provider host, then ``*``; default 0 (free tiers)."""
-    table = settings.evals.pricing
-    for key in (model, provider_host(settings), "*"):
-        if key and key in table:
-            return table[key]
-    return ModelPrice()
-
-
-def cost_usd(price: ModelPrice, usage: TokenUsage) -> float:
-    return round(
-        (usage.input_tokens * price.input + usage.output_tokens * price.output) / 1_000_000, 6
-    )
+# ``cost.pricing`` (PR-041): provider_host, price_for and cost_usd live in
+# aiops.observability.pricing and are re-exported here for existing callers.
 
 
 # --------------------------------------------------------------------------- planner cases

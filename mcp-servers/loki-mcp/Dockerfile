@@ -1,5 +1,5 @@
 # Read-only Loki MCP server. Multi-stage, non-root, locked dependencies.
-FROM ghcr.io/astral-sh/uv:0.11.21 AS uv
+FROM ghcr.io/astral-sh/uv:0.13.5 AS uv
 
 FROM python:3.12-slim AS build
 COPY --from=uv /uv /usr/local/bin/uv
